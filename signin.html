@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Sign In - KutinFX</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:#07111f;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+color:white;
+}
+
+.container{
+width:100%;
+max-width:450px;
+background:#102542;
+padding:40px;
+border-radius:15px;
+box-shadow:0 10px 25px rgba(0,0,0,.3);
+}
+
+h1{
+text-align:center;
+margin-bottom:30px;
+color:#00d4ff;
+}
+
+input{
+width:100%;
+padding:14px;
+margin-bottom:15px;
+border:none;
+border-radius:8px;
+outline:none;
+}
+
+button{
+width:100%;
+padding:14px;
+background:#00d4ff;
+border:none;
+border-radius:8px;
+font-weight:700;
+cursor:pointer;
+}
+
+button:hover{
+opacity:.9;
+}
+
+.message{
+margin-top:15px;
+text-align:center;
+}
+
+.links{
+margin-top:20px;
+text-align:center;
+}
+
+.links a{
+color:#00d4ff;
+text-decoration:none;
+}
+
+.back-home{
+display:block;
+margin-bottom:20px;
+text-align:center;
+color:#00d4ff;
+text-decoration:none;
+}
+
+</style>
+
+</head>
+<body>
+
+<div class="container">
+
+<a href="index.html" class="back-home">
+← Back to Home
+</a>
+
+<h1>Sign In</h1>
+
+<input
+type="email"
+id="email"
+placeholder="Email Address">
+
+<input
+type="password"
+id="password"
+placeholder="Password">
+
+<button onclick="signInUser()">
+Sign In
+</button>
+
+<div id="message" class="message"></div>
+
+<div class="links">
+
+Don't have an account?
+
+<a href="signup.html">
+Sign Up
+</a>
+
+</div>
+
+</div>
+
+<script>
+
+const SUPABASE_URL =
+"https://gicamioeiitrfwhtvqxv.supabase.co";
+
+const SUPABASE_ANON_KEY =
+"PASTE_YOUR_ANON_KEY_HERE";
+
+const supabaseClient =
+supabase.createClient(
+SUPABASE_URL,
+SUPABASE_ANON_KEY
+);
+
+async function signInUser(){
+
+const email =
+document.getElementById("email").value;
+
+const password =
+document.getElementById("password").value;
+
+const message =
+document.getElementById("message");
+
+const { data, error } =
+await supabaseClient.auth.signInWithPassword({
+email,
+password
+});
+
+if(error){
+
+message.style.color="#ff4d4d";
+message.innerHTML=error.message;
+return;
+
+}
+
+message.style.color="#00ff99";
+message.innerHTML="Login successful...";
+
+setTimeout(()=>{
+
+window.location.href =
+"dashboard.html";
+
+},1000);
+
+}
+
+</script>
+
+</body>
+</html>
