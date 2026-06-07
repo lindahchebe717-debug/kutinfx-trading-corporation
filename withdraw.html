@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw Funds - KutinFX Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
+        .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; }
+        .input-dark:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); outline: none; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-lg">
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <a href="dashboard.html" class="text-slate-400 hover:text-amber-500 flex items-center justify-center gap-2 mb-4 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Back to Dashboard
+            </a>
+            <h1 class="text-3xl font-bold text-white"><span class="text-amber-500">Withdraw</span> Funds</h1>
+            <p class="text-slate-400 mt-2">Request a withdrawal to your external account</p>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="glass-card rounded-2xl p-6 mb-6 text-center border-l-4 border-l-amber-500">
+            <p class="text-slate-400 text-sm mb-1">Available Balance</p>
+            <h2 class="text-4xl font-bold text-white" id="currentBalance">$0.00</h2>
+        </div>
+
+        <!-- Withdrawal Form -->
+        <div class="glass-card rounded-2xl p-6 shadow-2xl">
+            <form id="withdrawForm" class="space-y-5">
+                <!-- Amount -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Withdrawal Amount (USD)</label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">$</span>
+                        <input type="number" id="amount" required min="10" step="0.01"
+                            class="input-dark w-full pl-8 pr-20 py-3 rounded-xl text-white placeholder-slate-500"
+                            placeholder="0.00">
+                        <button type="button" id="maxBtn" class="absolute right-2 top-1/2 -translate-y-1/2 text-amber-500 text-xs font-bold hover:text-amber-400 px-2 py-1 rounded">
+                            MAX
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Minimum withdrawal: $10.00</p>
+                </div>
+
+                <!-- Payment Method -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Withdrawal Method</label>
+                    <select id="method" class="input-dark w-full px-4 py-3 rounded-xl text-white outline-none appearance-none cursor-pointer">
+                        <option value="USDT (TRC20)">USDT (TRC20 Network)</option>
+                        <option value="Bitcoin (BTC)">Bitcoin (BTC Network)</option>
+                        <option value="Ethereum (ETH)">Ethereum (ERC20 Network)</option>
+                        <option value="Bank Transfer">Bank Wire Transfer</option>
+                    </select>
+                </div>
+
+                <!-- Destination Address -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2" id="addressLabel">Wallet Address</label>
+                    <input type="text" id="destination" required
+                        class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500"
+                        placeholder="Enter your USDT TRC20 wallet address">
+                    <p class="text-xs text-amber-500/80 mt-1 flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                        Double-check your address. Transactions cannot be reversed.
+                    </p>
+                </div>
+
+                <!-- Messages -->
+                <div id="errorMsg" class="hidden p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+                <div id="successMsg" class="hidden p-3 bg-green-500/20 border border-green-500/50 rounded-xl text-green-300 text-sm text-center"></div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="withdrawBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg flex items-center justify-center">
+                    <span id="btnText">Request Withdrawal</span>
+                    <svg id="btnSpinner" class="hidden animate-spin ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let userBalance = 0;
+
+        // Auth Check & Load Balance
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = session.user;
+            
+            const { data: profile } = await supabase.from('users').select('balance').eq('id', currentUser.id).single();
+            if (profile) {
+                userBalance = profile.balance || 0;
+                document.getElementById('currentBalance').textContent = `$${userBalance.toFixed(2)}`;
+            }
+        }
+        init();
+
+        // Dynamic Label based on Method
+        document.getElementById('method').addEventListener('change', function() {
+            const label = document.getElementById('addressLabel');
+            const input = document.getElementById('destination');
+            if (this.value === 'Bank Transfer') {
+                label.textContent = 'Bank Account Details';
+                input.placeholder = 'Bank Name, Account Number, Routing/SWIFT';
+            } else {
+                label.textContent = 'Wallet Address';
+                input.placeholder = `Enter your ${this.value.split(' ')[0]} wallet address`;
+            }
+        });
+
+        // Max Button
+        document.getElementById('maxBtn').addEventListener('click', function() {
+            document.getElementById('amount').value = userBalance.toFixed(2);
+        });
+
+        // Form Submission
+        document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('amount').value);
+            const method = document.getElementById('method').value;
+            const destination = document.getElementById('destination').value.trim();
+
+            // Validation
+            if (amount < 10) {
+                showError('Minimum withdrawal amount is $10.00');
+                return;
+            }
+            if (amount > userBalance) {
+                showError('Insufficient balance for this withdrawal.');
+                return;
+            }
+            if (destination.length < 10) {
+                showError('Please enter a valid destination address or account details.');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const { error } = await supabase.from('transactions').insert([{
+                    user_id: currentUser.id,
+                    type: 'withdrawal',
+                    amount: amount,
+                    payment_method: method,
+                    wallet_address: destination,
+                    status: 'pending'
+                }]);
+
+                if (error) throw error;
+
+                document.getElementById('successMsg').textContent = 'Withdrawal request submitted successfully! Processing time: 24-48 hours.';
+                document.getElementById('successMsg').classList.remove('hidden');
+                document.getElementById('errorMsg').classList.add('hidden');
+                document.getElementById('withdrawForm').reset();
+
+                setTimeout(() => window.location.href = 'dashboard.html', 3000);
+            } catch (err) {
+                showError('Failed to submit withdrawal request. Please try again.');
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            document.getElementById('successMsg').classList.add('hidden');
+        }
+
+        function setLoading(loading) {
+            const btn = document.getElementById('withdrawBtn');
+            const text = document.getElementById('btnText');
+            const spinner = document.getElementById('btnSpinner');
+            if (loading) {
+                text.textContent = 'Processing...';
+                spinner.classList.remove('hidden');
+                btn.disabled = true;
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+            } else {
+                text.textContent = 'Request Withdrawal';
+                spinner.classList.add('hidden');
+                btn.disabled = false;
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        }
+    </script>
+</body>
+</html>
