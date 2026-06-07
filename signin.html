@@ -1,187 +1,173 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Sign In - KutinFX</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<style>
-
-*{
-margin:0;
-padding:0;
-box-sizing:border-box;
-font-family:'Poppins',sans-serif;
-}
-
-body{
-background:#07111f;
-display:flex;
-justify-content:center;
-align-items:center;
-height:100vh;
-color:white;
-}
-
-.container{
-width:100%;
-max-width:450px;
-background:#102542;
-padding:40px;
-border-radius:15px;
-box-shadow:0 10px 25px rgba(0,0,0,.3);
-}
-
-h1{
-text-align:center;
-margin-bottom:30px;
-color:#00d4ff;
-}
-
-input{
-width:100%;
-padding:14px;
-margin-bottom:15px;
-border:none;
-border-radius:8px;
-outline:none;
-}
-
-button{
-width:100%;
-padding:14px;
-background:#00d4ff;
-border:none;
-border-radius:8px;
-font-weight:700;
-cursor:pointer;
-}
-
-button:hover{
-opacity:.9;
-}
-
-.message{
-margin-top:15px;
-text-align:center;
-}
-
-.links{
-margin-top:20px;
-text-align:center;
-}
-
-.links a{
-color:#00d4ff;
-text-decoration:none;
-}
-
-.back-home{
-display:block;
-margin-bottom:20px;
-text-align:center;
-color:#00d4ff;
-text-decoration:none;
-}
-
-</style>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - KutinFX Trading Corporation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+        .gold-gradient {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        .input-dark {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            transition: all 0.3s ease;
+        }
+        .input-dark:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+        }
+    </style>
 </head>
-<body>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+        <!-- Logo -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">
+                <span class="text-amber-500">KutinFX</span> Trading
+            </h1>
+            <p class="text-slate-400">Access your trading dashboard</p>
+        </div>
 
-<div class="container">
+        <!-- Login Card -->
+        <div class="glass-card rounded-2xl p-8 shadow-2xl">
+            <h2 class="text-2xl font-bold text-white mb-6 text-center">Welcome Back</h2>
+            
+            <form id="loginForm" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
+                    <input type="email" id="email" required
+                        class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none"
+                        placeholder="your@email.com">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                    <input type="password" id="password" required
+                        class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none"
+                        placeholder="Enter your password">
+                </div>
 
-<a href="index.html" class="back-home">
-← Back to Home
-</a>
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center">
+                        <input type="checkbox" class="w-4 h-4 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500">
+                        <span class="ml-2 text-sm text-slate-400">Remember me</span>
+                    </label>
+                    <a href="#" class="text-sm text-amber-500 hover:text-amber-400">Forgot password?</a>
+                </div>
 
-<h1>Sign In</h1>
+                <button type="submit" id="loginBtn"
+                    class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg">
+                    <span id="loginText">Sign In</span>
+                    <svg id="loginSpinner" class="hidden animate-spin inline-block w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                </button>
+            </form>
 
-<input
-type="email"
-id="email"
-placeholder="Email Address">
+            <!-- Error Message -->
+            <div id="errorMsg" class="hidden mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+            
+            <!-- Success Message -->
+            <div id="successMsg" class="hidden mt-4 p-3 bg-green-500/20 border border-green-500/50 rounded-xl text-green-300 text-sm text-center"></div>
 
-<input
-type="password"
-id="password"
-placeholder="Password">
+            <div class="mt-6 text-center">
+                <p class="text-slate-400">Don't have an account? 
+                    <a href="register.html" class="text-amber-500 font-semibold hover:text-amber-400">Sign Up</a>
+                </p>
+            </div>
+        </div>
 
-<button onclick="signInUser()">
-Sign In
-</button>
+        <p class="text-center text-slate-500 text-sm mt-6">
+            &copy; 2026 KutinFX Trading Corporation. All rights reserved.
+        </p>
+    </div>
 
-<div id="message" class="message"></div>
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-<div class="links">
+        const loginForm = document.getElementById('loginForm');
+        const errorMsg = document.getElementById('errorMsg');
+        const successMsg = document.getElementById('successMsg');
+        const loginText = document.getElementById('loginText');
+        const loginSpinner = document.getElementById('loginSpinner');
 
-Don't have an account?
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.classList.remove('hidden');
+            successMsg.classList.add('hidden');
+        }
 
-<a href="signup.html">
-Sign Up
-</a>
+        function showSuccess(msg) {
+            successMsg.textContent = msg;
+            successMsg.classList.remove('hidden');
+            errorMsg.classList.add('hidden');
+        }
 
-</div>
+        function setLoading(loading) {
+            if (loading) {
+                loginText.textContent = 'Signing In...';
+                loginSpinner.classList.remove('hidden');
+            } else {
+                loginText.textContent = 'Sign In';
+                loginSpinner.classList.add('hidden');
+            }
+        }
 
-</div>
+        // Check if already logged in
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                window.location.href = 'dashboard.html';
+            }
+        }
+        checkAuth();
 
-<script>
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            
+            setLoading(true);
+            errorMsg.classList.add('hidden');
+            successMsg.classList.add('hidden');
 
-const SUPABASE_URL =
-"https://gicamioeiitrfwhtvqxv.supabase.co";
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
 
-const SUPABASE_ANON_KEY =
-"PASTE_YOUR_ANON_KEY_HERE";
-
-const supabaseClient =
-supabase.createClient(
-SUPABASE_URL,
-SUPABASE_ANON_KEY
-);
-
-async function signInUser(){
-
-const email =
-document.getElementById("email").value;
-
-const password =
-document.getElementById("password").value;
-
-const message =
-document.getElementById("message");
-
-const { data, error } =
-await supabaseClient.auth.signInWithPassword({
-email,
-password
-});
-
-if(error){
-
-message.style.color="#ff4d4d";
-message.innerHTML=error.message;
-return;
-
-}
-
-message.style.color="#00ff99";
-message.innerHTML="Login successful...";
-
-setTimeout(()=>{
-
-window.location.href =
-"dashboard.html";
-
-},1000);
-
-}
-
-</script>
-
+                if (error) {
+                    showError(error.message);
+                } else {
+                    showSuccess('Login successful! Redirecting...');
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                }
+            } catch (err) {
+                showError('An unexpected error occurred. Please try again.');
+            } finally {
+                setLoading(false);
+            }
+        });
+    </script>
 </body>
 </html>
