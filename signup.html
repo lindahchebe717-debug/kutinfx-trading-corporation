@@ -28,6 +28,7 @@
         .input-dark:focus {
             border-color: #f59e0b;
             box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+            outline: none;
         }
     </style>
 </head>
@@ -90,16 +91,16 @@
                 </div>
 
                 <div class="flex items-start">
-                    <input type="checkbox" id="terms" required class="w-4 h-4 mt-1 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500">
+                    <input type="checkbox" id="terms" required class="w-4 h-4 mt-1 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500 focus:ring-offset-slate-900">
                     <label for="terms" class="ml-2 text-sm text-slate-400">
-                        I agree to the <a href="#" class="text-amber-500 hover:text-amber-400">Terms of Service</a> and <a href="#" class="text-amber-500 hover:text-amber-400">Privacy Policy</a>
+                        I agree to the <a href="#" class="text-amber-500 hover:text-amber-400 underline">Terms of Service</a> and <a href="#" class="text-amber-500 hover:text-amber-400 underline">Privacy Policy</a>
                     </label>
                 </div>
 
                 <button type="submit" id="registerBtn"
-                    class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg mt-6">
+                    class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg mt-6 flex items-center justify-center">
                     <span id="registerText">Create Account</span>
-                    <svg id="registerSpinner" class="hidden animate-spin inline-block w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24">
+                    <svg id="registerSpinner" class="hidden animate-spin ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
@@ -152,9 +153,13 @@
             if (loading) {
                 registerText.textContent = 'Creating Account...';
                 registerSpinner.classList.remove('hidden');
+                document.getElementById('registerBtn').disabled = true;
+                document.getElementById('registerBtn').classList.add('opacity-75', 'cursor-not-allowed');
             } else {
                 registerText.textContent = 'Create Account';
                 registerSpinner.classList.add('hidden');
+                document.getElementById('registerBtn').disabled = false;
+                document.getElementById('registerBtn').classList.remove('opacity-75', 'cursor-not-allowed');
             }
         }
 
@@ -183,7 +188,8 @@
             successMsg.classList.add('hidden');
 
             try {
-                // Create auth user
+                // Create auth user 
+                // NOTE: The SQL trigger 'handle_new_user' will automatically create the profile in the 'users' table!
                 const { data: authData, error: authError } = await supabase.auth.signUp({
                     email,
                     password,
@@ -200,33 +206,16 @@
                 if (authError) {
                     showError(authError.message);
                 } else {
-                    // Insert user profile into users table
-                    const { error: profileError } = await supabase
-                        .from('users')
-                        .insert([{
-                            id: authData.user.id,
-                            email: email,
-                            first_name: firstName,
-                            last_name: lastName,
-                            phone: phone,
-                            full_name: `${firstName} ${lastName}`,
-                            balance: 0,
-                            account_status: 'active',
-                            created_at: new Date().toISOString()
-                        }]);
-
-                    if (profileError && profileError.code !== '23505') {
-                        console.error('Profile error:', profileError.message);
-                    }
-
                     showSuccess('Account created successfully! Please check your email to verify your account.');
                     registerForm.reset();
                     
+                    // Redirect to login after a short delay
                     setTimeout(() => {
                         window.location.href = 'login.html';
-                    }, 2000);
+                    }, 2500);
                 }
             } catch (err) {
+                console.error('Registration error:', err);
                 showError('An unexpected error occurred. Please try again.');
             } finally {
                 setLoading(false);
