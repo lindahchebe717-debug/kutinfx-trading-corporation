@@ -284,7 +284,8 @@
         async function checkAuth() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
-                window.location.href = 'login.html';
+                // UPDATED TO sign-in.html
+                window.location.href = 'sign-in.html'; 
                 return;
             }
             currentUser = session.user;
@@ -466,7 +467,8 @@
         // Logout function
         async function logout() {
             await supabase.auth.signOut();
-            window.location.href = 'login.html';
+            // UPDATED TO sign-in.html
+            window.location.href = 'sign-in.html'; 
         }
 
         // Toggle mobile sidebar
