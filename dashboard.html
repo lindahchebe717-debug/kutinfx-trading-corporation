@@ -25,7 +25,6 @@
         }
         .bot-card { transition: all 0.3s ease; }
         .bot-card:hover { transform: translateY(-4px); border-color: rgba(245, 158, 11, 0.5); }
-        
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
         ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
@@ -41,7 +40,6 @@
                 </h1>
                 <p class="text-slate-500 text-xs mt-1 tracking-wider">TRADING CORPORATION</p>
             </div>
-            
             <nav class="mt-6 space-y-1">
                 <a href="dashboard.html" class="nav-item active flex items-center px-6 py-3 text-white">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
@@ -68,7 +66,6 @@
                     Transactions
                 </a>
             </nav>
-
             <div class="absolute bottom-0 w-full p-4 border-t border-slate-700/50">
                 <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -79,7 +76,6 @@
 
         <!-- Main Content -->
         <main class="flex-1 lg:ml-64 w-full">
-            <!-- Top Bar -->
             <header class="glass-card sticky top-0 z-10 px-6 py-4 flex items-center justify-between border-b border-slate-700/50">
                 <div class="flex items-center gap-4">
                     <button class="lg:hidden text-white" onclick="toggleSidebar()">
@@ -100,7 +96,6 @@
             </header>
 
             <div class="p-4 md:p-6 space-y-6">
-                <!-- Email Verification Alert -->
                 <div id="emailAlert" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
                     <div class="flex items-center">
                         <svg class="w-5 h-5 text-amber-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
@@ -108,7 +103,6 @@
                     </div>
                 </div>
 
-                <!-- Stats Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div class="stat-card rounded-xl p-5">
                         <div class="flex items-center justify-between">
@@ -121,7 +115,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="stat-card rounded-xl p-5">
                         <div class="flex items-center justify-between">
                             <div>
@@ -133,7 +126,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="stat-card rounded-xl p-5">
                         <div class="flex items-center justify-between">
                             <div>
@@ -145,7 +137,6 @@
                             </div>
                         </div>
                     </div>
-                    
                     <div class="stat-card rounded-xl p-5">
                         <div class="flex items-center justify-between">
                             <div>
@@ -159,7 +150,6 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <a href="deposit.html" class="glass-card rounded-xl p-4 hover:border-amber-500/50 transition-all text-center group">
                         <div class="w-12 h-12 mx-auto rounded-full gold-gradient flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
@@ -188,7 +178,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Trading Bots Section -->
                     <div class="lg:col-span-2">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-white">Available Trading Bots</h3>
@@ -204,7 +193,6 @@
                         </div>
                     </div>
 
-                    <!-- Recent Transactions Preview -->
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-white">Recent Activity</h3>
@@ -222,11 +210,9 @@
                     </div>
                 </div>
 
-                <!-- Investment Plans Section -->
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Investment Plans</h3>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="plansContainer">
-                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="plansContainer"></div>
                 </div>
             </div>
         </main>
@@ -270,23 +256,41 @@
     </div>
 
     <script>
-        // Supabase Configuration
+        console.log("Dashboard script starting...");
+        
         const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
         
-        // FIX: Changed from 'supabase' to 'mySupabase' to prevent the crash!
+        // We use mySupabase to prevent the "already declared" crash!
         const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log("Supabase client created successfully.");
 
         let currentUser = null;
 
         async function checkAuth() {
-            const { data: { session } } = await mySupabase.auth.getSession();
-            if (!session) {
-                window.location.href = 'sign-in.html'; 
-                return;
+            try {
+                console.log("Checking authentication...");
+                const { data: { session }, error } = await mySupabase.auth.getSession();
+                
+                if (error) {
+                    console.error('Auth error:', error);
+                    document.getElementById('welcomeText').textContent = 'Error connecting to database';
+                    return;
+                }
+                
+                if (!session) {
+                    console.log("No session found, redirecting to sign-in...");
+                    window.location.href = 'sign-in.html'; 
+                    return;
+                }
+                
+                currentUser = session.user;
+                console.log("User logged in:", currentUser.email);
+                await loadUserData();
+            } catch (err) {
+                console.error('CheckAuth failed:', err);
+                document.getElementById('welcomeText').textContent = 'Error: ' + err.message;
             }
-            currentUser = session.user;
-            await loadUserData();
         }
 
         async function loadUserData() {
@@ -296,6 +300,8 @@
                     .select('*')
                     .eq('id', currentUser.id)
                     .single();
+
+                if (profileError) console.error('Profile error:', profileError);
 
                 if (profile) {
                     document.getElementById('welcomeText').textContent = `Welcome back, ${profile.first_name || 'Trader'}!`;
@@ -316,7 +322,6 @@
                     loadInvestmentPlans(),
                     loadRecentTransactions()
                 ]);
-
             } catch (err) {
                 console.error('Error loading user data:', err);
             }
@@ -358,6 +363,8 @@
                             </button>
                         </div>
                     `).join('');
+                } else {
+                    container.innerHTML = '<p class="text-slate-400 text-sm">No active bots available.</p>';
                 }
             } catch (err) {
                 console.error('Error loading bots:', err);
@@ -399,6 +406,8 @@
                             </a>
                         </div>
                     `).join('');
+                } else {
+                    container.innerHTML = '<p class="text-slate-400 text-sm col-span-full">No investment plans available.</p>';
                 }
             } catch (err) {
                 console.error('Error loading plans:', err);
@@ -466,6 +475,7 @@
             sidebar.classList.toggle('hidden');
         }
 
+        // Initialize
         checkAuth();
     </script>
 </body>
