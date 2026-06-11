@@ -105,15 +105,27 @@
                             <input type="text" id="docNumber" required class="input-dark w-full px-4 py-3 rounded-xl text-white bg-slate-800/50 border border-slate-700 outline-none focus:border-amber-500" placeholder="Enter document ID number">
                         </div>
 
-                        <!-- File Upload -->
+                        <!-- Front Side Upload -->
                         <div>
-                            <label class="block text-sm font-medium text-slate-300 mb-2">Upload Document Image</label>
-                            <div class="file-drop-zone rounded-xl p-8 text-center cursor-pointer relative" id="dropZone">
-                                <input type="file" id="docFile" accept="image/*,.pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Upload Front Side of Document</label>
+                            <div class="file-drop-zone rounded-xl p-8 text-center cursor-pointer relative" id="dropZoneFront">
+                                <input type="file" id="docFileFront" accept="image/*,.pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
                                 <svg class="w-12 h-12 text-amber-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                                <p class="text-slate-300 font-medium">Click to upload or drag and drop</p>
+                                <p class="text-slate-300 font-medium">Click to upload front side</p>
                                 <p class="text-slate-500 text-sm mt-1">JPG, PNG or PDF (Max 5MB)</p>
-                                <p id="fileName" class="text-amber-500 text-sm mt-3 font-bold hidden"></p>
+                                <p id="fileNameFront" class="text-amber-500 text-sm mt-3 font-bold hidden"></p>
+                            </div>
+                        </div>
+
+                        <!-- Back Side Upload -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-300 mb-2">Upload Back Side of Document</label>
+                            <div class="file-drop-zone rounded-xl p-8 text-center cursor-pointer relative" id="dropZoneBack">
+                                <input type="file" id="docFileBack" accept="image/*,.pdf" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                                <svg class="w-12 h-12 text-amber-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                                <p class="text-slate-300 font-medium">Click to upload back side</p>
+                                <p class="text-slate-500 text-sm mt-1">JPG, PNG or PDF (Max 5MB)</p>
+                                <p id="fileNameBack" class="text-amber-500 text-sm mt-3 font-bold hidden"></p>
                             </div>
                         </div>
 
@@ -173,10 +185,22 @@
         }
         init();
 
-        // File Name Display
-        document.getElementById('docFile').addEventListener('change', function() {
+        // File Name Display - Front
+        document.getElementById('docFileFront').addEventListener('change', function() {
             const fileName = this.files[0] ? this.files[0].name : '';
-            const nameDisplay = document.getElementById('fileName');
+            const nameDisplay = document.getElementById('fileNameFront');
+            if (fileName) {
+                nameDisplay.textContent = `Selected: ${fileName}`;
+                nameDisplay.classList.remove('hidden');
+            } else {
+                nameDisplay.classList.add('hidden');
+            }
+        });
+
+        // File Name Display - Back
+        document.getElementById('docFileBack').addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : '';
+            const nameDisplay = document.getElementById('fileNameBack');
             if (fileName) {
                 nameDisplay.textContent = `Selected: ${fileName}`;
                 nameDisplay.classList.remove('hidden');
@@ -190,10 +214,11 @@
             e.preventDefault();
             const docType = document.getElementById('docType').value;
             const docNumber = document.getElementById('docNumber').value;
-            const file = document.getElementById('docFile').files[0];
+            const fileFront = document.getElementById('docFileFront').files[0];
+            const fileBack = document.getElementById('docFileBack').files[0];
 
-            if (!file) {
-                showError('Please select a file to upload.');
+            if (!fileFront || !fileBack) {
+                showError('Please upload both front and back sides of your document.');
                 return;
             }
 
@@ -202,32 +227,44 @@
             document.getElementById('successMsg').classList.add('hidden');
 
             try {
-                // 1. Upload file to Supabase Storage
-                const fileExt = file.name.split('.').pop();
-                const fileName = `${currentUser.id}/${Date.now()}.${fileExt}`;
+                // 1. Upload front side
+                const fileExtFront = fileFront.name.split('.').pop();
+                const fileNameFront = `${currentUser.id}/front_${Date.now()}.${fileExtFront}`;
                 
-                const { data: uploadData, error: uploadError } = await mySupabase.storage
+                const { data: uploadDataFront, error: uploadErrorFront } = await mySupabase.storage
                     .from('kyc-documents')
-                    .upload(fileName, file);
+                    .upload(fileNameFront, fileFront);
 
-                if (uploadError) throw uploadError;
+                if (uploadErrorFront) throw uploadErrorFront;
 
-                // 2. Update User Profile
+                // 2. Upload back side
+                const fileExtBack = fileBack.name.split('.').pop();
+                const fileNameBack = `${currentUser.id}/back_${Date.now()}.${fileExtBack}`;
+                
+                const { data: uploadDataBack, error: uploadErrorBack } = await mySupabase.storage
+                    .from('kyc-documents')
+                    .upload(fileNameBack, fileBack);
+
+                if (uploadErrorBack) throw uploadErrorBack;
+
+                // 3. Update User Profile
                 const { error: updateError } = await mySupabase
                     .from('users')
                     .update({
                         kyc_status: 'pending',
                         kyc_document_type: docType,
-                        kyc_document_url: fileName
+                        kyc_document_url: fileNameFront,
+                        kyc_document_back_url: fileNameBack
                     })
                     .eq('id', currentUser.id);
 
                 if (updateError) throw updateError;
 
-                // 3. Success
+                // 4. Success
                 document.getElementById('successMsg').classList.remove('hidden');
                 document.getElementById('kycForm').reset();
-                document.getElementById('fileName').classList.add('hidden');
+                document.getElementById('fileNameFront').classList.add('hidden');
+                document.getElementById('fileNameBack').classList.add('hidden');
                 
                 setTimeout(() => {
                     window.location.reload();
