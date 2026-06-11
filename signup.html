@@ -53,6 +53,14 @@
                     <input type="password" id="confirmPassword" required class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none" placeholder="Re-enter password">
                 </div>
 
+                <!-- Terms and Conditions Checkbox -->
+                <div class="flex items-start gap-3 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
+                    <input type="checkbox" id="termsCheckbox" required class="mt-1 w-4 h-4 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500 cursor-pointer">
+                    <label for="termsCheckbox" class="text-sm text-slate-300 cursor-pointer leading-relaxed">
+                        I agree to the <a href="terms.html" target="_blank" class="text-amber-500 hover:text-amber-400 underline font-medium">Terms and Conditions</a> and <a href="privacy.html" target="_blank" class="text-amber-500 hover:text-amber-400 underline font-medium">Privacy Policy</a>
+                    </label>
+                </div>
+
                 <button type="submit" id="registerBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg mt-6 flex items-center justify-center">
                     <span id="registerText">Create Account</span>
                     <svg id="registerSpinner" class="hidden animate-spin ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24">
@@ -113,6 +121,14 @@
 
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // Check if terms are accepted
+            const termsCheckbox = document.getElementById('termsCheckbox');
+            if (!termsCheckbox.checked) {
+                showError('Please accept the Terms and Conditions to continue.');
+                return;
+            }
+
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const email = document.getElementById('email').value.trim();
