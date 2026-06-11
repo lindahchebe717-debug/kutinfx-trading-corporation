@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bots - KutinFX Trading Corporation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
+        .sidebar { background: rgba(15, 23, 42, 0.95); }
+        .nav-item { transition: all 0.3s ease; }
+        .nav-item:hover, .nav-item.active { background: rgba(245, 158, 11, 0.15); border-right: 3px solid #f59e0b; color: white; }
+        .bot-card { transition: all 0.3s ease; }
+        .bot-card:hover { transform: translateY(-4px); border-color: rgba(245, 158, 11, 0.5); }
+        .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; }
+        .input-dark:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); outline: none; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-slate-200">
+    <div class="flex min-h-screen">
+        <!-- Desktop Sidebar -->
+        <aside class="sidebar w-64 fixed h-full hidden lg:block border-r border-slate-700/50 z-20">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-white"><span class="text-amber-500">KutinFX</span></h1>
+                <p class="text-slate-500 text-xs mt-1 tracking-wider">TRADING CORPORATION</p>
+            </div>
+            <nav class="mt-6 space-y-1">
+                <a href="dashboard.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    Dashboard
+                </a>
+                <a href="trading-bots.html" class="nav-item active flex items-center px-6 py-3 text-white">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                    Trading Bots
+                </a>
+                <a href="investments.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    Investments
+                </a>
+                <a href="deposit.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Deposit
+                </a>
+                <a href="withdraw.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    Withdraw
+                </a>
+                <a href="transactions.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Transactions
+                </a>
+                <a href="kyc.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>
+                    KYC Verification
+                </a>
+                <a href="profile.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    Edit Profile
+                </a>
+            </nav>
+            <div class="absolute bottom-0 w-full p-4 border-t border-slate-700/50">
+                <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 lg:ml-64 w-full">
+            <header class="glass-card sticky top-0 z-10 px-6 py-4 flex items-center justify-between border-b border-slate-700/50">
+                <div class="flex items-center gap-4">
+                    <button class="lg:hidden text-white" onclick="toggleSidebar()">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    </button>
+                    <div>
+                        <h2 class="text-xl font-semibold text-white">Trading Bots</h2>
+                        <p class="text-slate-400 text-sm">Activate and manage your automated trading bots</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="hidden sm:flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50">
+                        <span class="text-slate-400 text-sm">Balance:</span>
+                        <span class="text-amber-500 font-bold" id="headerBalance">$0.00</span>
+                    </div>
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold shadow-lg" id="userAvatar">U</div>
+                </div>
+            </header>
+
+            <div class="p-4 md:p-6 space-y-6">
+                <!-- Stats -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="glass-card rounded-xl p-5">
+                        <p class="text-slate-400 text-sm">Active Bots</p>
+                        <p class="text-2xl font-bold text-white mt-1" id="activeBotsCount">0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5">
+                        <p class="text-slate-400 text-sm">Total Invested in Bots</p>
+                        <p class="text-2xl font-bold text-amber-500 mt-1" id="totalBotInvestment">$0.00</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5">
+                        <p class="text-slate-400 text-sm">Total Bot Earnings</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1" id="totalBotEarnings">$0.00</p>
+                    </div>
+                </div>
+
+                <!-- My Active Bots -->
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-4">My Active Bots</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="myBotsContainer">
+                        <div class="glass-card rounded-xl p-5 animate-pulse">
+                            <div class="h-4 bg-slate-700 rounded w-3/4 mb-3"></div>
+                            <div class="h-3 bg-slate-700 rounded w-1/2 mb-2"></div>
+                            <div class="h-10 bg-slate-700 rounded mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Available Bots -->
+                <div>
+                    <h3 class="text-lg font-semibold text-white mb-4">Available Trading Bots</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="availableBotsContainer">
+                        <div class="glass-card rounded-xl p-5 animate-pulse">
+                            <div class="h-4 bg-slate-700 rounded w-3/4 mb-3"></div>
+                            <div class="h-3 bg-slate-700 rounded w-1/2 mb-2"></div>
+                            <div class="h-10 bg-slate-700 rounded mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Activate Bot Modal -->
+    <div id="activateModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card rounded-2xl p-8 max-w-md w-full relative">
+                <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                <h3 class="text-xl font-bold text-white mb-2">Activate Trading Bot</h3>
+                <p id="modalBotName" class="text-amber-500 font-semibold mb-4"></p>
+                
+                <div id="modalError" class="hidden mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Investment Amount ($)</label>
+                        <input type="number" id="investAmount" min="0" step="0.01" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="Enter amount">
+                        <p id="minDepositText" class="text-xs text-slate-500 mt-1"></p>
+                    </div>
+                    <div class="bg-slate-800/50 rounded-xl p-4 space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Expected Daily ROI:</span>
+                            <span id="modalROI" class="text-green-400 font-medium"></span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Risk Level:</span>
+                            <span id="modalRisk" class="font-medium"></span>
+                        </div>
+                    </div>
+                    <button onclick="activateBot()" id="activateBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all shadow-lg">
+                        Activate Bot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let currentUser = null;
+        let allBots = [];
+        let selectedBotId = null;
+        let userBalance = 0;
+
+        async function init() {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'sign-in.html';
+                return;
+            }
+            currentUser = session.user;
+            document.getElementById('userAvatar').textContent = (currentUser.email[0] || 'U').toUpperCase();
+            
+            // Load user balance
+            const { data: profile } = await mySupabase.from('users').select('balance').eq('id', currentUser.id).single();
+            if (profile) {
+                userBalance = profile.balance || 0;
+                document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
+            }
+            
+            await Promise.all([loadAllBots(), loadMyBots()]);
+        }
+        init();
+
+        async function loadAllBots() {
+            const container = document.getElementById('availableBotsContainer');
+            try {
+                const { data: bots, error } = await mySupabase.from('trading_bots').select('*').eq('is_active', true);
+                if (error) throw error;
+                allBots = bots || [];
+                
+                if (allBots.length === 0) {
+                    container.innerHTML = '<p class="text-slate-400 col-span-full">No trading bots available at the moment.</p>';
+                    return;
+                }
+                
+                container.innerHTML = allBots.map(bot => `
+                    <div class="bot-card glass-card rounded-xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-white font-semibold">${bot.name}</h4>
+                            <span class="px-2 py-1 rounded-full text-xs font-medium ${bot.risk_level === 'low' ? 'bg-green-500/20 text-green-400' : bot.risk_level === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}">
+                                ${bot.risk_level.charAt(0).toUpperCase() + bot.risk_level.slice(1)} Risk
+                            </span>
+                        </div>
+                        <p class="text-slate-400 text-sm mb-4">${bot.description || 'AI-powered trading bot'}</p>
+                        <div class="space-y-2 mb-4 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Min. Deposit:</span>
+                                <span class="text-white font-medium">$${(bot.min_deposit || 0).toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Expected ROI:</span>
+                                <span class="text-green-400 font-medium">${bot.expected_roi || 0}% / day</span>
+                            </div>
+                        </div>
+                        <button onclick="openModal(${bot.id})" class="w-full gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
+                            Activate Bot
+                        </button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('Error loading bots:', err);
+                container.innerHTML = '<p class="text-red-400 col-span-full">Failed to load trading bots.</p>';
+            }
+        }
+
+        async function loadMyBots() {
+            const container = document.getElementById('myBotsContainer');
+            try {
+                const { data: myBots, error } = await mySupabase
+                    .from('user_bots')
+                    .select('*, trading_bots(name, expected_roi, risk_level)')
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'active');
+
+                if (error) throw error;
+
+                if (!myBots || myBots.length === 0) {
+                    container.innerHTML = '<p class="text-slate-400 col-span-full text-center py-8">You haven\'t activated any bots yet. Choose a bot below to get started!</p>';
+                    document.getElementById('activeBotsCount').textContent = '0';
+                    document.getElementById('totalBotInvestment').textContent = '$0.00';
+                    document.getElementById('totalBotEarnings').textContent = '$0.00';
+                    return;
+                }
+
+                let totalInvestment = 0;
+                let totalEarnings = 0;
+
+                container.innerHTML = myBots.map(ub => {
+                    totalInvestment += ub.invested_amount || 0;
+                    totalEarnings += ub.earnings || 0;
+                    const bot = ub.trading_bots;
+                    return `
+                        <div class="glass-card rounded-xl p-5 border border-green-500/30">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-white font-semibold">${bot.name}</h4>
+                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Active</span>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Invested:</span>
+                                    <span class="text-amber-500 font-medium">$${(ub.invested_amount || 0).toFixed(2)}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Earnings:</span>
+                                    <span class="text-green-400 font-medium">+$${(ub.earnings || 0).toFixed(2)}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Daily ROI:</span>
+                                    <span class="text-green-400 font-medium">${bot.expected_roi || 0}%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-slate-400">Activated:</span>
+                                    <span class="text-slate-300">${new Date(ub.activated_at).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                            <button onclick="stopBot(${ub.id})" class="w-full mt-4 bg-red-500/20 text-red-400 font-medium py-2 rounded-lg hover:bg-red-500/30 transition-all text-sm">
+                                Stop Bot
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('activeBotsCount').textContent = myBots.length;
+                document.getElementById('totalBotInvestment').textContent = `$${totalInvestment.toFixed(2)}`;
+                document.getElementById('totalBotEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
+
+            } catch (err) {
+                console.error('Error loading my bots:', err);
+                container.innerHTML = '<p class="text-red-400 col-span-full">Failed to load your bots.</p>';
+            }
+        }
+
+        function openModal(botId) {
+            const bot = allBots.find(b => b.id === botId);
+            if (!bot) return;
+            
+            selectedBotId = botId;
+            document.getElementById('modalBotName').textContent = bot.name;
+            document.getElementById('modalROI').textContent = `${bot.expected_roi}% / day`;
+            document.getElementById('minDepositText').textContent = `Minimum deposit: $${(bot.min_deposit || 0).toFixed(2)} | Your balance: $${userBalance.toFixed(2)}`;
+            
+            const riskEl = document.getElementById('modalRisk');
+            riskEl.textContent = bot.risk_level.charAt(0).toUpperCase() + bot.risk_level.slice(1);
+            riskEl.className = `font-medium ${bot.risk_level === 'low' ? 'text-green-400' : bot.risk_level === 'medium' ? 'text-amber-400' : 'text-red-400'}`;
+            
+            document.getElementById('investAmount').min = bot.min_deposit || 0;
+            document.getElementById('investAmount').value = '';
+            document.getElementById('modalError').classList.add('hidden');
+            document.getElementById('activateModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('activateModal').classList.add('hidden');
+            selectedBotId = null;
+        }
+
+        async function activateBot() {
+            const amount = parseFloat(document.getElementById('investAmount').value);
+            const bot = allBots.find(b => b.id === selectedBotId);
+            const errorEl = document.getElementById('modalError');
+            
+            if (!amount || amount <= 0) {
+                errorEl.textContent = 'Please enter a valid amount.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (amount < (bot.min_deposit || 0)) {
+                errorEl.textContent = `Minimum deposit is $${bot.min_deposit.toFixed(2)}.`;
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (amount > userBalance) {
+                errorEl.textContent = 'Insufficient balance. Please deposit funds first.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            document.getElementById('activateBtn').disabled = true;
+            document.getElementById('activateBtn').textContent = 'Activating...';
+            
+            try {
+                // Deduct balance
+                const newBalance = userBalance - amount;
+                const { error: balanceError } = await mySupabase
+                    .from('users')
+                    .update({ balance: newBalance, total_invested: (userBalance > 0 ? 0 : 0) })
+                    .eq('id', currentUser.id);
+                
+                if (balanceError) throw balanceError;
+
+                // Create bot activation record
+                const { error: botError } = await mySupabase
+                    .from('user_bots')
+                    .insert({
+                        user_id: currentUser.id,
+                        bot_id: selectedBotId,
+                        invested_amount: amount,
+                        status: 'active'
+                    });
+
+                if (botError) {
+                    // Rollback balance
+                    await mySupabase.from('users').update({ balance: userBalance }).eq('id', currentUser.id);
+                    throw botError;
+                }
+
+                // Create transaction record
+                await mySupabase.from('transactions').insert({
+                    user_id: currentUser.id,
+                    type: 'bot_activation',
+                    amount: amount,
+                    status: 'approved',
+                    description: `Activated ${bot.name} trading bot`
+                });
+
+                closeModal();
+                await loadMyBots();
+                userBalance = newBalance;
+                document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
+                
+                alert(`✅ ${bot.name} activated successfully! Invested: $${amount.toFixed(2)}`);
+            } catch (err) {
+                console.error('Activation error:', err);
+                errorEl.textContent = 'Failed to activate bot. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                document.getElementById('activateBtn').disabled = false;
+                document.getElementById('activateBtn').textContent = 'Activate Bot';
+            }
+        }
+
+        async function stopBot(userBotId) {
+            if (!confirm('Are you sure you want to stop this bot? Your invested amount will be returned to your balance.')) return;
+            
+            try {
+                const { data: userBot } = await mySupabase.from('user_bots').select('*').eq('id', userBotId).single();
+                
+                // Return funds to balance
+                const newBalance = userBalance + (userBot.invested_amount || 0) + (userBot.earnings || 0);
+                await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+                
+                // Stop the bot
+                await mySupabase.from('user_bots').update({ status: 'stopped' }).eq('id', userBotId);
+                
+                await loadMyBots();
+                userBalance = newBalance;
+                document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
+                
+                alert('Bot stopped successfully! Funds returned to your balance.');
+            } catch (err) {
+                console.error('Stop bot error:', err);
+                alert('Failed to stop bot. Please try again.');
+            }
+        }
+
+        function toggleSidebar() {
+            // Simple mobile toggle - you can add mobile sidebar HTML if needed
+        }
+
+        async function logout() {
+            await mySupabase.auth.signOut();
+            window.location.href = 'sign-in.html';
+        }
+    </script>
+</body>
+</html>
