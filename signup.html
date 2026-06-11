@@ -9,96 +9,51 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .gradient-bg {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
-        }
-        .gold-gradient {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-        }
-        .glass-card {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(245, 158, 11, 0.2);
-        }
-        .input-dark {
-            background: rgba(15, 23, 42, 0.8);
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            transition: all 0.3s ease;
-        }
-        .input-dark:focus {
-            border-color: #f59e0b;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-            outline: none;
-        }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; }
+        .input-dark:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); outline: none; }
     </style>
 </head>
 <body class="gradient-bg min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md">
-        <!-- Logo -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-white mb-2">
-                <span class="text-amber-500">KutinFX</span> Trading
-            </h1>
+            <h1 class="text-4xl font-bold text-white mb-2"><span class="text-amber-500">KutinFX</span> Trading</h1>
             <p class="text-slate-400">Start your trading journey today</p>
         </div>
 
-        <!-- Register Card -->
         <div class="glass-card rounded-2xl p-8 shadow-2xl">
             <h2 class="text-2xl font-bold text-white mb-6 text-center">Create Account</h2>
             
+            <div id="errorMsg" class="hidden mb-5 p-4 bg-red-500/20 border-2 border-red-500 rounded-xl text-red-200 text-center font-medium"></div>
+            <div id="successMsg" class="hidden mb-5 p-4 bg-green-500/20 border-2 border-green-500 rounded-xl text-green-200 text-center font-medium"></div>
+
             <form id="registerForm" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-2">First Name</label>
-                        <input type="text" id="firstName" required
-                            class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none"
-                            placeholder="John">
+                        <input type="text" id="firstName" required class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none" placeholder="John">
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-2">Last Name</label>
-                        <input type="text" id="lastName" required
-                            class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none"
-                            placeholder="Doe">
+                        <input type="text" id="lastName" required class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none" placeholder="Doe">
                     </div>
                 </div>
-                
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">Email Address</label>
-                    <input type="email" id="email" required
-                        class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none"
-                        placeholder="your@email.com">
+                    <input type="email" id="email" required class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none" placeholder="your@email.com">
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
-                    <input type="tel" id="phone"
-                        class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none"
-                        placeholder="+1 234 567 890">
-                </div>
-                
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">Password</label>
-                    <input type="password" id="password" required minlength="6"
-                        class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none"
-                        placeholder="Min. 6 characters">
+                    <input type="password" id="password" required minlength="6" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none" placeholder="Min. 6 characters">
                 </div>
-                
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">Confirm Password</label>
-                    <input type="password" id="confirmPassword" required
-                        class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none"
-                        placeholder="Re-enter password">
+                    <input type="password" id="confirmPassword" required class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none" placeholder="Re-enter password">
                 </div>
 
-                <div class="flex items-start">
-                    <input type="checkbox" id="terms" required class="w-4 h-4 mt-1 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500 focus:ring-offset-slate-900">
-                    <label for="terms" class="ml-2 text-sm text-slate-400">
-                        I agree to the <a href="#" class="text-amber-500 hover:text-amber-400 underline">Terms of Service</a> and <a href="#" class="text-amber-500 hover:text-amber-400 underline">Privacy Policy</a>
-                    </label>
-                </div>
-
-                <button type="submit" id="registerBtn"
-                    class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg mt-6 flex items-center justify-center">
+                <button type="submit" id="registerBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg mt-6 flex items-center justify-center">
                     <span id="registerText">Create Account</span>
                     <svg id="registerSpinner" class="hidden animate-spin ml-2 w-5 h-5" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -107,35 +62,28 @@
                 </button>
             </form>
 
-            <!-- Error Message -->
-            <div id="errorMsg" class="hidden mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
-            
-            <!-- Success Message -->
-            <div id="successMsg" class="hidden mt-4 p-3 bg-green-500/20 border border-green-500/50 rounded-xl text-green-300 text-sm text-center"></div>
-
             <div class="mt-6 text-center">
                 <p class="text-slate-400">Already have an account? 
-                    <a href="login.html" class="text-amber-500 font-semibold hover:text-amber-400">Sign In</a>
+                    <a href="sign-in.html" class="text-amber-500 font-semibold hover:text-amber-400">Sign In</a>
                 </p>
             </div>
         </div>
-
-        <p class="text-center text-slate-500 text-sm mt-6">
-            &copy; 2026 KutinFX Trading Corporation. All rights reserved.
-        </p>
     </div>
 
     <script>
-        // Supabase Configuration
+        console.log("Signup script starting...");
         const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // FIX: Using mySupabase to prevent the crash!
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const registerForm = document.getElementById('registerForm');
         const errorMsg = document.getElementById('errorMsg');
         const successMsg = document.getElementById('successMsg');
         const registerText = document.getElementById('registerText');
         const registerSpinner = document.getElementById('registerSpinner');
+        const registerBtn = document.getElementById('registerBtn');
 
         function showError(msg) {
             errorMsg.textContent = msg;
@@ -153,27 +101,24 @@
             if (loading) {
                 registerText.textContent = 'Creating Account...';
                 registerSpinner.classList.remove('hidden');
-                document.getElementById('registerBtn').disabled = true;
-                document.getElementById('registerBtn').classList.add('opacity-75', 'cursor-not-allowed');
+                registerBtn.disabled = true;
+                registerBtn.classList.add('opacity-75', 'cursor-not-allowed');
             } else {
                 registerText.textContent = 'Create Account';
                 registerSpinner.classList.add('hidden');
-                document.getElementById('registerBtn').disabled = false;
-                document.getElementById('registerBtn').classList.remove('opacity-75', 'cursor-not-allowed');
+                registerBtn.disabled = false;
+                registerBtn.classList.remove('opacity-75', 'cursor-not-allowed');
             }
         }
 
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const email = document.getElementById('email').value.trim();
-            const phone = document.getElementById('phone').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
 
-            // Validation
             if (password !== confirmPassword) {
                 showError('Passwords do not match!');
                 return;
@@ -188,35 +133,32 @@
             successMsg.classList.add('hidden');
 
             try {
-                // Create auth user 
-                // NOTE: The SQL trigger 'handle_new_user' will automatically create the profile in the 'users' table!
-                const { data: authData, error: authError } = await supabase.auth.signUp({
+                console.log("Attempting signup...");
+                const { data: authData, error: authError } = await mySupabase.auth.signUp({
                     email,
                     password,
                     options: {
                         data: {
                             first_name: firstName,
                             last_name: lastName,
-                            phone: phone,
                             full_name: `${firstName} ${lastName}`
                         }
                     }
                 });
 
                 if (authError) {
-                    showError(authError.message);
+                    showError('❌ ' + authError.message);
                 } else {
-                    showSuccess('Account created successfully! Please check your email to verify your account.');
+                    showSuccess('✅ Account created! Please check your email or sign in.');
                     registerForm.reset();
-                    
-                    // Redirect to login after a short delay
                     setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 2500);
+                        // FIXED: Redirects to sign-in.html instead of login.html
+                        window.location.href = 'sign-in.html'; 
+                    }, 2000);
                 }
             } catch (err) {
-                console.error('Registration error:', err);
-                showError('An unexpected error occurred. Please try again.');
+                console.error('Signup error:', err);
+                showError('An unexpected error occurred.');
             } finally {
                 setLoading(false);
             }
