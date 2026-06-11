@@ -26,7 +26,6 @@
         .bot-card { transition: all 0.3s ease; }
         .bot-card:hover { transform: translateY(-4px); border-color: rgba(245, 158, 11, 0.5); }
         
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
         ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
@@ -189,14 +188,13 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Trading Bots Section (Takes up 2/3 on large screens) -->
+                    <!-- Trading Bots Section -->
                     <div class="lg:col-span-2">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-white">Available Trading Bots</h3>
                             <a href="#" class="text-amber-500 text-sm hover:text-amber-400">View All</a>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="botsContainer">
-                            <!-- Loading Skeleton -->
                             <div class="glass-card rounded-xl p-5 animate-pulse">
                                 <div class="h-4 bg-slate-700 rounded w-3/4 mb-3"></div>
                                 <div class="h-3 bg-slate-700 rounded w-1/2 mb-2"></div>
@@ -206,7 +204,7 @@
                         </div>
                     </div>
 
-                    <!-- Recent Transactions Preview (Takes up 1/3 on large screens) -->
+                    <!-- Recent Transactions Preview -->
                     <div>
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-lg font-semibold text-white">Recent Activity</h3>
@@ -228,7 +226,6 @@
                 <div>
                     <h3 class="text-lg font-semibold text-white mb-4">Investment Plans</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="plansContainer">
-                        <!-- Plans will be loaded here -->
                     </div>
                 </div>
             </div>
@@ -276,15 +273,15 @@
         // Supabase Configuration
         const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // FIX: Changed from 'supabase' to 'mySupabase' to prevent the crash!
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
 
-        // Check authentication
         async function checkAuth() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await mySupabase.auth.getSession();
             if (!session) {
-                // UPDATED TO sign-in.html
                 window.location.href = 'sign-in.html'; 
                 return;
             }
@@ -292,10 +289,9 @@
             await loadUserData();
         }
 
-        // Load user data from database
         async function loadUserData() {
             try {
-                const { data: profile, error: profileError } = await supabase
+                const { data: profile, error: profileError } = await mySupabase
                     .from('users')
                     .select('*')
                     .eq('id', currentUser.id)
@@ -315,7 +311,6 @@
                     document.getElementById('emailAlert').classList.remove('hidden');
                 }
 
-                // Load dashboard components
                 await Promise.all([
                     loadTradingBots(),
                     loadInvestmentPlans(),
@@ -327,11 +322,10 @@
             }
         }
 
-        // Load Trading Bots
         async function loadTradingBots() {
             const container = document.getElementById('botsContainer');
             try {
-                const { data: bots, error } = await supabase
+                const { data: bots, error } = await mySupabase
                     .from('trading_bots')
                     .select('*')
                     .eq('is_active', true)
@@ -370,11 +364,10 @@
             }
         }
 
-        // Load Investment Plans
         async function loadInvestmentPlans() {
             const container = document.getElementById('plansContainer');
             try {
-                const { data: plans, error } = await supabase
+                const { data: plans, error } = await mySupabase
                     .from('investment_plans')
                     .select('*')
                     .eq('is_active', true)
@@ -412,11 +405,10 @@
             }
         }
 
-        // Load Recent Transactions (Mini Preview)
         async function loadRecentTransactions() {
             const container = document.getElementById('recentTransactionsList');
             try {
-                const { data: txs, error } = await supabase
+                const { data: txs, error } = await mySupabase
                     .from('transactions')
                     .select('type, amount, status, created_at')
                     .eq('user_id', currentUser.id)
@@ -464,20 +456,16 @@
             }
         }
 
-        // Logout function
         async function logout() {
-            await supabase.auth.signOut();
-            // UPDATED TO sign-in.html
+            await mySupabase.auth.signOut();
             window.location.href = 'sign-in.html'; 
         }
 
-        // Toggle mobile sidebar
         function toggleSidebar() {
             const sidebar = document.getElementById('mobileSidebar');
             sidebar.classList.toggle('hidden');
         }
 
-        // Initialize
         checkAuth();
     </script>
 </body>
