@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - KutinFX</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
+        .sidebar { background: rgba(15, 23, 42, 0.95); }
+        .nav-item { transition: all 0.3s ease; }
+        .nav-item:hover, .nav-item.active { background: rgba(245, 158, 11, 0.15); border-right: 3px solid #f59e0b; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-slate-200">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="sidebar w-64 fixed h-full border-r border-slate-700/50 z-20 hidden md:block">
+            <div class="p-6">
+                <h1 class="text-2xl font-bold text-white"><span class="text-red-500">Admin</span> Panel</h1>
+                <p class="text-slate-500 text-xs mt-1">KutinFX Management</p>
+            </div>
+            <nav class="mt-6 space-y-1">
+                <button onclick="switchTab('dashboard')" class="nav-item active w-full flex items-center px-6 py-3 text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+                    Dashboard
+                </button>
+                <button onclick="switchTab('users')" class="nav-item w-full flex items-center px-6 py-3 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    Users
+                </button>
+                <button onclick="switchTab('transactions')" class="nav-item w-full flex items-center px-6 py-3 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Transactions
+                </button>
+                <button onclick="switchTab('kyc')" class="nav-item w-full flex items-center px-6 py-3 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    KYC Verifications
+                </button>
+            </nav>
+            <div class="absolute bottom-0 w-full p-4 border-t border-slate-700/50">
+                <a href="dashboard.html" class="w-full flex items-center px-4 py-3 text-amber-500 hover:text-amber-400">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    Back to Site
+                </a>
+                <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-red-400 hover:text-red-300 mt-2">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                    Logout
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 md:ml-64 w-full p-4 md:p-8">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-2xl font-bold text-white" id="pageTitle">Admin Dashboard</h2>
+                <div class="flex items-center gap-3">
+                    <span class="text-slate-400 text-sm hidden sm:block" id="adminEmail">Loading...</span>
+                    <div class="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white font-bold shadow-lg">A</div>
+                </div>
+            </div>
+
+            <!-- DASHBOARD TAB -->
+            <div id="dashboard" class="tab-content active space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card rounded-xl p-5">
+                        <p class="text-slate-400 text-sm">Total Users</p>
+                        <p class="text-2xl font-bold text-white mt-1" id="stat-users">0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5">
+                        <p class="text-slate-400 text-sm">Pending Deposits</p>
+                        <p class="text-2xl font-bold text-amber-500 mt-1" id="stat-deposits">0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5">
+                        <p class="text-slate-400 text-sm">Pending Withdrawals</p>
+                        <p class="text-2xl font-bold text-red-400 mt-1" id="stat-withdrawals">0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5">
+                        <p class="text-slate-400 text-sm">Pending KYC</p>
+                        <p class="text-2xl font-bold text-blue-400 mt-1" id="stat-kyc">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USERS TAB -->
+            <div id="users" class="tab-content">
+                <div class="glass-card rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-slate-700/50">
+                        <h3 class="text-lg font-semibold text-white">Registered Users</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-800/50 text-slate-400">
+                                <tr>
+                                    <th class="p-4">Email</th>
+                                    <th class="p-4">Name</th>
+                                    <th class="p-4">Balance</th>
+                                    <th class="p-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody" class="divide-y divide-slate-700/50">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSACTIONS TAB -->
+            <div id="transactions" class="tab-content space-y-6">
+                <div class="glass-card rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-white">Pending Deposits</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-800/50 text-slate-400">
+                                <tr>
+                                    <th class="p-4">User</th>
+                                    <th class="p-4">Amount</th>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="depositsTableBody" class="divide-y divide-slate-700/50">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-slate-700/50">
+                        <h3 class="text-lg font-semibold text-white">Pending Withdrawals</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-800/50 text-slate-400">
+                                <tr>
+                                    <th class="p-4">User</th>
+                                    <th class="p-4">Amount</th>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawalsTableBody" class="divide-y divide-slate-700/50">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KYC TAB -->
+            <div id="kyc" class="tab-content">
+                <div class="glass-card rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-slate-700/50">
+                        <h3 class="text-lg font-semibold text-white">Pending KYC Verifications</h3>
+                    </div>
+                    <div class="p-4 space-y-4" id="kycContainer">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+
+        async function init() {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'sign-in.html';
+                return;
+            }
+            currentUser = session.user;
+            document.getElementById('adminEmail').textContent = currentUser.email;
+
+            // Check if admin
+            const { data: profile } = await mySupabase.from('users').select('is_admin').eq('id', currentUser.id).single();
+            if (!profile || !profile.is_admin) {
+                alert('Access Denied: Admin privileges required.');
+                window.location.href = 'dashboard.html';
+                return;
+            }
+
+            loadDashboardStats();
+            loadUsers();
+            loadTransactions();
+            loadKYC();
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'text-white');
+                el.classList.add('text-slate-400');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active', 'text-white');
+            event.currentTarget.classList.remove('text-slate-400');
+            
+            const titles = { 'dashboard': 'Admin Dashboard', 'users': 'User Management', 'transactions': 'Transaction Approvals', 'kyc': 'KYC Verifications' };
+            document.getElementById('pageTitle').textContent = titles[tabId];
+        }
+
+        async function loadDashboardStats() {
+            const { count: userCount } = await mySupabase.from('users').select('*', { count: 'exact', head: true });
+            const { count: depCount } = await mySupabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'deposit').eq('status', 'pending');
+            const { count: withCount } = await mySupabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'withdrawal').eq('status', 'pending');
+            const { count: kycCount } = await mySupabase.from('users').select('*', { count: 'exact', head: true }).eq('kyc_status', 'pending');
+
+            document.getElementById('stat-users').textContent = userCount || 0;
+            document.getElementById('stat-deposits').textContent = depCount || 0;
+            document.getElementById('stat-withdrawals').textContent = withCount || 0;
+            document.getElementById('stat-kyc').textContent = kycCount || 0;
+        }
+
+        async function loadUsers() {
+            const { data: users } = await mySupabase.from('users').select('*').order('created_at', { ascending: false });
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = users.map(u => `
+                <tr class="hover:bg-slate-800/30">
+                    <td class="p-4 text-white">${u.email}</td>
+                    <td class="p-4 text-slate-300">${u.first_name || '-'} ${u.last_name || ''}</td>
+                    <td class="p-4 text-amber-500 font-bold">$${(u.balance || 0).toFixed(2)}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-xs ${u.kyc_status === 'verified' ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}">${u.kyc_status || 'unverified'}</span></td>
+                </tr>
+            `).join('');
+        }
+
+        async function loadTransactions() {
+            const { data: txs } = await mySupabase.from('transactions').select('*, users(email)').eq('status', 'pending').order('created_at', { ascending: false });
+            
+            const depBody = document.getElementById('depositsTableBody');
+            const withBody = document.getElementById('withdrawalsTableBody');
+            
+            let depHtml = '';
+            let withHtml = '';
+
+            txs.forEach(tx => {
+                const row = `
+                    <tr class="hover:bg-slate-800/30">
+                        <td class="p-4 text-white">${tx.users?.email || 'Unknown'}</td>
+                        <td class="p-4 text-amber-500 font-bold">$${parseFloat(tx.amount).toFixed(2)}</td>
+                        <td class="p-4 text-slate-400 text-xs">${new Date(tx.created_at).toLocaleDateString()}</td>
+                        <td class="p-4 flex gap-2">
+                            <button onclick="approveTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-xs">Approve</button>
+                            <button onclick="rejectTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs">Reject</button>
+                        </td>
+                    </tr>
+                `;
+                if (tx.type === 'deposit') depHtml += row;
+                else withHtml += row;
+            });
+
+            depBody.innerHTML = depHtml || '<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending deposits</td></tr>';
+            withBody.innerHTML = withHtml || '<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending withdrawals</td></tr>';
+        }
+
+        async function approveTx(txId, type, userId, amount) {
+            if (!confirm(`Approve this ${type} of $${amount}?`)) return;
+            
+            await mySupabase.from('transactions').update({ status: 'approved' }).eq('id', txId);
+            
+            if (type === 'deposit') {
+                // Add to user balance
+                const { data: user } = await mySupabase.from('users').select('balance').eq('id', userId).single();
+                const newBal = (user.balance || 0) + amount;
+                await mySupabase.from('users').update({ balance: newBal }).eq('id', userId);
+            }
+            
+            alert('Transaction Approved!');
+            loadDashboardStats();
+            loadTransactions();
+        }
+
+        async function rejectTx(txId, type, userId, amount) {
+            if (!confirm(`Reject this ${type} of $${amount}?`)) return;
+            
+            await mySupabase.from('transactions').update({ status: 'rejected' }).eq('id', txId);
+            
+            if (type === 'withdrawal') {
+                // Refund to user balance
+                const { data: user } = await mySupabase.from('users').select('balance').eq('id', userId).single();
+                const newBal = (user.balance || 0) + amount;
+                await mySupabase.from('users').update({ balance: newBal }).eq('id', userId);
+            }
+            
+            alert('Transaction Rejected!');
+            loadDashboardStats();
+            loadTransactions();
+        }
+
+        async function loadKYC() {
+            const { data: users } = await mySupabase.from('users').select('*').eq('kyc_status', 'pending');
+            const container = document.getElementById('kycContainer');
+            
+            if (!users || users.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-center py-8">No pending KYC verifications.</p>';
+                return;
+            }
+
+            container.innerHTML = users.map(u => `
+                <div class="bg-slate-800/50 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <p class="text-white font-semibold">${u.first_name} ${u.last_name}</p>
+                        <p class="text-slate-400 text-sm">${u.email}</p>
+                        <p class="text-slate-500 text-xs mt-1">Doc: ${u.kyc_document_type || 'Unknown'}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="approveKYC('${u.id}')" class="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 text-sm">Approve</button>
+                        <button onclick="rejectKYC('${u.id}')" class="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 text-sm">Reject</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function approveKYC(userId) {
+            await mySupabase.from('users').update({ kyc_status: 'verified' }).eq('id', userId);
+            alert('KYC Approved!');
+            loadDashboardStats();
+            loadKYC();
+        }
+
+        async function rejectKYC(userId) {
+            await mySupabase.from('users').update({ kyc_status: 'rejected' }).eq('id', userId);
+            alert('KYC Rejected!');
+            loadDashboardStats();
+            loadKYC();
+        }
+
+        async function logout() {
+            await mySupabase.auth.signOut();
+            window.location.href = 'sign-in.html';
+        }
+
+        init();
+    </script>
+</body>
+</html>
