@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Dashboard - KutinFX Trading Corporation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; }
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
         .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
         .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
         .glass-card {
@@ -25,14 +25,43 @@
         }
         .bot-card { transition: all 0.3s ease; }
         .bot-card:hover { transform: translateY(-4px); border-color: rgba(245, 158, 11, 0.5); }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
-        ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
+        
+        /* MOBILE OPTIMIZATIONS (Points 1-10) */
+        @media (max-width: 768px) {
+            body { font-size: 13px; }
+            
+            /* 10. Custom Scrollbar - Hide on mobile */
+            ::-webkit-scrollbar { display: none; }
+            body { -ms-overflow-style: none; scrollbar-width: none; }
+
+            /* 1. Even smaller cards & 5. Compact stats */
+            .stat-card { padding: 0.5rem !important; }
+            .stat-value { font-size: 1rem !important; }
+            .stat-label { font-size: 0.6rem !important; }
+            .glass-card { padding: 0.75rem !important; }
+            .bot-card { padding: 0.75rem !important; }
+            
+            /* 4. Smaller fonts */
+            h2 { font-size: 1.1rem !important; }
+            h3 { font-size: 0.95rem !important; }
+            
+            /* 2. Hide some elements on mobile */
+            .hide-mobile { display: none !important; }
+            
+            /* 3. Different layout - Tighter spacing */
+            .mobile-space { margin-bottom: 0.75rem !important; }
+            
+            /* 9. Different button sizes - Larger touch targets */
+            .touch-target { min-height: 44px; display: flex; align-items: center; justify-content: center; }
+        }
+
+        /* Safe area for bottom nav on iPhones */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
     <div class="flex min-h-screen">
-        <!-- Desktop Sidebar -->
+        <!-- Desktop Sidebar (Hidden on mobile) -->
         <aside class="sidebar w-64 fixed h-full hidden lg:block border-r border-slate-700/50 z-20">
             <div class="p-6">
                 <h1 class="text-2xl font-bold text-white">
@@ -45,7 +74,6 @@
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                     Dashboard
                 </a>
-                <!-- LIVE TRADING LINK ADDED -->
                 <a href="live-trading.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     Live Trading
@@ -88,121 +116,124 @@
         </aside>
 
         <!-- Main Content -->
-        <main class="flex-1 lg:ml-64 w-full">
-            <header class="glass-card sticky top-0 z-10 px-6 py-4 flex items-center justify-between border-b border-slate-700/50">
-                <div class="flex items-center gap-4">
-                    <button class="lg:hidden text-white" onclick="toggleSidebar()">
+        <!-- Added pb-24 lg:pb-0 to prevent bottom nav from covering content on mobile -->
+        <main class="flex-1 lg:ml-64 w-full pb-24 lg:pb-0">
+            <header class="glass-card sticky top-0 z-10 px-4 py-3 flex items-center justify-between border-b border-slate-700/50">
+                <div class="flex items-center gap-3">
+                    <button class="lg:hidden text-white p-1" onclick="toggleSidebar()">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
                     <div>
-                        <h2 class="text-xl font-semibold text-white">Dashboard</h2>
-                        <p class="text-slate-400 text-sm" id="welcomeText">Welcome back, Trader!</p>
+                        <h2 class="text-lg font-semibold text-white">Dashboard</h2>
+                        <p class="text-slate-400 text-xs" id="welcomeText">Welcome back, Trader!</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-4">
-                    <div class="hidden sm:flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-xl border border-slate-700/50">
-                        <span class="text-slate-400 text-sm">Balance:</span>
-                        <span class="text-amber-500 font-bold" id="headerBalance">$0.00</span>
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-2 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-700/50">
+                        <span class="text-slate-400 text-xs">Balance:</span>
+                        <span class="text-amber-500 font-bold text-sm" id="headerBalance">$0.00</span>
                     </div>
-                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold shadow-lg" id="userAvatar">U</div>
+                    <div class="w-9 h-9 rounded-full gold-gradient flex items-center justify-center text-white font-bold shadow-lg text-sm" id="userAvatar">U</div>
                 </div>
             </header>
 
-            <div class="p-4 md:p-6 space-y-6">
-                <div id="emailAlert" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center justify-between">
+            <div class="p-3 md:p-6 space-y-4 md:space-y-6">
+                <div id="emailAlert" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 flex items-center justify-between">
                     <div class="flex items-center">
-                        <svg class="w-5 h-5 text-amber-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
-                        <p class="text-amber-300 text-sm">Please verify your email address to enable full account access and withdrawals.</p>
+                        <svg class="w-4 h-4 text-amber-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                        <p class="text-amber-300 text-xs">Please verify your email address.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="stat-card rounded-xl p-5">
+                <!-- 5. Compact Stats Cards -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4">
+                    <div class="stat-card rounded-lg p-3 md:p-5">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-400 text-sm">Account Balance</p>
-                                <p class="text-2xl font-bold text-white mt-1" id="balance">$0.00</p>
+                                <p class="stat-label text-slate-400 text-xs">Balance</p>
+                                <p class="stat-value text-lg md:text-2xl font-bold text-white mt-0.5 md:mt-1" id="balance">$0.00</p>
                             </div>
-                            <div class="w-12 h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+                            <div class="w-8 h-8 md:w-12 md:h-12 rounded-full bg-amber-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 md:w-6 md:h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             </div>
                         </div>
                     </div>
-                    <div class="stat-card rounded-xl p-5">
+                    <div class="stat-card rounded-lg p-3 md:p-5">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-400 text-sm">Total Invested</p>
-                                <p class="text-2xl font-bold text-white mt-1" id="totalInvested">$0.00</p>
+                                <p class="stat-label text-slate-400 text-xs">Invested</p>
+                                <p class="stat-value text-lg md:text-2xl font-bold text-white mt-0.5 md:mt-1" id="totalInvested">$0.00</p>
                             </div>
-                            <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            <div class="w-8 h-8 md:w-12 md:h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 md:w-6 md:h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                             </div>
                         </div>
                     </div>
-                    <div class="stat-card rounded-xl p-5">
+                    <div class="stat-card rounded-lg p-3 md:p-5">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-400 text-sm">Total Earnings</p>
-                                <p class="text-2xl font-bold text-green-400 mt-1" id="totalEarnings">$0.00</p>
+                                <p class="stat-label text-slate-400 text-xs">Earnings</p>
+                                <p class="stat-value text-lg md:text-2xl font-bold text-green-400 mt-0.5 md:mt-1" id="totalEarnings">$0.00</p>
                             </div>
-                            <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+                            <div class="w-8 h-8 md:w-12 md:h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 md:w-6 md:h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
                             </div>
                         </div>
                     </div>
-                    <div class="stat-card rounded-xl p-5">
+                    <div class="stat-card rounded-lg p-3 md:p-5">
                         <div class="flex items-center justify-between">
                             <div>
-                                <p class="text-slate-400 text-sm">Active Bots</p>
-                                <p class="text-2xl font-bold text-white mt-1" id="activeBots">0</p>
+                                <p class="stat-label text-slate-400 text-xs">Active Bots</p>
+                                <p class="stat-value text-lg md:text-2xl font-bold text-white mt-0.5 md:mt-1" id="activeBots">0</p>
                             </div>
-                            <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                                <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            <div class="w-8 h-8 md:w-12 md:h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+                                <svg class="w-4 h-4 md:w-6 md:h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-                    <a href="live-trading.html" class="glass-card rounded-xl p-4 hover:border-amber-500/50 transition-all text-center group">
-                        <div class="w-12 h-12 mx-auto rounded-full bg-cyan-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <!-- 3 & 9. Quick Actions - Compact layout, larger touch targets -->
+                <div class="grid grid-cols-3 sm:grid-cols-5 gap-2 md:gap-4">
+                    <a href="live-trading.html" class="glass-card rounded-lg p-2.5 md:p-4 hover:border-amber-500/50 transition-all text-center group touch-target">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-cyan-500 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                         </div>
-                        <p class="text-white font-medium text-sm">Live Trading</p>
+                        <p class="text-white font-medium text-[10px] md:text-sm">Live Trading</p>
                     </a>
-                    <a href="deposit.html" class="glass-card rounded-xl p-4 hover:border-amber-500/50 transition-all text-center group">
-                        <div class="w-12 h-12 mx-auto rounded-full gold-gradient flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                    <a href="deposit.html" class="glass-card rounded-lg p-2.5 md:p-4 hover:border-amber-500/50 transition-all text-center group touch-target">
+                        <div class="w-10 h-10 mx-auto rounded-full gold-gradient flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                         </div>
-                        <p class="text-white font-medium text-sm">Deposit Funds</p>
+                        <p class="text-white font-medium text-[10px] md:text-sm">Deposit</p>
                     </a>
-                    <a href="withdraw.html" class="glass-card rounded-xl p-4 hover:border-amber-500/50 transition-all text-center group">
-                        <div class="w-12 h-12 mx-auto rounded-full bg-blue-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    <a href="withdraw.html" class="glass-card rounded-lg p-2.5 md:p-4 hover:border-amber-500/50 transition-all text-center group touch-target">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-blue-500 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                         </div>
-                        <p class="text-white font-medium text-sm">Withdraw</p>
+                        <p class="text-white font-medium text-[10px] md:text-sm">Withdraw</p>
                     </a>
-                    <a href="trading-bots.html" class="glass-card rounded-xl p-4 hover:border-amber-500/50 transition-all text-center group">
-                        <div class="w-12 h-12 mx-auto rounded-full bg-green-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    <a href="trading-bots.html" class="glass-card rounded-lg p-2.5 md:p-4 hover:border-amber-500/50 transition-all text-center group touch-target">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-green-500 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                         </div>
-                        <p class="text-white font-medium text-sm">Start Bot</p>
+                        <p class="text-white font-medium text-[10px] md:text-sm">Start Bot</p>
                     </a>
-                    <a href="#" class="glass-card rounded-xl p-4 hover:border-amber-500/50 transition-all text-center group">
-                        <div class="w-12 h-12 mx-auto rounded-full bg-purple-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                    <a href="#" class="glass-card rounded-lg p-2.5 md:p-4 hover:border-amber-500/50 transition-all text-center group touch-target hidden sm:flex">
+                        <div class="w-10 h-10 mx-auto rounded-full bg-purple-500 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
+                            <svg class="w-5 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         </div>
-                        <p class="text-white font-medium text-sm">Refer & Earn</p>
+                        <p class="text-white font-medium text-[10px] md:text-sm">Refer</p>
                     </a>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
                     <div class="lg:col-span-2">
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-white">Available Trading Bots</h3>
-                            <a href="trading-bots.html" class="text-amber-500 text-sm hover:text-amber-400">View All</a>
+                        <div class="flex items-center justify-between mb-3 md:mb-4">
+                            <h3 class="text-base md:text-lg font-semibold text-white">Available Trading Bots</h3>
+                            <a href="trading-bots.html" class="text-amber-500 text-xs md:text-sm hover:text-amber-400">View All</a>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="botsContainer">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4" id="botsContainer">
                             <div class="glass-card rounded-xl p-5 animate-pulse">
                                 <div class="h-4 bg-slate-700 rounded w-3/4 mb-3"></div>
                                 <div class="h-3 bg-slate-700 rounded w-1/2 mb-2"></div>
@@ -213,12 +244,12 @@
                     </div>
 
                     <div>
-                        <div class="flex items-center justify-between mb-4">
-                            <h3 class="text-lg font-semibold text-white">Recent Activity</h3>
-                            <a href="transactions.html" class="text-amber-500 text-sm hover:text-amber-400">View All</a>
+                        <div class="flex items-center justify-between mb-3 md:mb-4">
+                            <h3 class="text-base md:text-lg font-semibold text-white">Recent Activity</h3>
+                            <a href="transactions.html" class="text-amber-500 text-xs md:text-sm hover:text-amber-400">View All</a>
                         </div>
-                        <div class="glass-card rounded-xl p-4">
-                            <div id="recentTransactionsList" class="space-y-3">
+                        <div class="glass-card rounded-xl p-3 md:p-4">
+                            <div id="recentTransactionsList" class="space-y-2 md:space-y-3">
                                 <div class="animate-pulse space-y-3">
                                     <div class="h-12 bg-slate-700/50 rounded-lg"></div>
                                     <div class="h-12 bg-slate-700/50 rounded-lg"></div>
@@ -230,17 +261,43 @@
                 </div>
 
                 <div>
-                    <h3 class="text-lg font-semibold text-white mb-4">Investment Plans</h3>
-                    <div class="flex justify-between items-center mb-4">
-                        <a href="investments.html" class="text-amber-500 text-sm hover:text-amber-400">View All Plans</a>
+                    <h3 class="text-base md:text-lg font-semibold text-white mb-3 md:mb-4">Investment Plans</h3>
+                    <div class="flex justify-between items-center mb-3 md:mb-4">
+                        <a href="investments.html" class="text-amber-500 text-xs md:text-sm hover:text-amber-400">View All Plans</a>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="plansContainer"></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" id="plansContainer"></div>
                 </div>
             </div>
         </main>
     </div>
 
-    <!-- Mobile Sidebar Overlay -->
+    <!-- 7. Bottom Navigation Bar (Mobile Only) -->
+    <div class="fixed bottom-0 left-0 right-0 bg-[#0f172a]/95 backdrop-blur-lg border-t border-slate-700/50 lg:hidden z-40 pb-safe">
+        <div class="flex justify-around items-center py-2">
+            <a href="dashboard.html" class="flex flex-col items-center text-amber-500 touch-target w-full">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span class="text-[10px] mt-1 font-medium">Home</span>
+            </a>
+            <a href="live-trading.html" class="flex flex-col items-center text-slate-400 hover:text-white touch-target w-full">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <span class="text-[10px] mt-1">Trade</span>
+            </a>
+            <a href="deposit.html" class="flex flex-col items-center text-slate-400 hover:text-white touch-target w-full">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span class="text-[10px] mt-1">Deposit</span>
+            </a>
+            <a href="trading-bots.html" class="flex flex-col items-center text-slate-400 hover:text-white touch-target w-full">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                <span class="text-[10px] mt-1">Bots</span>
+            </a>
+            <a href="profile.html" class="flex flex-col items-center text-slate-400 hover:text-white touch-target w-full">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span class="text-[10px] mt-1">Profile</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Mobile Sidebar Overlay (Simplified Navigation - Point 6) -->
     <div id="mobileSidebar" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleSidebar()"></div>
         <aside class="sidebar absolute left-0 top-0 h-full w-64 border-r border-slate-700/50 transform transition-transform duration-300">
@@ -255,7 +312,6 @@
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                     Dashboard
                 </a>
-                <!-- LIVE TRADING LINK ADDED TO MOBILE -->
                 <a href="live-trading.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                     Live Trading
@@ -382,28 +438,27 @@
 
                 if (bots && bots.length > 0) {
                     container.innerHTML = bots.map(bot => {
-                        // Generate accuracy between 97-99%
                         const accuracy = (97 + Math.random() * 2).toFixed(1);
-                        // Generate trading period
                         const periods = ['24/7', '18 hours', '20 hours', '22 hours'];
                         const period = periods[Math.floor(Math.random() * periods.length)];
                         
                         return `
-                        <div class="bot-card glass-card rounded-xl p-5">
+                        <div class="bot-card glass-card rounded-xl p-4 md:p-5">
                             <div class="flex items-center justify-between mb-3">
-                                <h4 class="text-white font-semibold">${bot.name}</h4>
-                                <span class="px-2 py-1 rounded-full text-xs font-medium ${bot.risk_level === 'low' ? 'bg-green-500/20 text-green-400' : bot.risk_level === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}">
+                                <h4 class="text-white font-semibold text-sm md:text-base">${bot.name}</h4>
+                                <span class="px-2 py-1 rounded-full text-[10px] md:text-xs font-medium ${bot.risk_level === 'low' ? 'bg-green-500/20 text-green-400' : bot.risk_level === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'}">
                                     ${bot.risk_level.charAt(0).toUpperCase() + bot.risk_level.slice(1)} Risk
                                 </span>
                             </div>
-                            <p class="text-slate-400 text-sm mb-4 line-clamp-2">${bot.description || 'AI-powered trading bot'}</p>
-                            <div class="space-y-2 mb-4 text-sm">
+                            <!-- 2. Hide description on mobile -->
+                            <p class="text-slate-400 text-xs md:text-sm mb-3 md:mb-4 line-clamp-2 hide-mobile">${bot.description || 'AI-powered trading bot'}</p>
+                            <div class="space-y-1.5 md:space-y-2 mb-3 md:mb-4 text-xs md:text-sm">
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Min. Deposit:</span>
                                     <span class="text-white font-medium">$${(bot.min_deposit || 0).toFixed(2)}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-slate-400">Expected ROI:</span>
+                                    <span class="text-slate-400">ROI:</span>
                                     <span class="text-green-400 font-medium">${bot.expected_roi || 0}% / day</span>
                                 </div>
                                 <div class="flex justify-between">
@@ -411,11 +466,11 @@
                                     <span class="text-cyan-400 font-medium">${accuracy}%</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-slate-400">Trading Period:</span>
+                                    <span class="text-slate-400">Period:</span>
                                     <span class="text-purple-400 font-medium">${period}</span>
                                 </div>
                             </div>
-                            <a href="trading-bots.html" class="block w-full text-center gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
+                            <a href="trading-bots.html" class="block w-full text-center gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-xs md:text-sm shadow-lg touch-target">
                                 Activate Bot
                             </a>
                         </div>
@@ -441,14 +496,14 @@
 
                 if (plans && plans.length > 0) {
                     container.innerHTML = plans.map((plan, index) => `
-                        <div class="glass-card rounded-xl p-5 relative ${index === 2 ? 'border-amber-500/50 ring-1 ring-amber-500/30' : ''}">
-                            ${index === 2 ? '<div class="absolute -top-3 left-1/2 -translate-x-1/2"><span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-slate-900 shadow-lg">MOST POPULAR</span></div>' : ''}
-                            <h4 class="text-white font-semibold text-lg text-center mb-3 mt-1">${plan.name}</h4>
-                            <div class="text-center mb-4">
-                                <span class="text-3xl font-bold text-amber-500">${plan.daily_roi}%</span>
-                                <span class="text-slate-400 text-sm">/day</span>
+                        <div class="glass-card rounded-xl p-4 md:p-5 relative ${index === 2 ? 'border-amber-500/50 ring-1 ring-amber-500/30' : ''}">
+                            ${index === 2 ? '<div class="absolute -top-2.5 left-1/2 -translate-x-1/2"><span class="px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[10px] md:text-xs font-bold bg-amber-500 text-slate-900 shadow-lg">MOST POPULAR</span></div>' : ''}
+                            <h4 class="text-white font-semibold text-base md:text-lg text-center mb-2 md:mb-3 mt-1">${plan.name}</h4>
+                            <div class="text-center mb-3 md:mb-4">
+                                <span class="text-2xl md:text-3xl font-bold text-amber-500">${plan.daily_roi}%</span>
+                                <span class="text-slate-400 text-xs md:text-sm">/day</span>
                             </div>
-                            <div class="space-y-3 mb-5 text-sm border-t border-slate-700/50 pt-4">
+                            <div class="space-y-2 md:space-y-3 mb-4 md:mb-5 text-xs md:text-sm border-t border-slate-700/50 pt-3 md:pt-4">
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Min Deposit:</span>
                                     <span class="text-white font-medium">$${(plan.min_deposit || 0).toLocaleString()}</span>
@@ -458,13 +513,13 @@
                                     <span class="text-white font-medium">${plan.duration_days || 30} days</span>
                                 </div>
                             </div>
-                            <a href="investments.html" class="block w-full text-center gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
+                            <a href="investments.html" class="block w-full text-center gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-xs md:text-sm shadow-lg touch-target">
                                 Invest Now
                             </a>
                         </div>
                     `).join('');
                 } else {
-                    container.innerHTML = '<p class="text-slate-400 text-sm col-span-full">No investment plans available.</p>';
+                    container.innerHTML = '<p class="text-slate-400 text-sm col-span-full text-center py-4">No investment plans available.</p>';
                 }
             } catch (err) {
                 console.error('Error loading plans:', err);
@@ -487,33 +542,33 @@
                     container.innerHTML = txs.map(tx => {
                         const isDeposit = tx.type === 'deposit';
                         const icon = isDeposit 
-                            ? '<svg class="w-8 h-8 p-1.5 rounded-full bg-green-500/20 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>'
-                            : '<svg class="w-8 h-8 p-1.5 rounded-full bg-red-500/20 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/></svg>';
+                            ? '<svg class="w-6 h-6 md:w-8 md:h-8 p-1 md:p-1.5 rounded-full bg-green-500/20 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11l5-5m0 0l5 5m-5-5v12"/></svg>'
+                            : '<svg class="w-6 h-6 md:w-8 md:h-8 p-1 md:p-1.5 rounded-full bg-red-500/20 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 13l-5 5m0 0l-5-5m5 5V6"/></svg>';
                         
                         const statusColor = tx.status === 'approved' ? 'text-green-400' : tx.status === 'rejected' ? 'text-red-400' : 'text-amber-400';
                         const date = new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
                         return `
-                            <div class="flex items-center justify-between p-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
-                                <div class="flex items-center gap-3">
+                            <div class="flex items-center justify-between p-2 md:p-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
+                                <div class="flex items-center gap-2 md:gap-3">
                                     ${icon}
                                     <div>
-                                        <p class="text-white text-sm font-medium capitalize">${tx.type}</p>
-                                        <p class="text-slate-500 text-xs">${date}</p>
+                                        <p class="text-white text-xs md:text-sm font-medium capitalize">${tx.type}</p>
+                                        <p class="text-slate-500 text-[10px] md:text-xs">${date}</p>
                                     </div>
                                 </div>
                                 <div class="text-right">
-                                    <p class="text-white text-sm font-bold">${isDeposit ? '+' : '-'}$${parseFloat(tx.amount).toFixed(2)}</p>
-                                    <p class="text-xs ${statusColor} capitalize">${tx.status}</p>
+                                    <p class="text-white text-xs md:text-sm font-bold">${isDeposit ? '+' : '-'}$${parseFloat(tx.amount).toFixed(2)}</p>
+                                    <p class="text-[10px] md:text-xs ${statusColor} capitalize">${tx.status}</p>
                                 </div>
                             </div>
                         `;
                     }).join('');
                 } else {
                     container.innerHTML = `
-                        <div class="text-center py-6">
-                            <p class="text-slate-500 text-sm">No recent transactions.</p>
-                            <a href="deposit.html" class="text-amber-500 text-sm hover:text-amber-400 mt-2 inline-block">Make your first deposit</a>
+                        <div class="text-center py-4 md:py-6">
+                            <p class="text-slate-500 text-xs md:text-sm">No recent transactions.</p>
+                            <a href="deposit.html" class="text-amber-500 text-xs md:text-sm hover:text-amber-400 mt-1 md:mt-2 inline-block">Make your first deposit</a>
                         </div>
                     `;
                 }
