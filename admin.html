@@ -104,6 +104,7 @@
                                     <th class="p-4">Name</th>
                                     <th class="p-4">Balance</th>
                                     <th class="p-4">Status</th>
+                                    <th class="p-4">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="usersTableBody" class="divide-y divide-slate-700/50">
@@ -238,7 +239,17 @@
                     <td class="p-4 text-white">${u.email}</td>
                     <td class="p-4 text-slate-300">${u.first_name || '-'} ${u.last_name || ''}</td>
                     <td class="p-4 text-amber-500 font-bold">$${(u.balance || 0).toFixed(2)}</td>
-                    <td class="p-4"><span class="px-2 py-1 rounded text-xs ${u.kyc_status === 'verified' ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400'}">${u.kyc_status || 'unverified'}</span></td>
+                    <td class="p-4">
+                        <span class="px-2 py-1 rounded text-xs ${u.kyc_status === 'verified' ? 'bg-green-500/20 text-green-400' : u.kyc_status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">
+                            ${u.kyc_status || 'unverified'}
+                        </span>
+                    </td>
+                    <td class="p-4 flex gap-2">
+                        ${u.kyc_status !== 'verified' ? `
+                            <button onclick="approveKYC('${u.id}')" class="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-xs">Verify</button>
+                            <button onclick="rejectKYC('${u.id}')" class="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs">Reject</button>
+                        ` : '<span class="text-green-400 text-xs">✓ Verified</span>'}
+                    </td>
                 </tr>
             `).join('');
         }
@@ -335,6 +346,7 @@
             alert('KYC Approved!');
             loadDashboardStats();
             loadKYC();
+            loadUsers();
         }
 
         async function rejectKYC(userId) {
@@ -342,6 +354,7 @@
             alert('KYC Rejected!');
             loadDashboardStats();
             loadKYC();
+            loadUsers();
         }
 
         async function logout() {
