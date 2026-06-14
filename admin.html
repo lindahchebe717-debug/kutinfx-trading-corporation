@@ -250,30 +250,53 @@
             `).join('');
         }
 
+        // UPDATED VIEW USER FUNCTION TO SHOW ACTUAL IMAGES
         async function viewUser(userId) {
             const { data: user } = await mySupabase.from('users').select('*').eq('id', userId).single();
             if (!user) return;
 
             const modal = document.getElementById('userModal');
             const content = document.getElementById('userModalContent');
-            
+
+            // Generate signed URLs for KYC images
+            let frontImgHtml = '';
+            let backImgHtml = '';
+
+            if (user.kyc_document_url) {
+                const { data: frontData } = await mySupabase.storage
+                    .from('kyc-documents')
+                    .createSignedUrl(user.kyc_document_url, 3600);
+                if (frontData) {
+                    frontImgHtml = `
+                        <div class="bg-slate-800/50 p-3 rounded-lg col-span-2">
+                            <p class="text-slate-400 text-xs mb-2">Front ID Document</p>
+                            <img src="${frontData.signedUrl}" class="w-full h-auto max-h-64 object-contain rounded-lg border border-slate-700 bg-black" alt="Front ID" />
+                        </div>`;
+                }
+            }
+
+            if (user.kyc_document_back_url) {
+                const { data: backData } = await mySupabase.storage
+                    .from('kyc-documents')
+                    .createSignedUrl(user.kyc_document_back_url, 3600);
+                if (backData) {
+                    backImgHtml = `
+                        <div class="bg-slate-800/50 p-3 rounded-lg col-span-2">
+                            <p class="text-slate-400 text-xs mb-2">Back ID Document</p>
+                            <img src="${backData.signedUrl}" class="w-full h-auto max-h-64 object-contain rounded-lg border border-slate-700 bg-black" alt="Back ID" />
+                        </div>`;
+                }
+            }
+
             content.innerHTML = `
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div class="bg-slate-800/50 p-3 rounded-lg">
                         <p class="text-slate-400 text-xs">Email</p>
-                        <p class="text-white font-medium">${user.email}</p>
+                        <p class="text-white font-medium break-all">${user.email}</p>
                     </div>
                     <div class="bg-slate-800/50 p-3 rounded-lg">
                         <p class="text-slate-400 text-xs">Full Name</p>
                         <p class="text-white font-medium">${user.full_name || 'Not provided'}</p>
-                    </div>
-                    <div class="bg-slate-800/50 p-3 rounded-lg">
-                        <p class="text-slate-400 text-xs">First Name</p>
-                        <p class="text-white font-medium">${user.first_name || '-'}</p>
-                    </div>
-                    <div class="bg-slate-800/50 p-3 rounded-lg">
-                        <p class="text-slate-400 text-xs">Last Name</p>
-                        <p class="text-white font-medium">${user.last_name || '-'}</p>
                     </div>
                     <div class="bg-slate-800/50 p-3 rounded-lg">
                         <p class="text-slate-400 text-xs">Phone</p>
@@ -296,21 +319,11 @@
                         <p class="text-amber-500 font-bold">$${(user.balance || 0).toFixed(2)}</p>
                     </div>
                     <div class="bg-slate-800/50 p-3 rounded-lg">
-                        <p class="text-slate-400 text-xs">Total Invested</p>
-                        <p class="text-white font-medium">$${(user.total_invested || 0).toFixed(2)}</p>
-                    </div>
-                    <div class="bg-slate-800/50 p-3 rounded-lg">
-                        <p class="text-slate-400 text-xs">Total Earnings</p>
-                        <p class="text-green-400 font-medium">$${(user.total_earnings || 0).toFixed(2)}</p>
-                    </div>
-                    <div class="bg-slate-800/50 p-3 rounded-lg">
                         <p class="text-slate-400 text-xs">KYC Status</p>
                         <span class="px-2 py-1 rounded text-xs ${user.kyc_status === 'verified' ? 'bg-green-500/20 text-green-400' : user.kyc_status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">${user.kyc_status || 'unverified'}</span>
                     </div>
-                    <div class="bg-slate-800/50 p-3 rounded-lg col-span-2">
-                        <p class="text-slate-400 text-xs">User ID</p>
-                        <p class="text-slate-300 font-mono text-xs">${user.id}</p>
-                    </div>
+                    ${frontImgHtml}
+                    ${backImgHtml}
                 </div>
                 <div class="mt-4 flex justify-end">
                     <button onclick="closeUserModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Close</button>
@@ -424,26 +437,14 @@
                 let frontLink = '<span class="text-slate-500 text-xs">No front doc</span>';
                 let backLink = '<span class="text-slate-500 text-xs">No back doc</span>';
 
-                // Generate secure signed URL for front document
                 if (u.kyc_document_url) {
-                    const { data: frontData } = await mySupabase.storage
-                        .from('kyc-documents')
-                        .createSignedUrl(u.kyc_document_url, 3600);
-                    
-                    if (frontData) {
-                        frontLink = `<a href="${frontData.signedUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Front Side</a>`;
-                    }
+                    const { data: frontData } = await mySupabase.storage.from('kyc-documents').createSignedUrl(u.kyc_document_url, 3600);
+                    if (frontData) frontLink = `<a href="${frontData.signedUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Front Side</a>`;
                 }
                 
-                // Generate secure signed URL for back document
                 if (u.kyc_document_back_url) {
-                    const { data: backData } = await mySupabase.storage
-                        .from('kyc-documents')
-                        .createSignedUrl(u.kyc_document_back_url, 3600);
-                    
-                    if (backData) {
-                        backLink = `<a href="${backData.signedUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Back Side</a>`;
-                    }
+                    const { data: backData } = await mySupabase.storage.from('kyc-documents').createSignedUrl(u.kyc_document_back_url, 3600);
+                    if (backData) backLink = `<a href="${backData.signedUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Back Side</a>`;
                 }
 
                 return `
