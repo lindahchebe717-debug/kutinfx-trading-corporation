@@ -107,15 +107,13 @@
                                     <th class="p-4">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="usersTableBody" class="divide-y divide-slate-700/50">
-                                <!-- Populated by JS -->
-                            </tbody>
+                            <tbody id="usersTableBody" class="divide-y divide-slate-700/50"></tbody>
                         </table>
                     </div>
                 </div>
             </div>
 
-            <!-- TRANSACTIONS TAB -->
+            <!-- TRANSACTIONS TAB (UPDATED WITH DETAILS) -->
             <div id="transactions" class="tab-content space-y-6">
                 <div class="glass-card rounded-xl overflow-hidden">
                     <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
@@ -126,14 +124,13 @@
                             <thead class="bg-slate-800/50 text-slate-400">
                                 <tr>
                                     <th class="p-4">User</th>
+                                    <th class="p-4">Method & Details</th>
                                     <th class="p-4">Amount</th>
-                                    <th class="p-4">Date</th>
+                                    <th class="p-4">Proof</th>
                                     <th class="p-4">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="depositsTableBody" class="divide-y divide-slate-700/50">
-                                <!-- Populated by JS -->
-                            </tbody>
+                            <tbody id="depositsTableBody" class="divide-y divide-slate-700/50"></tbody>
                         </table>
                     </div>
                 </div>
@@ -147,14 +144,12 @@
                             <thead class="bg-slate-800/50 text-slate-400">
                                 <tr>
                                     <th class="p-4">User</th>
+                                    <th class="p-4">Method & Wallet Address</th>
                                     <th class="p-4">Amount</th>
-                                    <th class="p-4">Date</th>
                                     <th class="p-4">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="withdrawalsTableBody" class="divide-y divide-slate-700/50">
-                                <!-- Populated by JS -->
-                            </tbody>
+                            <tbody id="withdrawalsTableBody" class="divide-y divide-slate-700/50"></tbody>
                         </table>
                     </div>
                 </div>
@@ -166,9 +161,7 @@
                     <div class="p-4 border-b border-slate-700/50">
                         <h3 class="text-lg font-semibold text-white">Pending KYC Verifications</h3>
                     </div>
-                    <div class="p-4 space-y-4" id="kycContainer">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div class="p-4 space-y-4" id="kycContainer"></div>
                 </div>
             </div>
         </main>
@@ -183,14 +176,10 @@
 
         async function init() {
             const { data: { session } } = await mySupabase.auth.getSession();
-            if (!session) {
-                window.location.href = 'sign-in.html';
-                return;
-            }
+            if (!session) { window.location.href = 'sign-in.html'; return; }
             currentUser = session.user;
             document.getElementById('adminEmail').textContent = currentUser.email;
 
-            // Check if admin
             const { data: profile } = await mySupabase.from('users').select('is_admin').eq('id', currentUser.id).single();
             if (!profile || !profile.is_admin) {
                 alert('Access Denied: Admin privileges required.');
@@ -206,15 +195,10 @@
 
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('active', 'text-white');
-                el.classList.add('text-slate-400');
-            });
-            
+            document.querySelectorAll('.nav-item').forEach(el => { el.classList.remove('active', 'text-white'); el.classList.add('text-slate-400'); });
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active', 'text-white');
             event.currentTarget.classList.remove('text-slate-400');
-            
             const titles = { 'dashboard': 'Admin Dashboard', 'users': 'User Management', 'transactions': 'Transaction Approvals', 'kyc': 'KYC Verifications' };
             document.getElementById('pageTitle').textContent = titles[tabId];
         }
@@ -239,11 +223,7 @@
                     <td class="p-4 text-white">${u.email}</td>
                     <td class="p-4 text-slate-300">${u.first_name || '-'} ${u.last_name || ''}</td>
                     <td class="p-4 text-amber-500 font-bold">$${(u.balance || 0).toFixed(2)}</td>
-                    <td class="p-4">
-                        <span class="px-2 py-1 rounded text-xs ${u.kyc_status === 'verified' ? 'bg-green-500/20 text-green-400' : u.kyc_status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">
-                            ${u.kyc_status || 'unverified'}
-                        </span>
-                    </td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-xs ${u.kyc_status === 'verified' ? 'bg-green-500/20 text-green-400' : u.kyc_status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">${u.kyc_status || 'unverified'}</span></td>
                     <td class="p-4 flex gap-2">
                         ${u.kyc_status !== 'verified' ? `
                             <button onclick="approveKYC('${u.id}')" class="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-xs">Verify</button>
@@ -264,68 +244,84 @@
             let withHtml = '';
 
             txs.forEach(tx => {
-                const row = `
-                    <tr class="hover:bg-slate-800/30">
-                        <td class="p-4 text-white">${tx.users?.email || 'Unknown'}</td>
-                        <td class="p-4 text-amber-500 font-bold">$${parseFloat(tx.amount).toFixed(2)}</td>
-                        <td class="p-4 text-slate-400 text-xs">${new Date(tx.created_at).toLocaleDateString()}</td>
-                        <td class="p-4 flex gap-2">
-                            <button onclick="approveTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-xs">Approve</button>
-                            <button onclick="rejectTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs">Reject</button>
-                        </td>
-                    </tr>
-                `;
-                if (tx.type === 'deposit') depHtml += row;
-                else withHtml += row;
+                const method = tx.payment_method ? tx.payment_method.replace('_', ' ').toUpperCase() : 'N/A';
+                
+                if (tx.type === 'deposit') {
+                    // Get image URL for proof
+                    let proofHtml = '<span class="text-slate-500 text-xs">No proof</span>';
+                    if (tx.payment_proof_url) {
+                        const { data: { publicUrl } } = mySupabase.storage.from('payment-proofs').getPublicUrl(tx.payment_proof_url);
+                        proofHtml = `<a href="${publicUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline">View Proof Image</a>`;
+                    }
+
+                    depHtml += `
+                        <tr class="hover:bg-slate-800/30">
+                            <td class="p-4 text-white text-xs">${tx.users?.email || 'Unknown'}</td>
+                            <td class="p-4 text-slate-300 text-xs">
+                                <p class="font-medium text-white">${method}</p>
+                                ${tx.transaction_id ? `<p class="text-[10px] text-slate-500 mt-1">Ref: ${tx.transaction_id}</p>` : ''}
+                            </td>
+                            <td class="p-4 text-amber-500 font-bold">$${parseFloat(tx.amount).toFixed(2)}</td>
+                            <td class="p-4">${proofHtml}</td>
+                            <td class="p-4 flex gap-2">
+                                <button onclick="approveTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-xs">Approve</button>
+                                <button onclick="rejectTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs">Reject</button>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    // Withdrawal details
+                    withHtml += `
+                        <tr class="hover:bg-slate-800/30">
+                            <td class="p-4 text-white text-xs">${tx.users?.email || 'Unknown'}</td>
+                            <td class="p-4 text-slate-300 text-xs">
+                                <p class="font-medium text-white">${method}</p>
+                                <p class="text-[10px] text-slate-400 mt-1 break-all">${tx.wallet_address || 'No address provided'}</p>
+                            </td>
+                            <td class="p-4 text-red-400 font-bold">$${parseFloat(tx.amount).toFixed(2)}</td>
+                            <td class="p-4 flex gap-2">
+                                <button onclick="approveTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-xs">Approve</button>
+                                <button onclick="rejectTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs">Reject</button>
+                            </td>
+                        </tr>
+                    `;
+                }
             });
 
-            depBody.innerHTML = depHtml || '<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending deposits</td></tr>';
+            depBody.innerHTML = depHtml || '<tr><td colspan="5" class="p-4 text-center text-slate-500">No pending deposits</td></tr>';
             withBody.innerHTML = withHtml || '<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending withdrawals</td></tr>';
         }
 
         async function approveTx(txId, type, userId, amount) {
             if (!confirm(`Approve this ${type} of $${amount}?`)) return;
-            
             await mySupabase.from('transactions').update({ status: 'approved' }).eq('id', txId);
             
             if (type === 'deposit') {
-                // Add to user balance
                 const { data: user } = await mySupabase.from('users').select('balance').eq('id', userId).single();
                 const newBal = (user.balance || 0) + amount;
                 await mySupabase.from('users').update({ balance: newBal }).eq('id', userId);
             }
-            
             alert('Transaction Approved!');
-            loadDashboardStats();
-            loadTransactions();
+            loadDashboardStats(); loadTransactions();
         }
 
         async function rejectTx(txId, type, userId, amount) {
             if (!confirm(`Reject this ${type} of $${amount}?`)) return;
-            
             await mySupabase.from('transactions').update({ status: 'rejected' }).eq('id', txId);
             
             if (type === 'withdrawal') {
-                // Refund to user balance
                 const { data: user } = await mySupabase.from('users').select('balance').eq('id', userId).single();
                 const newBal = (user.balance || 0) + amount;
                 await mySupabase.from('users').update({ balance: newBal }).eq('id', userId);
             }
-            
             alert('Transaction Rejected!');
-            loadDashboardStats();
-            loadTransactions();
+            loadDashboardStats(); loadTransactions();
         }
 
         async function loadKYC() {
             const { data: users } = await mySupabase.from('users').select('*').eq('kyc_status', 'pending');
             const container = document.getElementById('kycContainer');
-            
-            if (!users || users.length === 0) {
-                container.innerHTML = '<p class="text-slate-500 text-center py-8">No pending KYC verifications.</p>';
-                return;
-            }
-
+            if (!users || users.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">No pending KYC verifications.</p>'; return; }
             container.innerHTML = users.map(u => `
                 <div class="bg-slate-800/50 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <div>
@@ -343,25 +339,14 @@
 
         async function approveKYC(userId) {
             await mySupabase.from('users').update({ kyc_status: 'verified' }).eq('id', userId);
-            alert('KYC Approved!');
-            loadDashboardStats();
-            loadKYC();
-            loadUsers();
+            alert('KYC Approved!'); loadDashboardStats(); loadKYC(); loadUsers();
         }
-
         async function rejectKYC(userId) {
             await mySupabase.from('users').update({ kyc_status: 'rejected' }).eq('id', userId);
-            alert('KYC Rejected!');
-            loadDashboardStats();
-            loadKYC();
-            loadUsers();
+            alert('KYC Rejected!'); loadDashboardStats(); loadKYC(); loadUsers();
         }
 
-        async function logout() {
-            await mySupabase.auth.signOut();
-            window.location.href = 'sign-in.html';
-        }
-
+        async function logout() { await mySupabase.auth.signOut(); window.location.href = 'sign-in.html'; }
         init();
     </script>
 </body>
