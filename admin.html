@@ -113,7 +113,7 @@
                 </div>
             </div>
 
-            <!-- TRANSACTIONS TAB (UPDATED WITH DETAILS) -->
+            <!-- TRANSACTIONS TAB -->
             <div id="transactions" class="tab-content space-y-6">
                 <div class="glass-card rounded-xl overflow-hidden">
                     <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
@@ -247,7 +247,6 @@
                 const method = tx.payment_method ? tx.payment_method.replace('_', ' ').toUpperCase() : 'N/A';
                 
                 if (tx.type === 'deposit') {
-                    // Get image URL for proof
                     let proofHtml = '<span class="text-slate-500 text-xs">No proof</span>';
                     if (tx.payment_proof_url) {
                         const { data: { publicUrl } } = mySupabase.storage.from('payment-proofs').getPublicUrl(tx.payment_proof_url);
@@ -270,7 +269,6 @@
                         </tr>
                     `;
                 } else {
-                    // Withdrawal details
                     withHtml += `
                         <tr class="hover:bg-slate-800/30">
                             <td class="p-4 text-white text-xs">${tx.users?.email || 'Unknown'}</td>
@@ -318,23 +316,50 @@
             loadDashboardStats(); loadTransactions();
         }
 
+        // UPDATED KYC FUNCTION - Now shows front and back document links
         async function loadKYC() {
             const { data: users } = await mySupabase.from('users').select('*').eq('kyc_status', 'pending');
             const container = document.getElementById('kycContainer');
-            if (!users || users.length === 0) { container.innerHTML = '<p class="text-slate-500 text-center py-8">No pending KYC verifications.</p>'; return; }
-            container.innerHTML = users.map(u => `
-                <div class="bg-slate-800/50 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <p class="text-white font-semibold">${u.first_name} ${u.last_name}</p>
-                        <p class="text-slate-400 text-sm">${u.email}</p>
-                        <p class="text-slate-500 text-xs mt-1">Doc: ${u.kyc_document_type || 'Unknown'}</p>
+            
+            if (!users || users.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 text-center py-8">No pending KYC verifications.</p>';
+                return;
+            }
+
+            container.innerHTML = users.map(u => {
+                let frontLink = '<span class="text-slate-500 text-xs">No front doc</span>';
+                let backLink = '<span class="text-slate-500 text-xs">No back doc</span>';
+
+                // Get the link for the front side
+                if (u.kyc_document_url) {
+                    const { data: frontData } = mySupabase.storage.from('kyc-documents').getPublicUrl(u.kyc_document_url);
+                    frontLink = `<a href="${frontData.publicUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Front Side</a>`;
+                }
+                
+                // Get the link for the back side
+                if (u.kyc_document_back_url) {
+                    const { data: backData } = mySupabase.storage.from('kyc-documents').getPublicUrl(u.kyc_document_back_url);
+                    backLink = `<a href="${backData.publicUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Back Side</a>`;
+                }
+
+                return `
+                    <div class="bg-slate-800/50 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        <div class="flex-1">
+                            <p class="text-white font-semibold">${u.first_name} ${u.last_name}</p>
+                            <p class="text-slate-400 text-sm">${u.email}</p>
+                            <p class="text-slate-500 text-xs mt-1">Doc Type: ${u.kyc_document_type || 'Unknown'}</p>
+                            <div class="flex gap-4 mt-2">
+                                <div>${frontLink}</div>
+                                <div>${backLink}</div>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="approveKYC('${u.id}')" class="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 text-sm">Approve</button>
+                            <button onclick="rejectKYC('${u.id}')" class="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 text-sm">Reject</button>
+                        </div>
                     </div>
-                    <div class="flex gap-2">
-                        <button onclick="approveKYC('${u.id}')" class="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 text-sm">Approve</button>
-                        <button onclick="rejectKYC('${u.id}')" class="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 text-sm">Reject</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         async function approveKYC(userId) {
