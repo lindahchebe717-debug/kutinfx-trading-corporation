@@ -243,14 +243,19 @@
             let depHtml = '';
             let withHtml = '';
 
-            txs.forEach(tx => {
+            for (const tx of txs) {
                 const method = tx.payment_method ? tx.payment_method.replace('_', ' ').toUpperCase() : 'N/A';
                 
                 if (tx.type === 'deposit') {
                     let proofHtml = '<span class="text-slate-500 text-xs">No proof</span>';
                     if (tx.payment_proof_url) {
-                        const { data: { publicUrl } } = mySupabase.storage.from('payment-proofs').getPublicUrl(tx.payment_proof_url);
-                        proofHtml = `<a href="${publicUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline">View Proof Image</a>`;
+                        const { data: signedUrlData, error } = await mySupabase.storage
+                            .from('payment-proofs')
+                            .createSignedUrl(tx.payment_proof_url, 3600);
+                        
+                        if (signedUrlData) {
+                            proofHtml = `<a href="${signedUrlData.signedUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline">View Proof Image</a>`;
+                        }
                     }
 
                     depHtml += `
@@ -284,7 +289,7 @@
                         </tr>
                     `;
                 }
-            });
+            }
 
             depBody.innerHTML = depHtml || '<tr><td colspan="5" class="p-4 text-center text-slate-500">No pending deposits</td></tr>';
             withBody.innerHTML = withHtml || '<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending withdrawals</td></tr>';
@@ -316,7 +321,7 @@
             loadDashboardStats(); loadTransactions();
         }
 
-        // UPDATED KYC FUNCTION - Now shows front and back document links
+        // UPDATED KYC FUNCTION - Now uses secure signed URLs
         async function loadKYC() {
             const { data: users } = await mySupabase.from('users').select('*').eq('kyc_status', 'pending');
             const container = document.getElementById('kycContainer');
@@ -326,20 +331,30 @@
                 return;
             }
 
-            container.innerHTML = users.map(u => {
+            const userCards = await Promise.all(users.map(async u => {
                 let frontLink = '<span class="text-slate-500 text-xs">No front doc</span>';
                 let backLink = '<span class="text-slate-500 text-xs">No back doc</span>';
 
-                // Get the link for the front side
+                // Generate secure signed URL for front document (expires in 1 hour)
                 if (u.kyc_document_url) {
-                    const { data: frontData } = mySupabase.storage.from('kyc-documents').getPublicUrl(u.kyc_document_url);
-                    frontLink = `<a href="${frontData.publicUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Front Side</a>`;
+                    const { data: frontData, error } = await mySupabase.storage
+                        .from('kyc-documents')
+                        .createSignedUrl(u.kyc_document_url, 3600);
+                    
+                    if (frontData) {
+                        frontLink = `<a href="${frontData.signedUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Front Side</a>`;
+                    }
                 }
                 
-                // Get the link for the back side
+                // Generate secure signed URL for back document (expires in 1 hour)
                 if (u.kyc_document_back_url) {
-                    const { data: backData } = mySupabase.storage.from('kyc-documents').getPublicUrl(u.kyc_document_back_url);
-                    backLink = `<a href="${backData.publicUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Back Side</a>`;
+                    const { data: backData, error } = await mySupabase.storage
+                        .from('kyc-documents')
+                        .createSignedUrl(u.kyc_document_back_url, 3600);
+                    
+                    if (backData) {
+                        backLink = `<a href="${backData.signedUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline font-bold">View Back Side</a>`;
+                    }
                 }
 
                 return `
@@ -359,7 +374,9 @@
                         </div>
                     </div>
                 `;
-            }).join('');
+            }));
+
+            container.innerHTML = userCards.join('');
         }
 
         async function approveKYC(userId) {
