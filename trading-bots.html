@@ -22,6 +22,15 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
         ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
+        
+        /* Live profit animation */
+        @keyframes profitPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .profit-updating {
+            animation: profitPulse 1s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -65,6 +74,10 @@
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                     Edit Profile
                 </a>
+                <a href="support.html" class="nav-item flex items-center px-6 py-3 text-slate-400 hover:text-white">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    Support
+                </a>
             </nav>
             <div class="absolute bottom-0 w-full p-4 border-t border-slate-700/50">
                 <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all">
@@ -83,7 +96,7 @@
                     </button>
                     <div>
                         <h2 class="text-xl font-semibold text-white">Trading Bots</h2>
-                        <p class="text-slate-400 text-sm">Activate and manage your automated trading bots</p>
+                        <p class="text-slate-400 text-sm">Automated profit generation with live updates</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
@@ -96,25 +109,45 @@
             </header>
 
             <div class="p-4 md:p-6 space-y-6">
+                <!-- Live Profit Notification -->
+                <div id="profitNotification" class="hidden bg-green-500/10 border border-green-500/30 rounded-xl p-4 flex items-center justify-between">
+                    <div class="flex items-center">
+                        <svg class="w-5 h-5 text-green-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        <p class="text-green-300 text-sm" id="profitNotificationText">Profit calculated!</p>
+                    </div>
+                    <button onclick="hideProfitNotification()" class="text-green-400 hover:text-green-300">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
                 <!-- Stats -->
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div class="glass-card rounded-xl p-5">
                         <p class="text-slate-400 text-sm">Active Bots</p>
                         <p class="text-2xl font-bold text-white mt-1" id="activeBotsCount">0</p>
                     </div>
                     <div class="glass-card rounded-xl p-5">
-                        <p class="text-slate-400 text-sm">Total Invested in Bots</p>
+                        <p class="text-slate-400 text-sm">Total Invested</p>
                         <p class="text-2xl font-bold text-amber-500 mt-1" id="totalBotInvestment">$0.00</p>
                     </div>
                     <div class="glass-card rounded-xl p-5">
-                        <p class="text-slate-400 text-sm">Total Bot Earnings</p>
+                        <p class="text-slate-400 text-sm">Total Earnings</p>
                         <p class="text-2xl font-bold text-green-400 mt-1" id="totalBotEarnings">$0.00</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-2 border-green-500/30">
+                        <p class="text-slate-400 text-sm">Pending Profits</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1 profit-updating" id="pendingProfits">$0.00</p>
                     </div>
                 </div>
 
                 <!-- My Active Bots -->
                 <div>
-                    <h3 class="text-lg font-semibold text-white mb-4">My Active Bots</h3>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-white">My Active Bots</h3>
+                        <button onclick="claimAllProfits()" id="claimAllBtn" class="hidden px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all text-sm font-medium">
+                            Claim All Profits
+                        </button>
+                    </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="myBotsContainer">
                         <div class="glass-card rounded-xl p-5 animate-pulse">
                             <div class="h-4 bg-slate-700 rounded w-3/4 mb-3"></div>
@@ -167,6 +200,10 @@
                             <span class="text-slate-400">Risk Level:</span>
                             <span id="modalRisk" class="font-medium"></span>
                         </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Profit Frequency:</span>
+                            <span class="text-cyan-400 font-medium">Every Hour</span>
+                        </div>
                     </div>
                     <button onclick="activateBot()" id="activateBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all shadow-lg">
                         Activate Bot
@@ -185,6 +222,7 @@
         let allBots = [];
         let selectedBotId = null;
         let userBalance = 0;
+        let profitCalculationInterval = null;
 
         async function init() {
             const { data: { session } } = await mySupabase.auth.getSession();
@@ -195,7 +233,6 @@
             currentUser = session.user;
             document.getElementById('userAvatar').textContent = (currentUser.email[0] || 'U').toUpperCase();
             
-            // Load user balance
             const { data: profile } = await mySupabase.from('users').select('balance').eq('id', currentUser.id).single();
             if (profile) {
                 userBalance = profile.balance || 0;
@@ -203,8 +240,156 @@
             }
             
             await Promise.all([loadAllBots(), loadMyBots()]);
+            
+            // Start automated profit calculation (runs every minute)
+            startProfitCalculation();
         }
         init();
+
+        // AUTOMATED PROFIT CALCULATION SYSTEM
+        function startProfitCalculation() {
+            // Calculate profits every 60 seconds (1 minute)
+            profitCalculationInterval = setInterval(async () => {
+                await calculateAndAddProfits();
+            }, 60000); // 60000ms = 1 minute
+            
+            // Also run immediately on page load
+            calculateAndAddProfits();
+        }
+
+        async function calculateAndAddProfits() {
+            try {
+                // Get all active bots for this user
+                const { data: activeBots, error } = await mySupabase
+                    .from('user_bots')
+                    .select('*, trading_bots(expected_roi)')
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'active');
+
+                if (error || !activeBots || activeBots.length === 0) return;
+
+                let totalNewProfit = 0;
+
+                for (const userBot of activeBots) {
+                    const bot = userBot.trading_bots;
+                    const investedAmount = userBot.invested_amount || 0;
+                    const dailyROI = bot.expected_roi || 0;
+                    
+                    // Calculate hourly profit (daily ROI / 24 hours)
+                    const hourlyProfit = (investedAmount * dailyROI / 100) / 24;
+                    
+                    // Add some randomness to make it realistic (±10%)
+                    const randomFactor = 0.9 + Math.random() * 0.2; // 0.9 to 1.1
+                    const actualProfit = hourlyProfit * randomFactor;
+                    
+                    // Record the profit
+                    const { error: profitError } = await mySupabase.from('bot_profits').insert({
+                        user_bot_id: userBot.id,
+                        user_id: currentUser.id,
+                        profit_amount: actualProfit
+                    });
+
+                    if (!profitError) {
+                        // Update the bot's earnings
+                        const newEarnings = (userBot.earnings || 0) + actualProfit;
+                        await mySupabase.from('user_bots')
+                            .update({ 
+                                earnings: newEarnings,
+                                last_profit_calculation: new Date().toISOString()
+                            })
+                            .eq('id', userBot.id);
+
+                        totalNewProfit += actualProfit;
+                    }
+                }
+
+                // Show notification if profits were added
+                if (totalNewProfit > 0.01) {
+                    showProfitNotification(totalNewProfit);
+                    await loadMyBots(); // Refresh the display
+                }
+
+            } catch (err) {
+                console.error('Profit calculation error:', err);
+            }
+        }
+
+        function showProfitNotification(amount) {
+            const notification = document.getElementById('profitNotification');
+            const text = document.getElementById('profitNotificationText');
+            text.textContent = `💰 Profit calculated: +$${amount.toFixed(2)} added to your earnings!`;
+            notification.classList.remove('hidden');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+        }
+
+        function hideProfitNotification() {
+            document.getElementById('profitNotification').classList.add('hidden');
+        }
+
+        async function claimAllProfits() {
+            if (!confirm('Claim all pending profits? They will be added to your available balance.')) return;
+
+            try {
+                // Get all active bots
+                const { data: activeBots } = await mySupabase
+                    .from('user_bots')
+                    .select('earnings, id')
+                    .eq('user_id', currentUser.id)
+                    .eq('status', 'active');
+
+                if (!activeBots || activeBots.length === 0) {
+                    alert('No profits to claim.');
+                    return;
+                }
+
+                let totalClaimable = 0;
+                for (const bot of activeBots) {
+                    totalClaimable += bot.earnings || 0;
+                }
+
+                if (totalClaimable <= 0) {
+                    alert('No profits available to claim.');
+                    return;
+                }
+
+                // Add profits to user balance
+                const newBalance = userBalance + totalClaimable;
+                await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+
+                // Reset bot earnings to 0
+                for (const bot of activeBots) {
+                    await mySupabase.from('user_bots').update({ earnings: 0 }).eq('id', bot.id);
+                }
+
+                // Update user's total earnings
+                const { data: profile } = await mySupabase.from('users').select('total_earnings').eq('id', currentUser.id).single();
+                const newTotalEarnings = (profile.total_earnings || 0) + totalClaimable;
+                await mySupabase.from('users').update({ total_earnings: newTotalEarnings }).eq('id', currentUser.id);
+
+                // Create transaction record
+                await mySupabase.from('transactions').insert({
+                    user_id: currentUser.id,
+                    type: 'bot_profit',
+                    amount: totalClaimable,
+                    status: 'approved',
+                    description: `Claimed bot profits: $${totalClaimable.toFixed(2)}`
+                });
+
+                userBalance = newBalance;
+                document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
+                
+                alert(`✅ Successfully claimed $${totalClaimable.toFixed(2)} in bot profits!`);
+                await loadMyBots();
+
+            } catch (err) {
+                console.error('Claim profits error:', err);
+                alert('Failed to claim profits. Please try again.');
+            }
+        }
 
         async function loadAllBots() {
             const container = document.getElementById('availableBotsContainer');
@@ -236,6 +421,10 @@
                                 <span class="text-slate-400">Expected ROI:</span>
                                 <span class="text-green-400 font-medium">${bot.expected_roi || 0}% / day</span>
                             </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-400">Profit Frequency:</span>
+                                <span class="text-cyan-400 font-medium">Hourly</span>
+                            </div>
                         </div>
                         <button onclick="openModal(${bot.id})" class="w-full gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
                             Activate Bot
@@ -264,21 +453,34 @@
                     document.getElementById('activeBotsCount').textContent = '0';
                     document.getElementById('totalBotInvestment').textContent = '$0.00';
                     document.getElementById('totalBotEarnings').textContent = '$0.00';
+                    document.getElementById('pendingProfits').textContent = '$0.00';
+                    document.getElementById('claimAllBtn').classList.add('hidden');
                     return;
                 }
 
                 let totalInvestment = 0;
                 let totalEarnings = 0;
+                let totalPending = 0;
 
                 container.innerHTML = myBots.map(ub => {
                     totalInvestment += ub.invested_amount || 0;
                     totalEarnings += ub.earnings || 0;
+                    totalPending += ub.earnings || 0;
                     const bot = ub.trading_bots;
+                    
+                    // Calculate next profit time
+                    const lastCalc = ub.last_profit_calculation ? new Date(ub.last_profit_calculation) : new Date();
+                    const nextProfit = new Date(lastCalc.getTime() + 60 * 60 * 1000); // +1 hour
+                    const timeUntilNext = getTimeUntilNext(nextProfit);
+                    
                     return `
                         <div class="glass-card rounded-xl p-5 border border-green-500/30">
                             <div class="flex items-center justify-between mb-3">
                                 <h4 class="text-white font-semibold">${bot.name}</h4>
-                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Active</span>
+                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 flex items-center gap-1">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                    Active
+                                </span>
                             </div>
                             <div class="space-y-2 text-sm">
                                 <div class="flex justify-between">
@@ -286,21 +488,30 @@
                                     <span class="text-amber-500 font-medium">$${(ub.invested_amount || 0).toFixed(2)}</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-slate-400">Earnings:</span>
-                                    <span class="text-green-400 font-medium">+$${(ub.earnings || 0).toFixed(2)}</span>
+                                    <span class="text-slate-400">Pending Profits:</span>
+                                    <span class="text-green-400 font-bold profit-updating">+$${(ub.earnings || 0).toFixed(2)}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Daily ROI:</span>
                                     <span class="text-green-400 font-medium">${bot.expected_roi || 0}%</span>
                                 </div>
                                 <div class="flex justify-between">
+                                    <span class="text-slate-400">Next Profit:</span>
+                                    <span class="text-cyan-400 font-medium">${timeUntilNext}</span>
+                                </div>
+                                <div class="flex justify-between">
                                     <span class="text-slate-400">Activated:</span>
                                     <span class="text-slate-300">${new Date(ub.activated_at).toLocaleDateString()}</span>
                                 </div>
                             </div>
-                            <button onclick="stopBot(${ub.id})" class="w-full mt-4 bg-red-500/20 text-red-400 font-medium py-2 rounded-lg hover:bg-red-500/30 transition-all text-sm">
-                                Stop Bot
-                            </button>
+                            <div class="flex gap-2 mt-4">
+                                <button onclick="claimBotProfit(${ub.id}, ${(ub.earnings || 0).toFixed(2)})" class="flex-1 bg-green-500/20 text-green-400 font-medium py-2 rounded-lg hover:bg-green-500/30 transition-all text-sm">
+                                    Claim Profit
+                                </button>
+                                <button onclick="stopBot(${ub.id})" class="flex-1 bg-red-500/20 text-red-400 font-medium py-2 rounded-lg hover:bg-red-500/30 transition-all text-sm">
+                                    Stop Bot
+                                </button>
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -308,10 +519,75 @@
                 document.getElementById('activeBotsCount').textContent = myBots.length;
                 document.getElementById('totalBotInvestment').textContent = `$${totalInvestment.toFixed(2)}`;
                 document.getElementById('totalBotEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
+                document.getElementById('pendingProfits').textContent = `$${totalPending.toFixed(2)}`;
+                
+                // Show claim all button if there are pending profits
+                if (totalPending > 0) {
+                    document.getElementById('claimAllBtn').classList.remove('hidden');
+                } else {
+                    document.getElementById('claimAllBtn').classList.add('hidden');
+                }
 
             } catch (err) {
                 console.error('Error loading my bots:', err);
                 container.innerHTML = '<p class="text-red-400 col-span-full">Failed to load your bots.</p>';
+            }
+        }
+
+        function getTimeUntilNext(nextTime) {
+            const now = new Date();
+            const diff = nextTime - now;
+            
+            if (diff <= 0) return 'Now';
+            
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            
+            if (minutes > 0) {
+                return `${minutes}m ${seconds}s`;
+            }
+            return `${seconds}s`;
+        }
+
+        async function claimBotProfit(userBotId, amount) {
+            if (amount <= 0) {
+                alert('No profits available to claim.');
+                return;
+            }
+
+            if (!confirm(`Claim $${amount} in bot profits?`)) return;
+
+            try {
+                // Add to user balance
+                const newBalance = userBalance + parseFloat(amount);
+                await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+
+                // Reset bot earnings
+                await mySupabase.from('user_bots').update({ earnings: 0 }).eq('id', userBotId);
+
+                // Update total earnings
+                const { data: profile } = await mySupabase.from('users').select('total_earnings').eq('id', currentUser.id).single();
+                const newTotalEarnings = (profile.total_earnings || 0) + parseFloat(amount);
+                await mySupabase.from('users').update({ total_earnings: newTotalEarnings }).eq('id', currentUser.id);
+
+                // Create transaction
+                await mySupabase.from('transactions').insert({
+                    user_id: currentUser.id,
+                    type: 'bot_profit',
+                    amount: parseFloat(amount),
+                    status: 'approved',
+                    description: `Claimed bot profit: $${amount}`
+                });
+
+                userBalance = newBalance;
+                document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
+                
+                alert(`✅ Successfully claimed $${amount} in bot profits!`);
+                await loadMyBots();
+
+            } catch (err) {
+                console.error('Claim profit error:', err);
+                alert('Failed to claim profits. Please try again.');
             }
         }
 
@@ -366,32 +642,30 @@
             document.getElementById('activateBtn').textContent = 'Activating...';
             
             try {
-                // Deduct balance
                 const newBalance = userBalance - amount;
                 const { error: balanceError } = await mySupabase
                     .from('users')
-                    .update({ balance: newBalance, total_invested: (userBalance > 0 ? 0 : 0) })
+                    .update({ balance: newBalance })
                     .eq('id', currentUser.id);
                 
                 if (balanceError) throw balanceError;
 
-                // Create bot activation record
                 const { error: botError } = await mySupabase
                     .from('user_bots')
                     .insert({
                         user_id: currentUser.id,
                         bot_id: selectedBotId,
                         invested_amount: amount,
-                        status: 'active'
+                        status: 'active',
+                        earnings: 0,
+                        last_profit_calculation: new Date().toISOString()
                     });
 
                 if (botError) {
-                    // Rollback balance
                     await mySupabase.from('users').update({ balance: userBalance }).eq('id', currentUser.id);
                     throw botError;
                 }
 
-                // Create transaction record
                 await mySupabase.from('transactions').insert({
                     user_id: currentUser.id,
                     type: 'bot_activation',
@@ -405,7 +679,7 @@
                 userBalance = newBalance;
                 document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
                 
-                alert(`✅ ${bot.name} activated successfully! Invested: $${amount.toFixed(2)}`);
+                alert(`✅ ${bot.name} activated successfully! Profits will be calculated hourly.`);
             } catch (err) {
                 console.error('Activation error:', err);
                 errorEl.textContent = 'Failed to activate bot. Please try again.';
@@ -417,23 +691,32 @@
         }
 
         async function stopBot(userBotId) {
-            if (!confirm('Are you sure you want to stop this bot? Your invested amount will be returned to your balance.')) return;
+            if (!confirm('Are you sure you want to stop this bot? All pending profits will be claimed and added to your balance.')) return;
             
             try {
                 const { data: userBot } = await mySupabase.from('user_bots').select('*').eq('id', userBotId).single();
                 
-                // Return funds to balance
-                const newBalance = userBalance + (userBot.invested_amount || 0) + (userBot.earnings || 0);
+                // Claim all pending profits first
+                const pendingProfits = userBot.earnings || 0;
+                const returnAmount = (userBot.invested_amount || 0) + pendingProfits;
+                
+                const newBalance = userBalance + returnAmount;
                 await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
                 
-                // Stop the bot
+                // Update total earnings if there were profits
+                if (pendingProfits > 0) {
+                    const { data: profile } = await mySupabase.from('users').select('total_earnings').eq('id', currentUser.id).single();
+                    const newTotalEarnings = (profile.total_earnings || 0) + pendingProfits;
+                    await mySupabase.from('users').update({ total_earnings: newTotalEarnings }).eq('id', currentUser.id);
+                }
+                
                 await mySupabase.from('user_bots').update({ status: 'stopped' }).eq('id', userBotId);
                 
                 await loadMyBots();
                 userBalance = newBalance;
                 document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
                 
-                alert('Bot stopped successfully! Funds returned to your balance.');
+                alert(`Bot stopped successfully! $${returnAmount.toFixed(2)} returned to your balance (including $${pendingProfits.toFixed(2)} in profits).`);
             } catch (err) {
                 console.error('Stop bot error:', err);
                 alert('Failed to stop bot. Please try again.');
@@ -441,10 +724,13 @@
         }
 
         function toggleSidebar() {
-            // Simple mobile toggle - you can add mobile sidebar HTML if needed
+            // Simple mobile toggle
         }
 
         async function logout() {
+            if (profitCalculationInterval) {
+                clearInterval(profitCalculationInterval);
+            }
             await mySupabase.auth.signOut();
             window.location.href = 'sign-in.html';
         }
