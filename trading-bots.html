@@ -640,17 +640,25 @@
 
             document.getElementById('activateBtn').disabled = true;
             document.getElementById('activateBtn').textContent = 'Activating...';
+            errorEl.classList.add('hidden');
             
             try {
+                // Step 1: Deduct balance
+                console.log('Step 1: Deducting balance...');
                 const newBalance = userBalance - amount;
                 const { error: balanceError } = await mySupabase
                     .from('users')
                     .update({ balance: newBalance })
                     .eq('id', currentUser.id);
                 
-                if (balanceError) throw balanceError;
+                if (balanceError) {
+                    console.error('Balance update error:', balanceError);
+                    throw new Error('Failed to update balance: ' + balanceError.message);
+                }
 
-                const { error: botError } = await mySupabase
+                // Step 2: Create bot activation
+                console.log('Step 2: Creating bot activation...');
+                const { data: botData, error: botError } = await mySupabase
                     .from('user_bots')
                     .insert({
                         user_id: currentUser.id,
@@ -659,14 +667,20 @@
                         status: 'active',
                         earnings: 0,
                         last_profit_calculation: new Date().toISOString()
-                    });
+                    })
+                    .select()
+                    .single();
 
                 if (botError) {
+                    console.error('Bot activation error:', botError);
+                    // Rollback balance
                     await mySupabase.from('users').update({ balance: userBalance }).eq('id', currentUser.id);
-                    throw botError;
+                    throw new Error('Failed to activate bot: ' + botError.message);
                 }
 
-                await mySupabase.from('transactions').insert({
+                // Step 3: Create transaction record
+                console.log('Step 3: Creating transaction record...');
+                const { error: txError } = await mySupabase.from('transactions').insert({
                     user_id: currentUser.id,
                     type: 'bot_activation',
                     amount: amount,
@@ -674,6 +688,12 @@
                     description: `Activated ${bot.name} trading bot`
                 });
 
+                if (txError) {
+                    console.error('Transaction record error:', txError);
+                    // Don't rollback - bot is already activated
+                }
+
+                console.log('Bot activated successfully!');
                 closeModal();
                 await loadMyBots();
                 userBalance = newBalance;
@@ -682,7 +702,7 @@
                 alert(`✅ ${bot.name} activated successfully! Profits will be calculated hourly.`);
             } catch (err) {
                 console.error('Activation error:', err);
-                errorEl.textContent = 'Failed to activate bot. Please try again.';
+                errorEl.textContent = err.message || 'Failed to activate bot. Please try again.';
                 errorEl.classList.remove('hidden');
             } finally {
                 document.getElementById('activateBtn').disabled = false;
