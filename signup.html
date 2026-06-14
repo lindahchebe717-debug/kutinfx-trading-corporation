@@ -53,6 +53,15 @@
                     <input type="password" id="confirmPassword" required class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none" placeholder="Re-enter password">
                 </div>
 
+                <!-- Referral Code Field -->
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">
+                        Referral Code <span class="text-slate-500 text-xs">(Optional)</span>
+                    </label>
+                    <input type="text" id="referralCode" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 outline-none uppercase" placeholder="Enter referral code">
+                    <p class="text-xs text-slate-500 mt-1">Have a referral code? Enter it here to earn bonuses!</p>
+                </div>
+
                 <!-- Terms and Conditions Checkbox -->
                 <div class="flex items-start gap-3 p-4 bg-slate-800/30 rounded-xl border border-slate-700/50">
                     <input type="checkbox" id="termsCheckbox" required class="mt-1 w-4 h-4 text-amber-500 bg-slate-800 border-slate-600 rounded focus:ring-amber-500 cursor-pointer">
@@ -83,7 +92,6 @@
         const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
         
-        // FIX: Using mySupabase to prevent the crash!
         const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const registerForm = document.getElementById('registerForm');
@@ -92,6 +100,13 @@
         const registerText = document.getElementById('registerText');
         const registerSpinner = document.getElementById('registerSpinner');
         const registerBtn = document.getElementById('registerBtn');
+
+        // Check for referral code in URL parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlReferralCode = urlParams.get('ref');
+        if (urlReferralCode) {
+            document.getElementById('referralCode').value = urlReferralCode.toUpperCase();
+        }
 
         function showError(msg) {
             errorMsg.textContent = msg;
@@ -119,10 +134,16 @@
             }
         }
 
+        // Generate unique referral code
+        function generateReferralCode(userId, firstName) {
+            const prefix = firstName.substring(0, 3).toUpperCase();
+            const suffix = userId.substring(0, 6).toUpperCase();
+            return `${prefix}${suffix}`;
+        }
+
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            // Check if terms are accepted
             const termsCheckbox = document.getElementById('termsCheckbox');
             if (!termsCheckbox.checked) {
                 showError('Please accept the Terms and Conditions to continue.');
@@ -134,6 +155,7 @@
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirmPassword').value;
+            const referralCodeInput = document.getElementById('referralCode').value.trim().toUpperCase();
 
             if (password !== confirmPassword) {
                 showError('Passwords do not match!');
@@ -150,6 +172,8 @@
 
             try {
                 console.log("Attempting signup...");
+                
+                // Step 1: Create the user
                 const { data: authData, error: authError } = await mySupabase.auth.signUp({
                     email,
                     password,
@@ -164,11 +188,64 @@
 
                 if (authError) {
                     showError('❌ ' + authError.message);
-                } else {
-                    showSuccess('✅ Account created! Please check your email or sign in.');
+                } else if (authData.user) {
+                    const userId = authData.user.id;
+                    
+                    // Step 2: Generate referral code for this user
+                    const userReferralCode = generateReferralCode(userId, firstName);
+                    
+                    // Step 3: Update user profile with referral code
+                    const { error: updateError } = await mySupabase
+                        .from('users')
+                        .update({ 
+                            referral_code: userReferralCode,
+                            balance: 10 // Welcome bonus for new user
+                        })
+                        .eq('id', userId);
+
+                    if (updateError) {
+                        console.error('Error updating user profile:', updateError);
+                    }
+
+                    // Step 4: Handle referral if code was provided
+                    if (referralCodeInput) {
+                        // Find the referrer
+                        const { data: referrer, error: referrerError } = await mySupabase
+                            .from('users')
+                            .select('id, referral_earnings')
+                            .eq('referral_code', referralCodeInput)
+                            .single();
+
+                        if (referrer && !referrerError) {
+                            // Record the referral
+                            await mySupabase.from('referrals').insert({
+                                referrer_id: referrer.id,
+                                referred_id: userId,
+                                referral_code: referralCodeInput,
+                                commission_earned: 10 // $10 commission for referrer
+                            });
+
+                            // Update referrer's earnings
+                            const newEarnings = (referrer.referral_earnings || 0) + 10;
+                            const newBalance = await getReferrerBalance(referrer.id);
+                            
+                            await mySupabase
+                                .from('users')
+                                .update({ 
+                                    referral_earnings: newEarnings,
+                                    balance: newBalance + 10 // Add $10 bonus to referrer
+                                })
+                                .eq('id', referrer.id);
+
+                            console.log('Referral recorded successfully!');
+                        } else {
+                            console.warn('Invalid referral code:', referralCodeInput);
+                        }
+                    }
+
+                    showSuccess('✅ Account created successfully! You received a $10 welcome bonus. Redirecting to sign in...');
                     registerForm.reset();
                     setTimeout(() => {
-                        // FIXED: Redirects to sign-in.html instead of login.html
                         window.location.href = 'sign-in.html'; 
                     }, 2000);
                 }
@@ -179,6 +256,16 @@
                 setLoading(false);
             }
         });
+
+        // Helper function to get referrer's current balance
+        async function getReferrerBalance(userId) {
+            const { data: user } = await mySupabase
+                .from('users')
+                .select('balance')
+                .eq('id', userId)
+                .single();
+            return user?.balance || 0;
+        }
     </script>
 </body>
 </html>
