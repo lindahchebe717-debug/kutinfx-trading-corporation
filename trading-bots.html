@@ -6,6 +6,8 @@
     <title>Trading Bots - KutinFX Trading Corporation</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- TradingView Chart Widget -->
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -24,11 +26,16 @@
         ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
         
         @keyframes profitPulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
         }
         .profit-updating {
-            animation: profitPulse 1s ease-in-out infinite;
+            animation: profitPulse 2s ease-in-out infinite;
+        }
+        .chart-container {
+            height: 400px;
+            border-radius: 12px;
+            overflow: hidden;
         }
     </style>
 </head>
@@ -127,12 +134,21 @@
                     </div>
                     <div class="glass-card rounded-xl p-5">
                         <p class="text-slate-400 text-sm">Total Earnings</p>
-                        <p class="text-2xl font-bold text-green-400 mt-1" id="totalBotEarnings">$0.00</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1 profit-updating" id="totalBotEarnings">$0.00</p>
                     </div>
                     <div class="glass-card rounded-xl p-5 border-2 border-green-500/30">
                         <p class="text-slate-400 text-sm">Pending Profits</p>
                         <p class="text-2xl font-bold text-green-400 mt-1 profit-updating" id="pendingProfits">$0.00</p>
                     </div>
+                </div>
+
+                <!-- MT5 Chart Section -->
+                <div class="glass-card rounded-xl p-4">
+                    <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                        Live Market Chart
+                    </h3>
+                    <div id="tradingview_chart" class="chart-container"></div>
                 </div>
 
                 <div>
@@ -194,7 +210,7 @@
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-slate-400">Profit Frequency:</span>
-                            <span class="text-cyan-400 font-medium">Every Hour</span>
+                            <span class="text-cyan-400 font-medium">Every Minute</span>
                         </div>
                     </div>
                     <button onclick="activateBot()" id="activateBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all shadow-lg">
@@ -216,6 +232,32 @@
         let userBalance = 0;
         let profitCalculationInterval = null;
 
+        // Initialize TradingView Chart
+        function initTradingViewChart() {
+            new TradingView.widget({
+                "width": "100%",
+                "height": 400,
+                "symbol": "FX:EURUSD",
+                "interval": "1",
+                "timezone": "Etc/UTC",
+                "theme": "dark",
+                "style": "1",
+                "locale": "en",
+                "toolbar_bg": "#f1f3f6",
+                "enable_publishing": false,
+                "allow_symbol_change": true,
+                "container_id": "tradingview_chart",
+                "hide_side_toolbar": false,
+                "studies": [
+                    "MASimple@tv-basicstudies",
+                    "RSI@tv-basicstudies"
+                ],
+                "show_popup_button": true,
+                "popup_width": "1000",
+                "popup_height": "650"
+            });
+        }
+
         async function init() {
             const { data: { session } } = await mySupabase.auth.getSession();
             if (!session) {
@@ -230,6 +272,9 @@
                 userBalance = profile.balance || 0;
                 document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
             }
+            
+            // Initialize chart
+            initTradingViewChart();
             
             await Promise.all([loadAllBots(), loadMyBots()]);
             startProfitCalculation();
@@ -395,7 +440,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-slate-400">Profit Frequency:</span>
-                                <span class="text-cyan-400 font-medium">Hourly</span>
+                                <span class="text-cyan-400 font-medium">Every Minute</span>
                             </div>
                         </div>
                         <button onclick="openModal(${bot.id})" class="w-full gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
@@ -440,10 +485,6 @@
                     totalPending += ub.earnings || 0;
                     const bot = ub.trading_bots;
                     
-                    const lastCalc = ub.last_profit_calculation ? new Date(ub.last_profit_calculation) : new Date();
-                    const nextProfit = new Date(lastCalc.getTime() + 60 * 60 * 1000);
-                    const timeUntilNext = getTimeUntilNext(nextProfit);
-                    
                     return `
                         <div class="glass-card rounded-xl p-5 border border-green-500/30">
                             <div class="flex items-center justify-between mb-3">
@@ -467,8 +508,8 @@
                                     <span class="text-green-400 font-medium">${bot.expected_roi || 0}%</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-slate-400">Next Profit:</span>
-                                    <span class="text-cyan-400 font-medium">${timeUntilNext}</span>
+                                    <span class="text-slate-400">Total Earned:</span>
+                                    <span class="text-cyan-400 font-medium">$${(ub.earnings || 0).toFixed(2)}</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Activated:</span>
@@ -502,21 +543,6 @@
                 console.error('Error loading my bots:', err);
                 container.innerHTML = '<p class="text-red-400 col-span-full">Failed to load your bots.</p>';
             }
-        }
-
-        function getTimeUntilNext(nextTime) {
-            const now = new Date();
-            const diff = nextTime - now;
-            
-            if (diff <= 0) return 'Now';
-            
-            const minutes = Math.floor(diff / 60000);
-            const seconds = Math.floor((diff % 60000) / 1000);
-            
-            if (minutes > 0) {
-                return `${minutes}m ${seconds}s`;
-            }
-            return `${seconds}s`;
         }
 
         async function claimBotProfit(userBotId, amount) {
@@ -580,7 +606,6 @@
             selectedBotId = null;
         }
 
-        // UPDATED activateBot() FUNCTION - Handles all scenarios
         async function activateBot() {
             const amount = parseFloat(document.getElementById('investAmount').value);
             const bot = allBots.find(b => b.id === selectedBotId);
@@ -609,7 +634,6 @@
             errorEl.classList.add('hidden');
             
             try {
-                // Check if user already has this bot
                 console.log('Checking for existing bot...');
                 const { data: existingBot } = await mySupabase
                     .from('user_bots')
@@ -620,7 +644,6 @@
                     .maybeSingle();
 
                 if (existingBot && existingBot.status === 'active') {
-                    // Bot is already ACTIVE - add more funds
                     console.log('Bot already active, adding investment...');
                     
                     const newInvestment = (existingBot.invested_amount || 0) + amount;
@@ -662,7 +685,6 @@
                     alert(`✅ Successfully added $${amount} to ${bot.name}!\nTotal investment: $${newInvestment.toFixed(2)}`);
                     
                 } else if (existingBot && existingBot.status === 'stopped') {
-                    // Bot was STOPPED - reactivate it
                     console.log('Reactivating stopped bot...');
                     
                     const newBalance = userBalance - amount;
@@ -704,7 +726,6 @@
                     alert(`✅ ${bot.name} reactivated successfully!\nInvestment: $${amount.toFixed(2)}`);
                     
                 } else {
-                    // No existing bot - create new activation
                     console.log('Creating new bot activation...');
                     
                     const newBalance = userBalance - amount;
@@ -744,7 +765,7 @@
                     userBalance = newBalance;
                     document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
                     
-                    alert(`✅ ${bot.name} activated successfully!\nProfits will be calculated hourly.`);
+                    alert(`✅ ${bot.name} activated successfully!\nProfits will be calculated every minute.`);
                 }
                 
             } catch (err) {
