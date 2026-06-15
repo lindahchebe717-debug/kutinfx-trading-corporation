@@ -274,12 +274,10 @@
         init();
 
         function startProfitCalculation() {
-            // Check every 5 minutes if any bot has completed 12 hours
             profitCalculationInterval = setInterval(async () => {
                 await calculateAndAddProfits();
-            }, 300000); // 5 minutes = 300000ms
+            }, 300000);
             
-            // Also run immediately
             calculateAndAddProfits();
         }
 
@@ -302,16 +300,11 @@
                     const investedAmount = userBot.invested_amount || 0;
                     const dailyROI = bot.expected_roi || 0;
                     
-                    // Calculate time since last profit calculation
                     const lastCalc = userBot.last_profit_calculation ? new Date(userBot.last_profit_calculation) : new Date(userBot.activated_at);
                     const hoursElapsed = (now - lastCalc) / (1000 * 60 * 60);
                     
-                    // Check if 12 hours have passed
                     if (hoursElapsed >= 12) {
-                        // Calculate 12-hour profit (half of daily ROI)
                         const profit12Hours = investedAmount * (dailyROI / 100) / 2;
-                        
-                        // Add some randomness (±5%)
                         const randomFactor = 0.95 + Math.random() * 0.1;
                         const actualProfit = profit12Hours * randomFactor;
                         
@@ -336,7 +329,6 @@
                     }
                 }
 
-                // Auto-stop bots that completed 12 hours
                 for (const bot of botsToStop) {
                     await mySupabase.from('user_bots').update({ status: 'stopped' }).eq('id', bot.id);
                 }
@@ -501,7 +493,6 @@
                     
                     const bot = ub.trading_bots;
                     
-                    // Calculate time remaining
                     const lastCalc = ub.last_profit_calculation ? new Date(ub.last_profit_calculation) : new Date(ub.activated_at);
                     const now = new Date();
                     const hoursElapsed = (now - lastCalc) / (1000 * 60 * 60);
