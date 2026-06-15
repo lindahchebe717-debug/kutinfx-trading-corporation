@@ -153,7 +153,7 @@
 
                 <div>
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-semibold text-white">My Active Bots</h3>
+                        <h3 class="text-lg font-semibold text-white">My Bots</h3>
                         <button onclick="claimAllProfits()" id="claimAllBtn" class="hidden px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all text-sm font-medium">
                             Claim All Profits
                         </button>
@@ -290,6 +290,7 @@
 
         async function calculateAndAddProfits() {
             try {
+                // Only calculate profits for 'active' bots
                 const { data: activeBots, error } = await mySupabase
                     .from('user_bots')
                     .select('*, trading_bots(expected_roi)')
@@ -457,11 +458,12 @@
         async function loadMyBots() {
             const container = document.getElementById('myBotsContainer');
             try {
+                // Load all bots regardless of status to show controls
                 const { data: myBots, error } = await mySupabase
                     .from('user_bots')
                     .select('*, trading_bots(name, expected_roi, risk_level)')
                     .eq('user_id', currentUser.id)
-                    .eq('status', 'active');
+                    .in('status', ['active', 'paused', 'stopped']);
 
                 if (error) throw error;
 
@@ -478,21 +480,26 @@
                 let totalInvestment = 0;
                 let totalEarnings = 0;
                 let totalPending = 0;
+                let activeCount = 0;
 
                 container.innerHTML = myBots.map(ub => {
                     totalInvestment += ub.invested_amount || 0;
                     totalEarnings += ub.earnings || 0;
                     totalPending += ub.earnings || 0;
+                    if(ub.status === 'active') activeCount++;
+                    
                     const bot = ub.trading_bots;
                     
+                    let statusBadge = '';
+                    if(ub.status === 'active') statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>Active</span>';
+                    else if(ub.status === 'paused') statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 flex items-center gap-1"><span class="w-2 h-2 bg-amber-500 rounded-full"></span>Paused</span>';
+                    else statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 flex items-center gap-1"><span class="w-2 h-2 bg-red-500 rounded-full"></span>Stopped</span>';
+                    
                     return `
-                        <div class="glass-card rounded-xl p-5 border border-green-500/30">
+                        <div class="glass-card rounded-xl p-5 border ${ub.status === 'active' ? 'border-green-500/30' : ub.status === 'paused' ? 'border-amber-500/30' : 'border-red-500/30'}">
                             <div class="flex items-center justify-between mb-3">
                                 <h4 class="text-white font-semibold">${bot.name}</h4>
-                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 flex items-center gap-1">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                    Active
-                                </span>
+                                ${statusBadge}
                             </div>
                             <div class="space-y-2 text-sm">
                                 <div class="flex justify-between">
@@ -507,28 +514,19 @@
                                     <span class="text-slate-400">Daily ROI:</span>
                                     <span class="text-green-400 font-medium">${bot.expected_roi || 0}%</span>
                                 </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-400">Total Earned:</span>
-                                    <span class="text-cyan-400 font-medium">$${(ub.earnings || 0).toFixed(2)}</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-slate-400">Activated:</span>
-                                    <span class="text-slate-300">${new Date(ub.activated_at).toLocaleDateString()}</span>
-                                </div>
                             </div>
-                            <div class="flex gap-2 mt-4">
-                                <button onclick="claimBotProfit(${ub.id}, ${(ub.earnings || 0).toFixed(2)})" class="flex-1 bg-green-500/20 text-green-400 font-medium py-2 rounded-lg hover:bg-green-500/30 transition-all text-sm">
-                                    Claim Profit
-                                </button>
-                                <button onclick="stopBot(${ub.id})" class="flex-1 bg-red-500/20 text-red-400 font-medium py-2 rounded-lg hover:bg-red-500/30 transition-all text-sm">
-                                    Stop Bot
-                                </button>
+                            <div class="grid grid-cols-2 gap-2 mt-4">
+                                <button onclick="claimBotProfit(${ub.id}, ${(ub.earnings || 0).toFixed(2)})" class="bg-green-500/20 text-green-400 font-medium py-2 rounded-lg hover:bg-green-500/30 transition-all text-sm">Claim Profit</button>
+                                <button onclick="stopBot(${ub.id})" class="bg-red-500/20 text-red-400 font-medium py-2 rounded-lg hover:bg-red-500/30 transition-all text-sm">Stop Bot</button>
+                                <button onclick="pauseBot(${ub.id})" class="bg-amber-500/20 text-amber-400 font-medium py-2 rounded-lg hover:bg-amber-500/30 transition-all text-sm">Pause</button>
+                                <button onclick="resumeBot(${ub.id})" class="bg-blue-500/20 text-blue-400 font-medium py-2 rounded-lg hover:bg-blue-500/30 transition-all text-sm">Resume</button>
+                                <button onclick="startBot(${ub.id})" class="col-span-2 bg-cyan-500/20 text-cyan-400 font-medium py-2 rounded-lg hover:bg-cyan-500/30 transition-all text-sm">Start Bot</button>
                             </div>
                         </div>
                     `;
                 }).join('');
 
-                document.getElementById('activeBotsCount').textContent = myBots.length;
+                document.getElementById('activeBotsCount').textContent = activeCount;
                 document.getElementById('totalBotInvestment').textContent = `$${totalInvestment.toFixed(2)}`;
                 document.getElementById('totalBotEarnings').textContent = `$${totalEarnings.toFixed(2)}`;
                 document.getElementById('pendingProfits').textContent = `$${totalPending.toFixed(2)}`;
@@ -579,6 +577,72 @@
             } catch (err) {
                 console.error('Claim profit error:', err);
                 alert('Failed to claim profits. Please try again.');
+            }
+        }
+
+        // NEW BOT CONTROL FUNCTIONS
+        async function pauseBot(userBotId) {
+            if (!confirm('Are you sure you want to pause this bot? Profits will stop accumulating.')) return;
+            try {
+                await mySupabase.from('user_bots').update({ status: 'paused' }).eq('id', userBotId);
+                alert('Bot paused successfully!');
+                await loadMyBots();
+            } catch (err) {
+                console.error('Pause bot error:', err);
+                alert('Failed to pause bot.');
+            }
+        }
+
+        async function resumeBot(userBotId) {
+            try {
+                await mySupabase.from('user_bots').update({ status: 'active' }).eq('id', userBotId);
+                alert('Bot resumed successfully! Profits will start accumulating again.');
+                await loadMyBots();
+            } catch (err) {
+                console.error('Resume bot error:', err);
+                alert('Failed to resume bot.');
+            }
+        }
+
+        async function startBot(userBotId) {
+            try {
+                await mySupabase.from('user_bots').update({ status: 'active' }).eq('id', userBotId);
+                alert('Bot started successfully!');
+                await loadMyBots();
+            } catch (err) {
+                console.error('Start bot error:', err);
+                alert('Failed to start bot.');
+            }
+        }
+
+        async function stopBot(userBotId) {
+            if (!confirm('Are you sure you want to stop this bot? All pending profits will be claimed and added to your balance.')) return;
+            
+            try {
+                const { data: userBot } = await mySupabase.from('user_bots').select('*').eq('id', userBotId).single();
+                
+                const pendingProfits = userBot.earnings || 0;
+                const returnAmount = (userBot.invested_amount || 0) + pendingProfits;
+                
+                const newBalance = userBalance + returnAmount;
+                await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+                
+                if (pendingProfits > 0) {
+                    const { data: profile } = await mySupabase.from('users').select('total_earnings').eq('id', currentUser.id).single();
+                    const newTotalEarnings = (profile.total_earnings || 0) + pendingProfits;
+                    await mySupabase.from('users').update({ total_earnings: newTotalEarnings }).eq('id', currentUser.id);
+                }
+                
+                await mySupabase.from('user_bots').update({ status: 'stopped' }).eq('id', userBotId);
+                
+                await loadMyBots();
+                userBalance = newBalance;
+                document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
+                
+                alert(`Bot stopped successfully! $${returnAmount.toFixed(2)} returned to your balance (including $${pendingProfits.toFixed(2)} in profits).`);
+            } catch (err) {
+                console.error('Stop bot error:', err);
+                alert('Failed to stop bot. Please try again.');
             }
         }
 
@@ -634,137 +698,67 @@
             errorEl.classList.add('hidden');
             
             try {
-                console.log('Checking for existing bot...');
                 const { data: existingBot } = await mySupabase
                     .from('user_bots')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .eq('bot_id', selectedBotId)
-                    .in('status', ['active', 'stopped'])
+                    .in('status', ['active', 'paused', 'stopped'])
                     .maybeSingle();
 
                 if (existingBot && existingBot.status === 'active') {
-                    console.log('Bot already active, adding investment...');
-                    
                     const newInvestment = (existingBot.invested_amount || 0) + amount;
-                    
                     const newBalance = userBalance - amount;
-                    const { error: balanceError } = await mySupabase
-                        .from('users')
-                        .update({ balance: newBalance })
-                        .eq('id', currentUser.id);
-                    
+                    const { error: balanceError } = await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
                     if (balanceError) throw balanceError;
 
-                    const { error: updateError } = await mySupabase
-                        .from('user_bots')
-                        .update({ 
-                            invested_amount: newInvestment,
-                            last_profit_calculation: new Date().toISOString()
-                        })
-                        .eq('id', existingBot.id);
-
+                    const { error: updateError } = await mySupabase.from('user_bots').update({ invested_amount: newInvestment, last_profit_calculation: new Date().toISOString() }).eq('id', existingBot.id);
                     if (updateError) {
                         await mySupabase.from('users').update({ balance: userBalance }).eq('id', currentUser.id);
                         throw updateError;
                     }
 
-                    await mySupabase.from('transactions').insert({
-                        user_id: currentUser.id,
-                        type: 'bot_investment_add',
-                        amount: amount,
-                        status: 'approved',
-                        description: `Added $${amount} to ${bot.name} trading bot`
-                    });
-
+                    await mySupabase.from('transactions').insert({ user_id: currentUser.id, type: 'bot_investment_add', amount: amount, status: 'approved', description: `Added $${amount} to ${bot.name} trading bot` });
                     closeModal();
                     await loadMyBots();
                     userBalance = newBalance;
                     document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
-                    
                     alert(`✅ Successfully added $${amount} to ${bot.name}!\nTotal investment: $${newInvestment.toFixed(2)}`);
                     
-                } else if (existingBot && existingBot.status === 'stopped') {
-                    console.log('Reactivating stopped bot...');
-                    
+                } else if (existingBot) {
                     const newBalance = userBalance - amount;
-                    const { error: balanceError } = await mySupabase
-                        .from('users')
-                        .update({ balance: newBalance })
-                        .eq('id', currentUser.id);
-                    
+                    const { error: balanceError } = await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
                     if (balanceError) throw balanceError;
 
-                    const { error: reactivateError } = await mySupabase
-                        .from('user_bots')
-                        .update({ 
-                            status: 'active',
-                            invested_amount: amount,
-                            earnings: 0,
-                            last_profit_calculation: new Date().toISOString()
-                        })
-                        .eq('id', existingBot.id);
-
+                    const { error: reactivateError } = await mySupabase.from('user_bots').update({ status: 'active', invested_amount: amount, earnings: 0, last_profit_calculation: new Date().toISOString() }).eq('id', existingBot.id);
                     if (reactivateError) {
                         await mySupabase.from('users').update({ balance: userBalance }).eq('id', currentUser.id);
                         throw reactivateError;
                     }
 
-                    await mySupabase.from('transactions').insert({
-                        user_id: currentUser.id,
-                        type: 'bot_reactivation',
-                        amount: amount,
-                        status: 'approved',
-                        description: `Reactivated ${bot.name} trading bot`
-                    });
-
+                    await mySupabase.from('transactions').insert({ user_id: currentUser.id, type: 'bot_reactivation', amount: amount, status: 'approved', description: `Reactivated ${bot.name} trading bot` });
                     closeModal();
                     await loadMyBots();
                     userBalance = newBalance;
                     document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
-                    
                     alert(`✅ ${bot.name} reactivated successfully!\nInvestment: $${amount.toFixed(2)}`);
                     
                 } else {
-                    console.log('Creating new bot activation...');
-                    
                     const newBalance = userBalance - amount;
-                    const { error: balanceError } = await mySupabase
-                        .from('users')
-                        .update({ balance: newBalance })
-                        .eq('id', currentUser.id);
-                    
+                    const { error: balanceError } = await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
                     if (balanceError) throw balanceError;
 
-                    const { error: botError } = await mySupabase
-                        .from('user_bots')
-                        .insert({
-                            user_id: currentUser.id,
-                            bot_id: selectedBotId,
-                            invested_amount: amount,
-                            status: 'active',
-                            earnings: 0,
-                            last_profit_calculation: new Date().toISOString()
-                        });
-
+                    const { error: botError } = await mySupabase.from('user_bots').insert({ user_id: currentUser.id, bot_id: selectedBotId, invested_amount: amount, status: 'active', earnings: 0, last_profit_calculation: new Date().toISOString() });
                     if (botError) {
                         await mySupabase.from('users').update({ balance: userBalance }).eq('id', currentUser.id);
                         throw botError;
                     }
 
-                    await mySupabase.from('transactions').insert({
-                        user_id: currentUser.id,
-                        type: 'bot_activation',
-                        amount: amount,
-                        status: 'approved',
-                        description: `Activated ${bot.name} trading bot`
-                    });
-
+                    await mySupabase.from('transactions').insert({ user_id: currentUser.id, type: 'bot_activation', amount: amount, status: 'approved', description: `Activated ${bot.name} trading bot` });
                     closeModal();
                     await loadMyBots();
                     userBalance = newBalance;
                     document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
-                    
                     alert(`✅ ${bot.name} activated successfully!\nProfits will be calculated every minute.`);
                 }
                 
@@ -775,37 +769,6 @@
             } finally {
                 document.getElementById('activateBtn').disabled = false;
                 document.getElementById('activateBtn').textContent = 'Activate Bot';
-            }
-        }
-
-        async function stopBot(userBotId) {
-            if (!confirm('Are you sure you want to stop this bot? All pending profits will be claimed and added to your balance.')) return;
-            
-            try {
-                const { data: userBot } = await mySupabase.from('user_bots').select('*').eq('id', userBotId).single();
-                
-                const pendingProfits = userBot.earnings || 0;
-                const returnAmount = (userBot.invested_amount || 0) + pendingProfits;
-                
-                const newBalance = userBalance + returnAmount;
-                await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
-                
-                if (pendingProfits > 0) {
-                    const { data: profile } = await mySupabase.from('users').select('total_earnings').eq('id', currentUser.id).single();
-                    const newTotalEarnings = (profile.total_earnings || 0) + pendingProfits;
-                    await mySupabase.from('users').update({ total_earnings: newTotalEarnings }).eq('id', currentUser.id);
-                }
-                
-                await mySupabase.from('user_bots').update({ status: 'stopped' }).eq('id', userBotId);
-                
-                await loadMyBots();
-                userBalance = newBalance;
-                document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
-                
-                alert(`Bot stopped successfully! $${returnAmount.toFixed(2)} returned to your balance (including $${pendingProfits.toFixed(2)} in profits).`);
-            } catch (err) {
-                console.error('Stop bot error:', err);
-                alert('Failed to stop bot. Please try again.');
             }
         }
 
