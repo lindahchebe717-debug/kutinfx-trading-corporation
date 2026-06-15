@@ -146,7 +146,7 @@
                 <div class="glass-card rounded-xl p-4">
                     <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                         <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
-                        Live Market Chart
+                        Live Market Chart - XAU/USD (Gold)
                     </h3>
                     <div id="tradingview_chart" class="chart-container"></div>
                 </div>
@@ -232,12 +232,12 @@
         let userBalance = 0;
         let profitCalculationInterval = null;
 
-        // Initialize TradingView Chart
+        // Initialize TradingView Chart - XAU/USD (Gold)
         function initTradingViewChart() {
             new TradingView.widget({
                 "width": "100%",
                 "height": 400,
-                "symbol": "FX:EURUSD",
+                "symbol": "OANDA:XAUUSD",
                 "interval": "1",
                 "timezone": "Etc/UTC",
                 "theme": "dark",
