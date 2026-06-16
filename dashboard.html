@@ -70,8 +70,6 @@
             .mobile-space { margin-bottom: 0.75rem !important; }
             .touch-target { min-height: 44px; display: flex; align-items: center; justify-content: center; }
             body { padding-top: 60px; }
-            .settings-sidebar { display: none; }
-            .settings-mobile-header { display: flex; }
         }
 
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
@@ -126,6 +124,19 @@
         .scroll-container::-webkit-scrollbar { width: 6px; }
         .scroll-container::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
         .scroll-container::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
+        
+        /* Mobile Settings Navigation */
+        .mobile-settings-nav {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .settings-sidebar {
+                display: none !important;
+            }
+            .mobile-settings-nav {
+                display: block;
+            }
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200 font-inter" id="bodyElement">
@@ -366,7 +377,7 @@
                     <p class="text-slate-500 text-xs mt-3">Earn $10 for each friend who signs up using your referral code!</p>
                 </div>
 
-                <!-- NEW: PLATFORM PERFORMANCE OVERVIEW -->
+                <!-- PLATFORM PERFORMANCE OVERVIEW -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
                     <div class="glass-card rounded-xl p-4 border-l-4 border-green-500">
                         <div class="flex items-center gap-2 mb-2">
@@ -402,9 +413,8 @@
                     </div>
                 </div>
 
-                <!-- NEW: LIVE PERFORMANCE FEED & TOP PERFORMERS -->
+                <!-- LIVE PERFORMANCE FEED & TOP PERFORMERS -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
-                    <!-- Live Performance Feed -->
                     <div class="lg:col-span-2 glass-card rounded-xl p-4 md:p-5">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
@@ -413,12 +423,9 @@
                             </h3>
                             <span class="text-xs text-slate-400">Real-time updates</span>
                         </div>
-                        <div class="scroll-container space-y-2" id="liveFeedContainer">
-                            <!-- Live feed items will be loaded here -->
-                        </div>
+                        <div class="scroll-container space-y-2" id="liveFeedContainer"></div>
                     </div>
 
-                    <!-- Top Performers Leaderboard -->
                     <div class="glass-card rounded-xl p-4 md:p-5">
                         <div class="flex items-center justify-between mb-4">
                             <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
@@ -427,13 +434,11 @@
                             </h3>
                             <span class="text-xs text-slate-400">This month</span>
                         </div>
-                        <div class="space-y-2" id="leaderboardContainer">
-                            <!-- Leaderboard items will be loaded here -->
-                        </div>
+                        <div class="space-y-2" id="leaderboardContainer"></div>
                     </div>
                 </div>
 
-                <!-- NEW: BOT PERFORMANCE HISTORY -->
+                <!-- BOT PERFORMANCE HISTORY -->
                 <div class="glass-card rounded-xl p-4 md:p-5">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
@@ -445,12 +450,10 @@
                             Live
                         </span>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="botPerformanceContainer">
-                        <!-- Bot performance cards will be loaded here -->
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="botPerformanceContainer"></div>
                 </div>
 
-                <!-- NEW: INVESTMENT RETURNS HISTORY -->
+                <!-- INVESTMENT RETURNS HISTORY -->
                 <div class="glass-card rounded-xl p-4 md:p-5">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
@@ -471,14 +474,12 @@
                                     <th class="text-left py-2 px-2">Date</th>
                                 </tr>
                             </thead>
-                            <tbody id="investmentReturnsContainer">
-                                <!-- Investment returns will be loaded here -->
-                            </tbody>
+                            <tbody id="investmentReturnsContainer"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- NEW: RECENT BIG WINS -->
+                <!-- RECENT BIG WINS -->
                 <div class="glass-card rounded-xl p-4 md:p-5 border-2 border-green-500/30">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
@@ -487,9 +488,7 @@
                         </h3>
                         <span class="text-xs text-green-400">Verified payouts</span>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" id="bigWinsContainer">
-                        <!-- Big wins will be loaded here -->
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" id="bigWinsContainer"></div>
                 </div>
 
                 <!-- CLIENT REVIEWS & TESTIMONIALS -->
@@ -502,9 +501,7 @@
                         <span class="text-amber-500 text-xs md:text-sm font-medium">4.9/5 Rating</span>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="reviewsContainer">
-                        <!-- Reviews will be loaded here -->
-                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="reviewsContainer"></div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
@@ -551,14 +548,38 @@
         </main>
     </div>
 
-    <!-- SETTINGS MODAL (unchanged) -->
+    <!-- SETTINGS MODAL -->
     <div id="settingsModal" class="settings-modal">
         <div class="absolute inset-0 bg-black/60" onclick="closeSettings()"></div>
         <div class="settings-content relative w-full max-w-5xl h-full md:h-[90vh] md:my-auto md:rounded-2xl flex flex-col md:flex-row overflow-hidden">
-            <button onclick="closeSettings()" class="absolute top-4 right-4 z-10 text-slate-400 hover:text-white p-2">
+            <button onclick="closeSettings()" class="absolute top-4 right-4 z-20 text-slate-400 hover:text-white p-2">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
 
+            <!-- MOBILE NAVIGATION DROPDOWN (Only visible on mobile) -->
+            <div class="mobile-settings-nav p-4 pt-14 border-b border-slate-700/50 bg-slate-900/80">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold" id="mobileSettingsAvatar">U</div>
+                    <div>
+                        <p class="text-white font-semibold text-sm" id="mobileSettingsUserName">User</p>
+                        <p class="text-slate-400 text-xs" id="mobileSettingsUserEmail">user@example.com</p>
+                    </div>
+                </div>
+                <select id="mobileSettingsSelect" onchange="switchSettingsTabMobile(this.value)" class="w-full px-4 py-3 rounded-lg bg-slate-800 border border-slate-700 text-white focus:border-amber-500 focus:outline-none text-sm">
+                    <option value="profile">👤 Profile</option>
+                    <option value="appearance">🎨 Appearance</option>
+                    <option value="security">🔒 Security</option>
+                    <option value="notifications">🔔 Notifications</option>
+                    <option value="performance">📊 Performance</option>
+                    <option value="disclaimer">⚠️ Risk Disclaimer</option>
+                    <option value="privacy">🛡️ Privacy & Cookies</option>
+                    <option value="language">🌐 Language</option>
+                    <option value="timezone">🕐 Time Zone</option>
+                    <option value="website">ℹ️ Website Info</option>
+                </select>
+            </div>
+
+            <!-- Settings Sidebar (Desktop only) -->
             <div class="settings-sidebar w-full md:w-64 bg-slate-900/50 border-b md:border-b-0 md:border-r border-slate-700/50 p-4 overflow-y-auto">
                 <div class="flex items-center gap-3 mb-6 px-2">
                     <div class="w-12 h-12 rounded-full gold-gradient flex items-center justify-center text-white font-bold text-lg" id="settingsAvatar">U</div>
@@ -569,43 +590,43 @@
                 </div>
                 
                 <nav class="space-y-1">
-                    <button onclick="switchSettingsTab('profile')" class="settings-tab active w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('profile', this)" class="settings-tab active w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                         Profile
                     </button>
-                    <button onclick="switchSettingsTab('appearance')" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('appearance', this)" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/></svg>
                         Appearance
                     </button>
-                    <button onclick="switchSettingsTab('security')" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('security', this)" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                         Security
                     </button>
-                    <button onclick="switchSettingsTab('notifications')" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('notifications', this)" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                         Notifications
                     </button>
-                    <button onclick="switchSettingsTab('performance')" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('performance', this)" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                         Performance
                     </button>
-                    <button onclick="switchSettingsTab('disclaimer')" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('disclaimer', this)" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
                         Risk Disclaimer
                     </button>
-                    <button onclick="switchSettingsTab('privacy')" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('privacy', this)" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                         Privacy & Cookies
                     </button>
-                    <button onclick="switchSettingsTab('language')" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('language', this)" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/></svg>
                         Language
                     </button>
-                    <button onclick="switchSettingsTab('timezone')" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('timezone', this)" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         Time Zone
                     </button>
-                    <button onclick="switchSettingsTab('website')" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
+                    <button onclick="switchSettingsTab('website', this)" class="settings-tab w-full flex items-center px-4 py-3 text-slate-300 hover:text-white rounded-lg text-left text-sm">
                         <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
                         Website Info
                     </button>
@@ -650,18 +671,18 @@
                         <div class="glass-card rounded-xl p-4">
                             <h3 class="text-white font-semibold mb-3">Font Family</h3>
                             <div class="grid grid-cols-3 gap-3">
-                                <button onclick="changeFont('Inter')" class="font-inter p-3 rounded-lg border-2 border-amber-500 bg-amber-500/20 text-white text-sm">Inter</button>
-                                <button onclick="changeFont('Poppins')" class="font-poppins p-3 rounded-lg border-2 border-slate-600 hover:border-amber-500 text-white text-sm">Poppins</button>
-                                <button onclick="changeFont('Roboto')" class="font-roboto p-3 rounded-lg border-2 border-slate-600 hover:border-amber-500 text-white text-sm">Roboto</button>
+                                <button onclick="changeFont('Inter', event)" class="font-inter p-3 rounded-lg border-2 border-amber-500 bg-amber-500/20 text-white text-sm">Inter</button>
+                                <button onclick="changeFont('Poppins', event)" class="font-poppins p-3 rounded-lg border-2 border-slate-600 hover:border-amber-500 text-white text-sm">Poppins</button>
+                                <button onclick="changeFont('Roboto', event)" class="font-roboto p-3 rounded-lg border-2 border-slate-600 hover:border-amber-500 text-white text-sm">Roboto</button>
                             </div>
                         </div>
 
                         <div class="glass-card rounded-xl p-4">
                             <h3 class="text-white font-semibold mb-3">Font Size</h3>
                             <div class="flex gap-2">
-                                <button onclick="changeFontSize('small')" class="flex-1 py-2 rounded-lg border-2 border-slate-600 hover:border-amber-500 text-slate-300 text-sm">Small</button>
-                                <button onclick="changeFontSize('medium')" class="flex-1 py-2 rounded-lg border-2 border-amber-500 bg-amber-500/20 text-white text-sm">Medium</button>
-                                <button onclick="changeFontSize('large')" class="flex-1 py-2 rounded-lg border-2 border-slate-600 hover:border-amber-500 text-slate-300 text-sm">Large</button>
+                                <button onclick="changeFontSize('small', event)" class="flex-1 py-2 rounded-lg border-2 border-slate-600 hover:border-amber-500 text-slate-300 text-sm">Small</button>
+                                <button onclick="changeFontSize('medium', event)" class="flex-1 py-2 rounded-lg border-2 border-amber-500 bg-amber-500/20 text-white text-sm">Medium</button>
+                                <button onclick="changeFontSize('large', event)" class="flex-1 py-2 rounded-lg border-2 border-slate-600 hover:border-amber-500 text-slate-300 text-sm">Large</button>
                             </div>
                         </div>
 
@@ -910,7 +931,7 @@
         </div>
     </div>
 
-    <!-- Mobile Sidebar Overlay (unchanged) -->
+    <!-- Mobile Sidebar Overlay -->
     <div id="mobileSidebar" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleSidebar()"></div>
         <aside class="sidebar absolute left-0 top-0 h-full w-64 border-r border-slate-700/50 transform transition-transform duration-300">
@@ -987,7 +1008,6 @@
         // PERFORMANCE HISTORY DATA
         // ============================================
 
-        // Live Performance Feed Data
         const liveFeedData = [
             { user: "Thabo M.", country: "🇿🇦", bot: "Gold Master", profit: 2847.50, time: "Just now" },
             { user: "Kelebogile M.", country: "🇧🇼", bot: "Swing Trader", profit: 1523.80, time: "2 min ago" },
@@ -1011,7 +1031,6 @@
             { user: "Fatima A.", country: "🇸🇦", bot: "Trend Follower Pro", profit: 2987.65, time: "38 min ago" }
         ];
 
-        // Top Performers Leaderboard
         const leaderboardData = [
             { rank: 1, user: "David Kim", country: "🇰🇷", profit: 28450.75, badge: "🥇" },
             { rank: 2, user: "Ahmed Hassan", country: "🇦🇪", profit: 24320.50, badge: "🥈" },
@@ -1025,7 +1044,6 @@
             { rank: 10, user: "Maria Garcia", country: "🇪🇸", profit: 12456.85, badge: "10" }
         ];
 
-        // Bot Performance History
         const botPerformanceData = [
             { name: "Scalper Pro", risk: "low", trades: 12847, wins: 12567, profit: 2847392.50, roi: 97.8, color: "green" },
             { name: "Swing Trader", risk: "medium", trades: 8934, wins: 8567, profit: 3456789.30, roi: 95.9, color: "amber" },
@@ -1035,7 +1053,6 @@
             { name: "Momentum Hunter", risk: "high", trades: 9234, wins: 8678, profit: 4892345.60, roi: 94.0, color: "red" }
         ];
 
-        // Investment Returns History
         const investmentReturnsData = [
             { investor: "David Kim", country: "🇰🇷", plan: "Platinum", invested: 10000, returns: 18450.75, roi: 184.5, date: "Today" },
             { investor: "Ahmed Hassan", country: "🇦🇪", plan: "Diamond", invested: 25000, returns: 49320.50, roi: 197.3, date: "Today" },
@@ -1051,7 +1068,6 @@
             { investor: "Chidinma Okafor", country: "🇳🇬", plan: "Gold", invested: 6000, returns: 11890.55, roi: 198.2, date: "5 days ago" }
         ];
 
-        // Big Wins Data
         const bigWinsData = [
             { user: "David Kim", country: "🇰🇷", amount: 28450.75, bot: "Gold Master", time: "2 hours ago" },
             { user: "Ahmed Hassan", country: "🇦🇪", amount: 24320.50, bot: "Trend Follower Pro", time: "5 hours ago" },
@@ -1192,10 +1208,8 @@
             `).join('');
         }
 
-        // Simulate live updates every 15 seconds
         function startLiveUpdates() {
             liveFeedInterval = setInterval(() => {
-                // Add a new random profit to the feed
                 const names = ["Thabo M.", "Kelebogile M.", "Chidinma O.", "Johannes v.", "Kwame A.", "Amina D.", "Peter M.", "Grace N.", "Mohamed B.", "Tendai C.", "Samuel O.", "Aisha M.", "Michael C.", "Sarah J.", "Ahmed H."];
                 const countries = ["🇿🇦", "🇧🇼", "🇳🇬", "🇳🇦", "🇬🇭", "🇸🇳", "🇰🇪", "🇿🇼", "🇲🇦", "🇲🇼", "🇨🇲", "🇹🇿", "🇺🇸", "🇬🇧", "🇦🇪"];
                 const bots = ["Gold Master", "Swing Trader", "Scalper Pro", "Day Trader Elite", "Trend Follower Pro", "Momentum Hunter"];
@@ -1209,11 +1223,9 @@
                     time: "Just now"
                 };
                 
-                // Add to top of feed
                 liveFeedData.unshift(newProfit);
                 if (liveFeedData.length > 20) liveFeedData.pop();
                 
-                // Update times
                 liveFeedData.forEach((item, idx) => {
                     if (idx === 0) item.time = "Just now";
                     else if (idx < 3) item.time = `${idx * 2} min ago`;
@@ -1221,11 +1233,11 @@
                 });
                 
                 loadLiveFeed();
-            }, 15000); // Every 15 seconds
+            }, 15000);
         }
 
         // ============================================
-        // REVIEWS DATA (24 reviews with African countries)
+        // REVIEWS DATA
         // ============================================
         const reviews = [
             { name: "Michael Chen", avatar: "M", profit: "$2,450", time: "3 days ago", rating: 5, text: "Started with $500 and made $2,450 in just 3 days! The bots are incredible. Best investment decision I've made.", country: "🇺🇸 USA" },
@@ -1310,27 +1322,68 @@
             document.body.style.overflow = '';
         }
 
-        function switchSettingsTab(tabName) {
+        // Switch tab from desktop sidebar button
+        function switchSettingsTab(tabName, btnElement) {
             document.querySelectorAll('.settings-content-tab').forEach(tab => {
                 tab.classList.add('hidden');
             });
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            
+            // Update desktop sidebar active state
             document.querySelectorAll('.settings-tab').forEach(btn => {
                 btn.classList.remove('active');
             });
-            event.currentTarget.classList.add('active');
+            if (btnElement) {
+                btnElement.classList.add('active');
+            }
+            
+            // Sync mobile dropdown
+            const mobileSelect = document.getElementById('mobileSettingsSelect');
+            if (mobileSelect) {
+                mobileSelect.value = tabName;
+            }
+        }
+
+        // Switch tab from mobile dropdown
+        function switchSettingsTabMobile(tabName) {
+            document.querySelectorAll('.settings-content-tab').forEach(tab => {
+                tab.classList.add('hidden');
+            });
+            document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+            
+            // Sync desktop sidebar active state
+            document.querySelectorAll('.settings-tab').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.trim().toLowerCase().includes(tabName)) {
+                    btn.classList.add('active');
+                }
+            });
         }
 
         function loadSettingsData() {
             if (!currentUser) return;
             
-            document.getElementById('settingsUserName').textContent = currentUser.email.split('@')[0];
-            document.getElementById('settingsUserEmail').textContent = currentUser.email;
-            document.getElementById('settingsAvatar').textContent = currentUser.email[0].toUpperCase();
+            const userName = currentUser.email.split('@')[0];
+            const userEmail = currentUser.email;
+            const userInitial = currentUser.email[0].toUpperCase();
             
-            document.getElementById('profileName').textContent = currentUser.email.split('@')[0];
-            document.getElementById('profileEmail').textContent = currentUser.email;
-            document.getElementById('profileAvatar').textContent = currentUser.email[0].toUpperCase();
+            // Desktop sidebar
+            document.getElementById('settingsUserName').textContent = userName;
+            document.getElementById('settingsUserEmail').textContent = userEmail;
+            document.getElementById('settingsAvatar').textContent = userInitial;
+            
+            // Mobile header
+            const mobileName = document.getElementById('mobileSettingsUserName');
+            const mobileEmail = document.getElementById('mobileSettingsUserEmail');
+            const mobileAvatar = document.getElementById('mobileSettingsAvatar');
+            if (mobileName) mobileName.textContent = userName;
+            if (mobileEmail) mobileEmail.textContent = userEmail;
+            if (mobileAvatar) mobileAvatar.textContent = userInitial;
+            
+            // Profile tab
+            document.getElementById('profileName').textContent = userName;
+            document.getElementById('profileEmail').textContent = userEmail;
+            document.getElementById('profileAvatar').textContent = userInitial;
             document.getElementById('profileBalance').textContent = document.getElementById('balance').textContent;
             
             const savedFont = localStorage.getItem('userFont') || 'Inter';
@@ -1341,19 +1394,21 @@
             document.getElementById('perfActiveTrades').textContent = document.getElementById('activeBots').textContent;
         }
 
-        function changeFont(fontName) {
+        function changeFont(fontName, event) {
             document.body.className = `gradient-bg min-h-screen text-slate-200 font-${fontName.toLowerCase()}`;
             localStorage.setItem('userFont', fontName);
             
-            document.querySelectorAll('#tab-appearance button').forEach(btn => {
+            document.querySelectorAll('#tab-appearance .grid-cols-3 button').forEach(btn => {
                 btn.classList.remove('border-amber-500', 'bg-amber-500/20', 'text-white');
                 btn.classList.add('border-slate-600', 'text-slate-300');
             });
-            event.target.classList.remove('border-slate-600', 'text-slate-300');
-            event.target.classList.add('border-amber-500', 'bg-amber-500/20', 'text-white');
+            if (event && event.target) {
+                event.target.classList.remove('border-slate-600', 'text-slate-300');
+                event.target.classList.add('border-amber-500', 'bg-amber-500/20', 'text-white');
+            }
         }
 
-        function changeFontSize(size) {
+        function changeFontSize(size, event) {
             localStorage.setItem('userFontSize', size);
             const body = document.body;
             
@@ -1361,7 +1416,7 @@
             else if (size === 'large') body.style.fontSize = '16px';
             else body.style.fontSize = '';
             
-            document.querySelectorAll('#tab-appearance button').forEach(btn => {
+            document.querySelectorAll('#tab-appearance .flex.gap-2 button').forEach(btn => {
                 if (btn.textContent.toLowerCase().includes(size)) {
                     btn.classList.remove('border-slate-600', 'text-slate-300');
                     btn.classList.add('border-amber-500', 'bg-amber-500/20', 'text-white');
@@ -1407,7 +1462,6 @@
                 currentUser = session.user;
                 await loadUserData();
                 
-                // Load all performance data
                 loadReviews();
                 loadLiveFeed();
                 loadLeaderboard();
@@ -1415,7 +1469,6 @@
                 loadInvestmentReturns();
                 loadBigWins();
                 
-                // Start live updates
                 startLiveUpdates();
                 
             } catch (err) {
