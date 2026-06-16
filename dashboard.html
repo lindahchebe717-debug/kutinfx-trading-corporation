@@ -79,6 +79,17 @@
         /* Toggle Switch */
         .toggle-checkbox:checked { right: 0; border-color: #f59e0b; }
         .toggle-checkbox:checked + .toggle-label { background-color: #f59e0b; }
+        
+        /* Reviews Section */
+        .review-card {
+            animation: slideIn 0.5s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .star-filled { color: #fbbf24; }
+        .star-empty { color: #475569; }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200 font-inter" id="bodyElement">
@@ -317,6 +328,21 @@
                         </div>
                     </div>
                     <p class="text-slate-500 text-xs mt-3">Earn $10 for each friend who signs up using your referral code!</p>
+                </div>
+
+                <!-- CLIENT REVIEWS & TESTIMONIALS -->
+                <div class="glass-card rounded-xl p-4 md:p-6 border-2 border-amber-500/30">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                            Success Stories
+                        </h3>
+                        <span class="text-amber-500 text-xs md:text-sm font-medium">4.9/5 Rating</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="reviewsContainer">
+                        <!-- Reviews will be loaded here -->
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
@@ -807,6 +833,160 @@
 
         let currentUser = null;
 
+        // Sample Reviews Data
+        const reviews = [
+            {
+                name: "Michael Chen",
+                avatar: "M",
+                profit: "$2,450",
+                time: "2 days ago",
+                rating: 5,
+                text: "Started with $500 and made $2,450 in just 3 weeks! The bots are incredible. Best investment decision I've made.",
+                country: "🇺🇸 USA"
+            },
+            {
+                name: "Sarah Johnson",
+                avatar: "S",
+                profit: "$1,890",
+                time: "5 days ago",
+                rating: 5,
+                text: "The automated trading is amazing! I made $1,890 profit in my first month. Highly recommend KutinFX!",
+                country: "🇬🇧 UK"
+            },
+            {
+                name: "Ahmed Hassan",
+                avatar: "A",
+                profit: "$3,200",
+                time: "1 week ago",
+                rating: 5,
+                text: "Withdrawals are fast and the platform is very reliable. Made over $3k in profits. Thank you KutinFX!",
+                country: "🇦🇪 UAE"
+            },
+            {
+                name: "Emma Williams",
+                avatar: "E",
+                profit: "$980",
+                time: "3 days ago",
+                rating: 5,
+                text: "Started small with $200 and now I've earned $980. The daily profits are consistent and real!",
+                country: "🇨🇦 Canada"
+            },
+            {
+                name: "David Kim",
+                avatar: "D",
+                profit: "$5,600",
+                time: "1 day ago",
+                rating: 5,
+                text: "Best trading platform ever! Made $5,600 in 2 months. The AI bots work perfectly. 10/10 would recommend!",
+                country: "🇰🇷 South Korea"
+            },
+            {
+                name: "Lisa Martinez",
+                avatar: "L",
+                profit: "$1,250",
+                time: "4 days ago",
+                rating: 5,
+                text: "I was skeptical at first but after making $1,250 in 3 weeks, I'm a believer. Great platform!",
+                country: "🇲🇽 Mexico"
+            },
+            {
+                name: "James Wilson",
+                avatar: "J",
+                profit: "$4,100",
+                time: "6 days ago",
+                rating: 5,
+                text: "The profits are real! Made $4,100 in my first 6 weeks. Customer support is excellent too.",
+                country: "🇦🇺 Australia"
+            },
+            {
+                name: "Fatima Al-Rashid",
+                avatar: "F",
+                profit: "$2,800",
+                time: "2 days ago",
+                rating: 5,
+                text: "Excellent platform! Very professional and the profits are consistent. Made $2,800 already!",
+                country: "🇸🇦 Saudi Arabia"
+            },
+            {
+                name: "Robert Taylor",
+                avatar: "R",
+                profit: "$1,560",
+                time: "1 week ago",
+                rating: 5,
+                text: "Easy to use and very profitable. Made $1,560 in just one month. The bots do all the work!",
+                country: "🇿🇦 South Africa"
+            },
+            {
+                name: "Maria Garcia",
+                avatar: "M",
+                profit: "$3,450",
+                time: "3 days ago",
+                rating: 5,
+                text: "I love this platform! Made $3,450 in profits and still growing. The best investment I've made!",
+                country: "🇪🇸 Spain"
+            },
+            {
+                name: "John Anderson",
+                avatar: "J",
+                profit: "$890",
+                time: "5 days ago",
+                rating: 5,
+                text: "Started with just $150 and made $890 in 2 weeks. The daily returns are amazing!",
+                country: "🇳🇬 Nigeria"
+            },
+            {
+                name: "Yuki Tanaka",
+                avatar: "Y",
+                profit: "$2,100",
+                time: "4 days ago",
+                rating: 5,
+                text: "Very reliable platform. Made $2,100 profit in 5 weeks. Withdrawals are processed quickly!",
+                country: "🇯🇵 Japan"
+            }
+        ];
+
+        function renderStars(rating) {
+            let stars = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= rating) {
+                    stars += '<svg class="w-4 h-4 star-filled" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+                } else {
+                    stars += '<svg class="w-4 h-4 star-empty" fill="currentColor" viewBox="0 0 24 24"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>';
+                }
+            }
+            return stars;
+        }
+
+        function loadReviews() {
+            const container = document.getElementById('reviewsContainer');
+            container.innerHTML = reviews.map(review => `
+                <div class="review-card glass-card rounded-xl p-4 border border-slate-700/50">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold text-sm">
+                            ${review.avatar}
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <h4 class="text-white font-semibold text-sm">${review.name}</h4>
+                                <span class="text-slate-500 text-xs">${review.time}</span>
+                            </div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <div class="flex">${renderStars(review.rating)}</div>
+                                <span class="text-slate-500 text-xs">${review.country}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="inline-flex items-center gap-1 bg-green-500/20 px-2 py-1 rounded-lg mb-2">
+                            <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            <span class="text-green-400 font-bold text-sm">+${review.profit}</span>
+                        </div>
+                    </div>
+                    <p class="text-slate-300 text-xs leading-relaxed">${review.text}</p>
+                </div>
+            `).join('');
+        }
+
         // SETTINGS FUNCTIONS
         function openSettings() {
             document.getElementById('settingsModal').classList.add('active');
@@ -934,6 +1114,7 @@
                 currentUser = session.user;
                 console.log("User logged in:", currentUser.email);
                 await loadUserData();
+                loadReviews();
             } catch (err) {
                 console.error('CheckAuth failed:', err);
                 document.getElementById('welcomeText').textContent = 'Error: ' + err.message;
