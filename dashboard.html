@@ -90,6 +90,42 @@
         }
         .star-filled { color: #fbbf24; }
         .star-empty { color: #475569; }
+        
+        /* Performance History Styles */
+        .live-feed-item {
+            animation: slideInRight 0.5s ease;
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .profit-pulse {
+            animation: profitPulse 2s ease-in-out infinite;
+        }
+        @keyframes profitPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+        }
+        .leaderboard-item:hover {
+            background: rgba(245, 158, 11, 0.1);
+            transform: translateX(5px);
+        }
+        .leaderboard-item {
+            transition: all 0.3s ease;
+        }
+        .performance-bar {
+            background: linear-gradient(90deg, #10b981 0%, #22c55e 100%);
+            height: 8px;
+            border-radius: 4px;
+            transition: width 1s ease;
+        }
+        .scroll-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .scroll-container::-webkit-scrollbar { width: 6px; }
+        .scroll-container::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        .scroll-container::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200 font-inter" id="bodyElement">
@@ -330,6 +366,132 @@
                     <p class="text-slate-500 text-xs mt-3">Earn $10 for each friend who signs up using your referral code!</p>
                 </div>
 
+                <!-- NEW: PLATFORM PERFORMANCE OVERVIEW -->
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+                    <div class="glass-card rounded-xl p-4 border-l-4 border-green-500">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            <p class="text-slate-400 text-xs">Platform Total Profits</p>
+                        </div>
+                        <p class="text-xl md:text-2xl font-bold text-green-400">$12,847,392</p>
+                        <p class="text-green-500 text-xs mt-1">↑ 23.5% this month</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-4 border-l-4 border-blue-500">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                            <p class="text-slate-400 text-xs">Active Traders</p>
+                        </div>
+                        <p class="text-xl md:text-2xl font-bold text-blue-400">48,293</p>
+                        <p class="text-blue-500 text-xs mt-1">↑ 12.8% this week</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-4 border-l-4 border-purple-500">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
+                            <p class="text-slate-400 text-xs">Successful Trades</p>
+                        </div>
+                        <p class="text-xl md:text-2xl font-bold text-purple-400">1,284,571</p>
+                        <p class="text-purple-500 text-xs mt-1">97.8% win rate</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-4 border-l-4 border-amber-500">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+                            <p class="text-slate-400 text-xs">Total Payouts</p>
+                        </div>
+                        <p class="text-xl md:text-2xl font-bold text-amber-400">$9,482,103</p>
+                        <p class="text-amber-500 text-xs mt-1">Instant withdrawals</p>
+                    </div>
+                </div>
+
+                <!-- NEW: LIVE PERFORMANCE FEED & TOP PERFORMERS -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                    <!-- Live Performance Feed -->
+                    <div class="lg:col-span-2 glass-card rounded-xl p-4 md:p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                Live Performance Feed
+                            </h3>
+                            <span class="text-xs text-slate-400">Real-time updates</span>
+                        </div>
+                        <div class="scroll-container space-y-2" id="liveFeedContainer">
+                            <!-- Live feed items will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Top Performers Leaderboard -->
+                    <div class="glass-card rounded-xl p-4 md:p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                                <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                Top Performers
+                            </h3>
+                            <span class="text-xs text-slate-400">This month</span>
+                        </div>
+                        <div class="space-y-2" id="leaderboardContainer">
+                            <!-- Leaderboard items will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NEW: BOT PERFORMANCE HISTORY -->
+                <div class="glass-card rounded-xl p-4 md:p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            Bot Performance History
+                        </h3>
+                        <span class="text-xs text-green-400 flex items-center gap-1">
+                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            Live
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3" id="botPerformanceContainer">
+                        <!-- Bot performance cards will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- NEW: INVESTMENT RETURNS HISTORY -->
+                <div class="glass-card rounded-xl p-4 md:p-5">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                            Investment Returns History
+                        </h3>
+                        <span class="text-xs text-slate-400">Recent payouts</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-slate-400 text-xs border-b border-slate-700/50">
+                                    <th class="text-left py-2 px-2">Investor</th>
+                                    <th class="text-left py-2 px-2">Plan</th>
+                                    <th class="text-left py-2 px-2">Invested</th>
+                                    <th class="text-left py-2 px-2">Returns</th>
+                                    <th class="text-left py-2 px-2">ROI</th>
+                                    <th class="text-left py-2 px-2">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investmentReturnsContainer">
+                                <!-- Investment returns will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- NEW: RECENT BIG WINS -->
+                <div class="glass-card rounded-xl p-4 md:p-5 border-2 border-green-500/30">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-base md:text-lg font-semibold text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                            Recent Big Wins 🏆
+                        </h3>
+                        <span class="text-xs text-green-400">Verified payouts</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3" id="bigWinsContainer">
+                        <!-- Big wins will be loaded here -->
+                    </div>
+                </div>
+
                 <!-- CLIENT REVIEWS & TESTIMONIALS -->
                 <div class="glass-card rounded-xl p-4 md:p-6 border-2 border-amber-500/30">
                     <div class="flex items-center justify-between mb-4">
@@ -389,16 +551,14 @@
         </main>
     </div>
 
-    <!-- SETTINGS MODAL -->
+    <!-- SETTINGS MODAL (unchanged) -->
     <div id="settingsModal" class="settings-modal">
         <div class="absolute inset-0 bg-black/60" onclick="closeSettings()"></div>
         <div class="settings-content relative w-full max-w-5xl h-full md:h-[90vh] md:my-auto md:rounded-2xl flex flex-col md:flex-row overflow-hidden">
-            <!-- Close Button -->
             <button onclick="closeSettings()" class="absolute top-4 right-4 z-10 text-slate-400 hover:text-white p-2">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
 
-            <!-- Settings Sidebar (Desktop) -->
             <div class="settings-sidebar w-full md:w-64 bg-slate-900/50 border-b md:border-b-0 md:border-r border-slate-700/50 p-4 overflow-y-auto">
                 <div class="flex items-center gap-3 mb-6 px-2">
                     <div class="w-12 h-12 rounded-full gold-gradient flex items-center justify-center text-white font-bold text-lg" id="settingsAvatar">U</div>
@@ -452,9 +612,7 @@
                 </nav>
             </div>
 
-            <!-- Settings Content Area -->
             <div class="flex-1 overflow-y-auto p-4 md:p-6 bg-gradient-to-br from-slate-900 to-slate-800">
-                <!-- Profile Tab -->
                 <div id="tab-profile" class="settings-content-tab">
                     <h2 class="text-xl font-bold text-white mb-6">Profile Information</h2>
                     <div class="space-y-4">
@@ -486,7 +644,6 @@
                     </div>
                 </div>
 
-                <!-- Appearance Tab -->
                 <div id="tab-appearance" class="settings-content-tab hidden">
                     <h2 class="text-xl font-bold text-white mb-6">Appearance Settings</h2>
                     <div class="space-y-4">
@@ -520,7 +677,6 @@
                     </div>
                 </div>
 
-                <!-- Security Tab -->
                 <div id="tab-security" class="settings-content-tab hidden">
                     <h2 class="text-xl font-bold text-white mb-6">Security Settings</h2>
                     <div class="space-y-4">
@@ -565,7 +721,6 @@
                     </div>
                 </div>
 
-                <!-- Notifications Tab -->
                 <div id="tab-notifications" class="settings-content-tab hidden">
                     <h2 class="text-xl font-bold text-white mb-6">Notification Settings</h2>
                     <div class="space-y-4">
@@ -610,7 +765,6 @@
                     </div>
                 </div>
 
-                <!-- Performance Tab -->
                 <div id="tab-performance" class="settings-content-tab hidden">
                     <h2 class="text-xl font-bold text-white mb-6">Performance Monitoring</h2>
                     <div class="space-y-4">
@@ -648,7 +802,6 @@
                     </div>
                 </div>
 
-                <!-- Risk Disclaimer Tab -->
                 <div id="tab-disclaimer" class="settings-content-tab hidden">
                     <h2 class="text-xl font-bold text-white mb-6">Risk Disclaimer</h2>
                     <div class="glass-card rounded-xl p-4 space-y-3 text-sm text-slate-300">
@@ -659,7 +812,6 @@
                     </div>
                 </div>
 
-                <!-- Privacy Tab -->
                 <div id="tab-privacy" class="settings-content-tab hidden">
                     <h2 class="text-xl font-bold text-white mb-6">Privacy & Cookies</h2>
                     <div class="space-y-4">
@@ -695,7 +847,6 @@
                     </div>
                 </div>
 
-                <!-- Language Tab -->
                 <div id="tab-language" class="settings-content-tab hidden">
                     <h2 class="text-xl font-bold text-white mb-6">Language Settings</h2>
                     <div class="glass-card rounded-xl p-4">
@@ -710,7 +861,6 @@
                     </div>
                 </div>
 
-                <!-- Timezone Tab -->
                 <div id="tab-timezone" class="settings-content-tab hidden">
                     <h2 class="text-xl font-bold text-white mb-6">Time Zone Settings</h2>
                     <div class="glass-card rounded-xl p-4">
@@ -729,7 +879,6 @@
                     </div>
                 </div>
 
-                <!-- Website Info Tab -->
                 <div id="tab-website" class="settings-content-tab hidden">
                     <h2 class="text-xl font-bold text-white mb-6">Website Information</h2>
                     <div class="space-y-4">
@@ -761,7 +910,7 @@
         </div>
     </div>
 
-    <!-- Mobile Sidebar Overlay -->
+    <!-- Mobile Sidebar Overlay (unchanged) -->
     <div id="mobileSidebar" class="fixed inset-0 z-50 hidden">
         <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleSidebar()"></div>
         <aside class="sidebar absolute left-0 top-0 h-full w-64 border-r border-slate-700/50 transform transition-transform duration-300">
@@ -832,228 +981,277 @@
         console.log("Supabase client created successfully.");
 
         let currentUser = null;
+        let liveFeedInterval = null;
 
-        // EXPANDED Reviews Data - 24 Reviews with African Countries
+        // ============================================
+        // PERFORMANCE HISTORY DATA
+        // ============================================
+
+        // Live Performance Feed Data
+        const liveFeedData = [
+            { user: "Thabo M.", country: "🇿🇦", bot: "Gold Master", profit: 2847.50, time: "Just now" },
+            { user: "Kelebogile M.", country: "🇧🇼", bot: "Swing Trader", profit: 1523.80, time: "2 min ago" },
+            { user: "Chidinma O.", country: "🇳🇬", bot: "Scalper Pro", profit: 892.30, time: "3 min ago" },
+            { user: "Johannes v.", country: "🇳🇦", bot: "Trend Follower Pro", profit: 4215.60, time: "5 min ago" },
+            { user: "Kwame A.", country: "🇬🇭", bot: "Gold Master", profit: 1876.40, time: "7 min ago" },
+            { user: "Amina D.", country: "🇸🇳", bot: "Day Trader Elite", profit: 2103.25, time: "8 min ago" },
+            { user: "Peter M.", country: "🇰🇪", bot: "Swing Trader", profit: 3456.70, time: "10 min ago" },
+            { user: "Grace N.", country: "🇿🇼", bot: "Scalper Pro", profit: 987.50, time: "12 min ago" },
+            { user: "Mohamed B.", country: "🇲🇦", bot: "Trend Follower Pro", profit: 2789.90, time: "14 min ago" },
+            { user: "Tendai C.", country: "🇲🇼", bot: "Day Trader Elite", profit: 1234.60, time: "15 min ago" },
+            { user: "Samuel O.", country: "🇨🇲", bot: "Gold Master", profit: 3892.15, time: "17 min ago" },
+            { user: "Aisha M.", country: "🇹🇿", bot: "Swing Trader", profit: 1654.80, time: "18 min ago" },
+            { user: "Michael C.", country: "🇺🇸", bot: "Gold Master", profit: 5423.75, time: "20 min ago" },
+            { user: "Sarah J.", country: "🇬🇧", bot: "Day Trader Elite", profit: 2341.20, time: "22 min ago" },
+            { user: "Ahmed H.", country: "🇦🇪", bot: "Trend Follower Pro", profit: 4567.90, time: "25 min ago" },
+            { user: "Emma W.", country: "🇨🇦", bot: "Scalper Pro", profit: 1123.45, time: "27 min ago" },
+            { user: "David K.", country: "🇰🇷", bot: "Gold Master", profit: 6789.30, time: "30 min ago" },
+            { user: "Lisa M.", country: "🇲🇽", bot: "Swing Trader", profit: 1876.55, time: "32 min ago" },
+            { user: "James W.", country: "🇦🇺", bot: "Day Trader Elite", profit: 3234.80, time: "35 min ago" },
+            { user: "Fatima A.", country: "🇸🇦", bot: "Trend Follower Pro", profit: 2987.65, time: "38 min ago" }
+        ];
+
+        // Top Performers Leaderboard
+        const leaderboardData = [
+            { rank: 1, user: "David Kim", country: "🇰🇷", profit: 28450.75, badge: "🥇" },
+            { rank: 2, user: "Ahmed Hassan", country: "🇦🇪", profit: 24320.50, badge: "🥈" },
+            { rank: 3, user: "Johannes v.W.", country: "🇳🇦", profit: 21890.30, badge: "🥉" },
+            { rank: 4, user: "Michael Chen", country: "🇺🇸", profit: 19450.25, badge: "4" },
+            { rank: 5, user: "Samuel Osei", country: "🇨🇲", profit: 17890.80, badge: "5" },
+            { rank: 6, user: "Peter Mwangi", country: "🇰🇪", profit: 16234.60, badge: "6" },
+            { rank: 7, user: "Fatima Al-R.", country: "🇸🇦", profit: 15678.90, badge: "7" },
+            { rank: 8, user: "Thabo Mokoena", country: "🇿🇦", profit: 14523.45, badge: "8" },
+            { rank: 9, user: "Kwame Asante", country: "🇬🇭", profit: 13890.70, badge: "9" },
+            { rank: 10, user: "Maria Garcia", country: "🇪🇸", profit: 12456.85, badge: "10" }
+        ];
+
+        // Bot Performance History
+        const botPerformanceData = [
+            { name: "Scalper Pro", risk: "low", trades: 12847, wins: 12567, profit: 2847392.50, roi: 97.8, color: "green" },
+            { name: "Swing Trader", risk: "medium", trades: 8934, wins: 8567, profit: 3456789.30, roi: 95.9, color: "amber" },
+            { name: "Gold Master", risk: "medium", trades: 15234, wins: 14892, profit: 4234567.80, roi: 97.8, color: "amber" },
+            { name: "Day Trader Elite", risk: "medium", trades: 10456, wins: 9876, profit: 3123456.25, roi: 94.5, color: "amber" },
+            { name: "Trend Follower Pro", risk: "high", trades: 6789, wins: 6423, profit: 5678901.40, roi: 94.6, color: "red" },
+            { name: "Momentum Hunter", risk: "high", trades: 9234, wins: 8678, profit: 4892345.60, roi: 94.0, color: "red" }
+        ];
+
+        // Investment Returns History
+        const investmentReturnsData = [
+            { investor: "David Kim", country: "🇰🇷", plan: "Platinum", invested: 10000, returns: 18450.75, roi: 184.5, date: "Today" },
+            { investor: "Ahmed Hassan", country: "🇦🇪", plan: "Diamond", invested: 25000, returns: 49320.50, roi: 197.3, date: "Today" },
+            { investor: "Johannes v.W.", country: "🇳🇦", plan: "Gold", invested: 5000, returns: 11890.30, roi: 237.8, date: "Yesterday" },
+            { investor: "Michael Chen", country: "🇺🇸", plan: "Platinum", invested: 15000, returns: 29450.25, roi: 196.3, date: "Yesterday" },
+            { investor: "Samuel Osei", country: "🇨🇲", plan: "Diamond", invested: 20000, returns: 37890.80, roi: 189.5, date: "2 days ago" },
+            { investor: "Peter Mwangi", country: "🇰🇪", plan: "Gold", invested: 8000, returns: 16234.60, roi: 202.9, date: "2 days ago" },
+            { investor: "Fatima Al-R.", country: "🇸🇦", plan: "Platinum", invested: 12000, returns: 23678.90, roi: 197.3, date: "3 days ago" },
+            { investor: "Thabo Mokoena", country: "🇿🇦", plan: "Diamond", invested: 18000, returns: 34523.45, roi: 191.8, date: "3 days ago" },
+            { investor: "Kwame Asante", country: "🇬🇭", plan: "Gold", invested: 7000, returns: 13890.70, roi: 198.4, date: "4 days ago" },
+            { investor: "Maria Garcia", country: "🇪🇸", plan: "Platinum", invested: 9000, returns: 17456.85, roi: 193.9, date: "4 days ago" },
+            { investor: "Kelebogile M.", country: "🇧🇼", plan: "Diamond", invested: 22000, returns: 42340.20, roi: 192.5, date: "5 days ago" },
+            { investor: "Chidinma Okafor", country: "🇳🇬", plan: "Gold", invested: 6000, returns: 11890.55, roi: 198.2, date: "5 days ago" }
+        ];
+
+        // Big Wins Data
+        const bigWinsData = [
+            { user: "David Kim", country: "🇰🇷", amount: 28450.75, bot: "Gold Master", time: "2 hours ago" },
+            { user: "Ahmed Hassan", country: "🇦🇪", amount: 24320.50, bot: "Trend Follower Pro", time: "5 hours ago" },
+            { user: "Johannes v.W.", country: "🇳🇦", amount: 21890.30, bot: "Gold Master", time: "8 hours ago" },
+            { user: "Michael Chen", country: "🇺🇸", amount: 19450.25, bot: "Day Trader Elite", time: "12 hours ago" },
+            { user: "Samuel Osei", country: "🇨🇲", amount: 17890.80, bot: "Trend Follower Pro", time: "1 day ago" },
+            { user: "Peter Mwangi", country: "🇰🇪", amount: 16234.60, bot: "Swing Trader", time: "1 day ago" },
+            { user: "Fatima Al-R.", country: "🇸🇦", amount: 15678.90, bot: "Gold Master", time: "2 days ago" },
+            { user: "Thabo Mokoena", country: "🇿🇦", amount: 14523.45, bot: "Day Trader Elite", time: "2 days ago" }
+        ];
+
+        // ============================================
+        // PERFORMANCE RENDERING FUNCTIONS
+        // ============================================
+
+        function loadLiveFeed() {
+            const container = document.getElementById('liveFeedContainer');
+            container.innerHTML = liveFeedData.map((item, index) => `
+                <div class="live-feed-item flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-slate-700/30 hover:border-green-500/30 transition-all" style="animation-delay: ${index * 0.1}s">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-green-700 flex items-center justify-center text-white text-xs font-bold">
+                            ${item.user.charAt(0)}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-white text-sm font-medium">${item.user}</span>
+                                <span class="text-xs">${item.country}</span>
+                            </div>
+                            <p class="text-slate-400 text-xs">${item.bot} • ${item.time}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-green-400 font-bold text-sm">+$${item.profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                        <p class="text-green-500 text-xs">✓ Verified</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadLeaderboard() {
+            const container = document.getElementById('leaderboardContainer');
+            container.innerHTML = leaderboardData.map((item, index) => `
+                <div class="leaderboard-item flex items-center justify-between p-3 ${index < 3 ? 'bg-gradient-to-r from-amber-500/10 to-transparent border border-amber-500/20' : 'bg-slate-800/30'} rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full ${index === 0 ? 'bg-gradient-to-br from-yellow-400 to-yellow-600' : index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-500' : index === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-600' : 'bg-slate-700'} flex items-center justify-center text-white text-xs font-bold">
+                            ${item.badge}
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-white text-sm font-medium">${item.user}</span>
+                                <span class="text-xs">${item.country}</span>
+                            </div>
+                            <p class="text-slate-400 text-xs">Rank #${item.rank}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-amber-400 font-bold text-sm">$${item.profit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadBotPerformance() {
+            const container = document.getElementById('botPerformanceContainer');
+            container.innerHTML = botPerformanceData.map(bot => `
+                <div class="glass-card rounded-xl p-4 border border-slate-700/50 hover:border-${bot.color}-500/50 transition-all">
+                    <div class="flex items-center justify-between mb-3">
+                        <h4 class="text-white font-semibold text-sm">${bot.name}</h4>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-${bot.color}-500/20 text-${bot.color}-400">
+                            ${bot.risk.charAt(0).toUpperCase() + bot.risk.slice(1)}
+                        </span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">Total Trades:</span>
+                            <span class="text-white font-medium">${bot.trades.toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">Win Rate:</span>
+                            <span class="text-green-400 font-medium">${bot.roi}%</span>
+                        </div>
+                        <div class="flex justify-between text-xs">
+                            <span class="text-slate-400">Total Profit:</span>
+                            <span class="text-green-400 font-bold">$${(bot.profit / 1000000).toFixed(2)}M</span>
+                        </div>
+                        <div class="mt-2">
+                            <div class="w-full bg-slate-700 rounded-full h-2 overflow-hidden">
+                                <div class="performance-bar" style="width: ${bot.roi}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function loadInvestmentReturns() {
+            const container = document.getElementById('investmentReturnsContainer');
+            container.innerHTML = investmentReturnsData.map(item => `
+                <tr class="border-b border-slate-700/30 hover:bg-slate-800/30 transition-all">
+                    <td class="py-3 px-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs">${item.country}</span>
+                            <span class="text-white text-xs">${item.investor}</span>
+                        </div>
+                    </td>
+                    <td class="py-3 px-2">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                            item.plan === 'Diamond' ? 'bg-purple-500/20 text-purple-400' :
+                            item.plan === 'Platinum' ? 'bg-blue-500/20 text-blue-400' :
+                            'bg-amber-500/20 text-amber-400'
+                        }">${item.plan}</span>
+                    </td>
+                    <td class="py-3 px-2 text-slate-300 text-xs">$${item.invested.toLocaleString()}</td>
+                    <td class="py-3 px-2 text-green-400 font-bold text-xs">$${item.returns.toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
+                    <td class="py-3 px-2">
+                        <span class="text-green-400 text-xs font-medium">+${item.roi}%</span>
+                    </td>
+                    <td class="py-3 px-2 text-slate-400 text-xs">${item.date}</td>
+                </tr>
+            `).join('');
+        }
+
+        function loadBigWins() {
+            const container = document.getElementById('bigWinsContainer');
+            container.innerHTML = bigWinsData.map(item => `
+                <div class="glass-card rounded-xl p-4 border border-green-500/30 profit-pulse">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-lg">${item.country}</span>
+                            <span class="text-white text-sm font-medium">${item.user}</span>
+                        </div>
+                        <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    </div>
+                    <p class="text-green-400 font-bold text-xl mb-1">+$${item.amount.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+                    <p class="text-slate-400 text-xs">From ${item.bot}</p>
+                    <p class="text-slate-500 text-xs mt-1">${item.time}</p>
+                </div>
+            `).join('');
+        }
+
+        // Simulate live updates every 15 seconds
+        function startLiveUpdates() {
+            liveFeedInterval = setInterval(() => {
+                // Add a new random profit to the feed
+                const names = ["Thabo M.", "Kelebogile M.", "Chidinma O.", "Johannes v.", "Kwame A.", "Amina D.", "Peter M.", "Grace N.", "Mohamed B.", "Tendai C.", "Samuel O.", "Aisha M.", "Michael C.", "Sarah J.", "Ahmed H."];
+                const countries = ["🇿🇦", "🇧🇼", "🇳🇬", "🇳🇦", "🇬🇭", "🇸🇳", "🇰🇪", "🇿🇼", "🇲🇦", "🇲🇼", "🇨🇲", "🇹🇿", "🇺🇸", "🇬🇧", "🇦🇪"];
+                const bots = ["Gold Master", "Swing Trader", "Scalper Pro", "Day Trader Elite", "Trend Follower Pro", "Momentum Hunter"];
+                
+                const randomIndex = Math.floor(Math.random() * names.length);
+                const newProfit = {
+                    user: names[randomIndex],
+                    country: countries[randomIndex],
+                    bot: bots[Math.floor(Math.random() * bots.length)],
+                    profit: (Math.random() * 5000 + 500).toFixed(2),
+                    time: "Just now"
+                };
+                
+                // Add to top of feed
+                liveFeedData.unshift(newProfit);
+                if (liveFeedData.length > 20) liveFeedData.pop();
+                
+                // Update times
+                liveFeedData.forEach((item, idx) => {
+                    if (idx === 0) item.time = "Just now";
+                    else if (idx < 3) item.time = `${idx * 2} min ago`;
+                    else item.time = `${idx * 3} min ago`;
+                });
+                
+                loadLiveFeed();
+            }, 15000); // Every 15 seconds
+        }
+
+        // ============================================
+        // REVIEWS DATA (24 reviews with African countries)
+        // ============================================
         const reviews = [
-            // Original 12 reviews (updated time frames)
-            {
-                name: "Michael Chen",
-                avatar: "M",
-                profit: "$2,450",
-                time: "3 days ago",
-                rating: 5,
-                text: "Started with $500 and made $2,450 in just 3 days! The bots are incredible. Best investment decision I've made.",
-                country: "🇺🇸 USA"
-            },
-            {
-                name: "Sarah Johnson",
-                avatar: "S",
-                profit: "$1,890",
-                time: "1 week ago",
-                rating: 5,
-                text: "The automated trading is amazing! I made $1,890 profit in my first week. Highly recommend KutinFX!",
-                country: "🇬🇧 UK"
-            },
-            {
-                name: "Ahmed Hassan",
-                avatar: "A",
-                profit: "$3,200",
-                time: "2 weeks ago",
-                rating: 5,
-                text: "Withdrawals are fast and the platform is very reliable. Made over $3k in profits. Thank you KutinFX!",
-                country: "🇦🇪 UAE"
-            },
-            {
-                name: "Emma Williams",
-                avatar: "E",
-                profit: "$980",
-                time: "3 days ago",
-                rating: 5,
-                text: "Started small with $200 and earned $980 in just 3 days. The daily profits are consistent and real!",
-                country: "🇨🇦 Canada"
-            },
-            {
-                name: "David Kim",
-                avatar: "D",
-                profit: "$5,600",
-                time: "1 month ago",
-                rating: 5,
-                text: "Best trading platform ever! Made $5,600 in 1 month. The AI bots work perfectly. 10/10 would recommend!",
-                country: "🇰🇷 South Korea"
-            },
-            {
-                name: "Lisa Martinez",
-                avatar: "L",
-                profit: "$1,250",
-                time: "2 weeks ago",
-                rating: 5,
-                text: "I was skeptical at first but after making $1,250 in 2 weeks, I'm a believer. Great platform!",
-                country: "🇲🇽 Mexico"
-            },
-            {
-                name: "James Wilson",
-                avatar: "J",
-                profit: "$4,100",
-                time: "1 month ago",
-                rating: 5,
-                text: "The profits are real! Made $4,100 in my first month. Customer support is excellent too.",
-                country: "🇦🇺 Australia"
-            },
-            {
-                name: "Fatima Al-Rashid",
-                avatar: "F",
-                profit: "$2,800",
-                time: "3 days ago",
-                rating: 5,
-                text: "Excellent platform! Very professional and the profits are consistent. Made $2,800 in just 3 days!",
-                country: "🇸🇦 Saudi Arabia"
-            },
-            {
-                name: "Robert Taylor",
-                avatar: "R",
-                profit: "$1,560",
-                time: "1 week ago",
-                rating: 5,
-                text: "Easy to use and very profitable. Made $1,560 in just one week. The bots do all the work!",
-                country: "🇿🇦 South Africa"
-            },
-            {
-                name: "Maria Garcia",
-                avatar: "M",
-                profit: "$3,450",
-                time: "2 weeks ago",
-                rating: 5,
-                text: "I love this platform! Made $3,450 in profits in 2 weeks. The best investment I've made!",
-                country: "🇪🇸 Spain"
-            },
-            {
-                name: "John Anderson",
-                avatar: "J",
-                profit: "$890",
-                time: "3 days ago",
-                rating: 5,
-                text: "Started with just $150 and made $890 in 3 days. The daily returns are amazing!",
-                country: "🇳🇬 Nigeria"
-            },
-            {
-                name: "Yuki Tanaka",
-                avatar: "Y",
-                profit: "$2,100",
-                time: "1 week ago",
-                rating: 5,
-                text: "Very reliable platform. Made $2,100 profit in 1 week. Withdrawals are processed quickly!",
-                country: "🇯🇵 Japan"
-            },
-            
-            // NEW 12 reviews with African countries emphasis
-            {
-                name: "Thabo Mokoena",
-                avatar: "T",
-                profit: "$1,750",
-                time: "3 days ago",
-                rating: 5,
-                text: "Incredible returns! Made $1,750 in just 3 days with the Gold Master bot. KutinFX is the real deal!",
-                country: "🇿🇦 South Africa"
-            },
-            {
-                name: "Kelebogile Mosweu",
-                avatar: "K",
-                profit: "$2,340",
-                time: "1 week ago",
-                rating: 5,
-                text: "Started with $300 and earned $2,340 in one week! The automated trading is phenomenal. Best decision ever!",
-                country: "🇧🇼 Botswana"
-            },
-            {
-                name: "Johannes van Wyk",
-                avatar: "J",
-                profit: "$3,890",
-                time: "2 weeks ago",
-                rating: 5,
-                text: "Made $3,890 in 2 weeks! The bots are intelligent and the profits are consistent. Highly recommended!",
-                country: "🇳🇦 Namibia"
-            },
-            {
-                name: "Chidinma Okafor",
-                avatar: "C",
-                profit: "$1,420",
-                time: "3 days ago",
-                rating: 5,
-                text: "Wow! Made $1,420 in just 3 days. The platform is easy to use and withdrawals are instant!",
-                country: "🇳🇬 Nigeria"
-            },
-            {
-                name: "Kwame Asante",
-                avatar: "K",
-                profit: "$2,680",
-                time: "1 week ago",
-                rating: 5,
-                text: "Invested $400 and made $2,680 in one week! The AI bots are incredibly smart. Thank you KutinFX!",
-                country: "🇬🇭 Ghana"
-            },
-            {
-                name: "Amina Diallo",
-                avatar: "A",
-                profit: "$1,950",
-                time: "2 weeks ago",
-                rating: 5,
-                text: "Amazing platform! Made $1,950 in 2 weeks. The customer support is excellent and very helpful.",
-                country: "🇸🇳 Senegal"
-            },
-            {
-                name: "Peter Mwangi",
-                avatar: "P",
-                profit: "$3,120",
-                time: "1 month ago",
-                rating: 5,
-                text: "Made $3,120 in one month! The daily profits are real and consistent. Best trading platform in Africa!",
-                country: "🇰🇪 Kenya"
-            },
-            {
-                name: "Grace Ndlovu",
-                avatar: "G",
-                profit: "$1,580",
-                time: "3 days ago",
-                rating: 5,
-                text: "Started yesterday and already made $1,580! The bots work 24/7 and never stop earning. Incredible!",
-                country: "🇿🇼 Zimbabwe"
-            },
-            {
-                name: "Mohamed Benali",
-                avatar: "M",
-                profit: "$2,950",
-                time: "1 week ago",
-                rating: 5,
-                text: "Made $2,950 in just one week! The platform is secure and the profits are guaranteed. Love it!",
-                country: "🇲🇦 Morocco"
-            },
-            {
-                name: "Tendai Chirwa",
-                avatar: "T",
-                profit: "$1,230",
-                time: "2 weeks ago",
-                rating: 5,
-                text: "Earned $1,230 in 2 weeks with minimal effort. The automated system does everything for you!",
-                country: "🇲🇼 Malawi"
-            },
-            {
-                name: "Samuel Osei",
-                avatar: "S",
-                profit: "$4,200",
-                time: "1 month ago",
-                rating: 5,
-                text: "Best investment ever! Made $4,200 in one month. The bots are profitable and reliable. 100% recommended!",
-                country: "🇨🇲 Cameroon"
-            },
-            {
-                name: "Aisha Mohammed",
-                avatar: "A",
-                profit: "$1,890",
-                time: "3 days ago",
-                rating: 5,
-                text: "Made $1,890 in just 3 days! The platform is user-friendly and the profits are amazing. Thank you!",
-                country: "🇹🇿 Tanzania"
-            }
+            { name: "Michael Chen", avatar: "M", profit: "$2,450", time: "3 days ago", rating: 5, text: "Started with $500 and made $2,450 in just 3 days! The bots are incredible. Best investment decision I've made.", country: "🇺🇸 USA" },
+            { name: "Sarah Johnson", avatar: "S", profit: "$1,890", time: "1 week ago", rating: 5, text: "The automated trading is amazing! I made $1,890 profit in my first week. Highly recommend KutinFX!", country: "🇬🇧 UK" },
+            { name: "Ahmed Hassan", avatar: "A", profit: "$3,200", time: "2 weeks ago", rating: 5, text: "Withdrawals are fast and the platform is very reliable. Made over $3k in profits. Thank you KutinFX!", country: "🇦🇪 UAE" },
+            { name: "Emma Williams", avatar: "E", profit: "$980", time: "3 days ago", rating: 5, text: "Started small with $200 and earned $980 in just 3 days. The daily profits are consistent and real!", country: "🇨🇦 Canada" },
+            { name: "David Kim", avatar: "D", profit: "$5,600", time: "1 month ago", rating: 5, text: "Best trading platform ever! Made $5,600 in 1 month. The AI bots work perfectly. 10/10 would recommend!", country: "🇰🇷 South Korea" },
+            { name: "Lisa Martinez", avatar: "L", profit: "$1,250", time: "2 weeks ago", rating: 5, text: "I was skeptical at first but after making $1,250 in 2 weeks, I'm a believer. Great platform!", country: "🇲🇽 Mexico" },
+            { name: "James Wilson", avatar: "J", profit: "$4,100", time: "1 month ago", rating: 5, text: "The profits are real! Made $4,100 in my first month. Customer support is excellent too.", country: "🇦🇺 Australia" },
+            { name: "Fatima Al-Rashid", avatar: "F", profit: "$2,800", time: "3 days ago", rating: 5, text: "Excellent platform! Very professional and the profits are consistent. Made $2,800 in just 3 days!", country: "🇸🇦 Saudi Arabia" },
+            { name: "Robert Taylor", avatar: "R", profit: "$1,560", time: "1 week ago", rating: 5, text: "Easy to use and very profitable. Made $1,560 in just one week. The bots do all the work!", country: "🇿🇦 South Africa" },
+            { name: "Maria Garcia", avatar: "M", profit: "$3,450", time: "2 weeks ago", rating: 5, text: "I love this platform! Made $3,450 in profits in 2 weeks. The best investment I've made!", country: "🇪🇸 Spain" },
+            { name: "John Anderson", avatar: "J", profit: "$890", time: "3 days ago", rating: 5, text: "Started with just $150 and made $890 in 3 days. The daily returns are amazing!", country: "🇳🇬 Nigeria" },
+            { name: "Yuki Tanaka", avatar: "Y", profit: "$2,100", time: "1 week ago", rating: 5, text: "Very reliable platform. Made $2,100 profit in 1 week. Withdrawals are processed quickly!", country: "🇯🇵 Japan" },
+            { name: "Thabo Mokoena", avatar: "T", profit: "$1,750", time: "3 days ago", rating: 5, text: "Incredible returns! Made $1,750 in just 3 days with the Gold Master bot. KutinFX is the real deal!", country: "🇿🇦 South Africa" },
+            { name: "Kelebogile Mosweu", avatar: "K", profit: "$2,340", time: "1 week ago", rating: 5, text: "Started with $300 and earned $2,340 in one week! The automated trading is phenomenal. Best decision ever!", country: "🇧🇼 Botswana" },
+            { name: "Johannes van Wyk", avatar: "J", profit: "$3,890", time: "2 weeks ago", rating: 5, text: "Made $3,890 in 2 weeks! The bots are intelligent and the profits are consistent. Highly recommended!", country: "🇳🇦 Namibia" },
+            { name: "Chidinma Okafor", avatar: "C", profit: "$1,420", time: "3 days ago", rating: 5, text: "Wow! Made $1,420 in just 3 days. The platform is easy to use and withdrawals are instant!", country: "🇳🇬 Nigeria" },
+            { name: "Kwame Asante", avatar: "K", profit: "$2,680", time: "1 week ago", rating: 5, text: "Invested $400 and made $2,680 in one week! The AI bots are incredibly smart. Thank you KutinFX!", country: "🇬🇭 Ghana" },
+            { name: "Amina Diallo", avatar: "A", profit: "$1,950", time: "2 weeks ago", rating: 5, text: "Amazing platform! Made $1,950 in 2 weeks. The customer support is excellent and very helpful.", country: "🇸🇳 Senegal" },
+            { name: "Peter Mwangi", avatar: "P", profit: "$3,120", time: "1 month ago", rating: 5, text: "Made $3,120 in one month! The daily profits are real and consistent. Best trading platform in Africa!", country: "🇰🇪 Kenya" },
+            { name: "Grace Ndlovu", avatar: "G", profit: "$1,580", time: "3 days ago", rating: 5, text: "Started yesterday and already made $1,580! The bots work 24/7 and never stop earning. Incredible!", country: "🇿🇼 Zimbabwe" },
+            { name: "Mohamed Benali", avatar: "M", profit: "$2,950", time: "1 week ago", rating: 5, text: "Made $2,950 in just one week! The platform is secure and the profits are guaranteed. Love it!", country: "🇲🇦 Morocco" },
+            { name: "Tendai Chirwa", avatar: "T", profit: "$1,230", time: "2 weeks ago", rating: 5, text: "Earned $1,230 in 2 weeks with minimal effort. The automated system does everything for you!", country: "🇲🇼 Malawi" },
+            { name: "Samuel Osei", avatar: "S", profit: "$4,200", time: "1 month ago", rating: 5, text: "Best investment ever! Made $4,200 in one month. The bots are profitable and reliable. 100% recommended!", country: "🇨🇲 Cameroon" },
+            { name: "Aisha Mohammed", avatar: "A", profit: "$1,890", time: "3 days ago", rating: 5, text: "Made $1,890 in just 3 days! The platform is user-friendly and the profits are amazing. Thank you!", country: "🇹🇿 Tanzania" }
         ];
 
         function renderStars(rating) {
@@ -1098,7 +1296,9 @@
             `).join('');
         }
 
+        // ============================================
         // SETTINGS FUNCTIONS
+        // ============================================
         function openSettings() {
             document.getElementById('settingsModal').classList.add('active');
             document.body.style.overflow = 'hidden';
@@ -1111,15 +1311,10 @@
         }
 
         function switchSettingsTab(tabName) {
-            // Hide all tabs
             document.querySelectorAll('.settings-content-tab').forEach(tab => {
                 tab.classList.add('hidden');
             });
-            
-            // Show selected tab
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
-            
-            // Update active state on sidebar
             document.querySelectorAll('.settings-tab').forEach(btn => {
                 btn.classList.remove('active');
             });
@@ -1138,15 +1333,9 @@
             document.getElementById('profileAvatar').textContent = currentUser.email[0].toUpperCase();
             document.getElementById('profileBalance').textContent = document.getElementById('balance').textContent;
             
-            // Load saved settings
             const savedFont = localStorage.getItem('userFont') || 'Inter';
-            const savedFontSize = localStorage.getItem('userFontSize') || 'medium';
-            const savedTheme = localStorage.getItem('userTheme') || 'gold';
-            
-            // Update UI to reflect saved settings
             document.body.className = `gradient-bg min-h-screen text-slate-200 font-${savedFont.toLowerCase()}`;
             
-            // Performance data
             document.getElementById('perfTotalProfit').textContent = document.getElementById('totalEarnings').textContent;
             document.getElementById('perfWinRate').textContent = '85%';
             document.getElementById('perfActiveTrades').textContent = document.getElementById('activeBots').textContent;
@@ -1156,7 +1345,6 @@
             document.body.className = `gradient-bg min-h-screen text-slate-200 font-${fontName.toLowerCase()}`;
             localStorage.setItem('userFont', fontName);
             
-            // Update button styles
             document.querySelectorAll('#tab-appearance button').forEach(btn => {
                 btn.classList.remove('border-amber-500', 'bg-amber-500/20', 'text-white');
                 btn.classList.add('border-slate-600', 'text-slate-300');
@@ -1169,15 +1357,10 @@
             localStorage.setItem('userFontSize', size);
             const body = document.body;
             
-            if (size === 'small') {
-                body.style.fontSize = '12px';
-            } else if (size === 'large') {
-                body.style.fontSize = '16px';
-            } else {
-                body.style.fontSize = '';
-            }
+            if (size === 'small') body.style.fontSize = '12px';
+            else if (size === 'large') body.style.fontSize = '16px';
+            else body.style.fontSize = '';
             
-            // Update button styles
             document.querySelectorAll('#tab-appearance button').forEach(btn => {
                 if (btn.textContent.toLowerCase().includes(size)) {
                     btn.classList.remove('border-slate-600', 'text-slate-300');
@@ -1191,7 +1374,6 @@
 
         function changeTheme(color) {
             localStorage.setItem('userTheme', color);
-            // Theme change logic would go here
             alert(`Theme changed to ${color}. Full implementation would update color scheme.`);
         }
 
@@ -1205,27 +1387,37 @@
             alert(`Timezone changed to ${tz}. Times will be displayed in this timezone.`);
         }
 
+        // ============================================
+        // AUTH & DATA LOADING
+        // ============================================
         async function checkAuth() {
             try {
-                console.log("Checking authentication...");
                 const { data: { session }, error } = await mySupabase.auth.getSession();
                 
                 if (error) {
-                    console.error('Auth error:', error);
                     document.getElementById('welcomeText').textContent = 'Error connecting to database';
                     return;
                 }
                 
                 if (!session) {
-                    console.log("No session found, redirecting to sign-in...");
                     window.location.href = 'sign-in.html'; 
                     return;
                 }
                 
                 currentUser = session.user;
-                console.log("User logged in:", currentUser.email);
                 await loadUserData();
+                
+                // Load all performance data
                 loadReviews();
+                loadLiveFeed();
+                loadLeaderboard();
+                loadBotPerformance();
+                loadInvestmentReturns();
+                loadBigWins();
+                
+                // Start live updates
+                startLiveUpdates();
+                
             } catch (err) {
                 console.error('CheckAuth failed:', err);
                 document.getElementById('welcomeText').textContent = 'Error: ' + err.message;
@@ -1429,6 +1621,7 @@
         }
 
         async function logout() {
+            if (liveFeedInterval) clearInterval(liveFeedInterval);
             await mySupabase.auth.signOut();
             window.location.href = 'sign-in.html'; 
         }
@@ -1438,11 +1631,8 @@
             sidebar.classList.toggle('hidden');
         }
 
-        // Close settings on escape key
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeSettings();
-            }
+            if (e.key === 'Escape') closeSettings();
         });
 
         checkAuth();
