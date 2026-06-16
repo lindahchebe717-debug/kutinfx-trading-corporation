@@ -15,7 +15,9 @@
         .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; }
         .input-dark:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); outline: none; }
         .crypto-option { transition: all 0.2s ease; cursor: pointer; border: 1px solid rgba(245, 158, 11, 0.2); }
-        .crypto-option:hover, .crypto-option.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .crypto-option:hover { border-color: #f59e0b; background: rgba(245, 158, 11, 0.05); transform: translateY(-2px); }
+        .crypto-option.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.15); box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.2); }
+        .crypto-option.selected:hover { transform: translateY(0); }
     </style>
 </head>
 <body class="gradient-bg min-h-screen flex items-center justify-center p-4">
@@ -54,7 +56,7 @@
                 <!-- Payment Method -->
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-3">Select Payment Method</label>
-                    <div class="grid grid-cols-3 gap-3">
+                    <div class="grid grid-cols-3 gap-3" id="cryptoOptions">
                         <div class="crypto-option selected rounded-xl p-3 text-center" data-method="USDT (TRC20)" data-address="TXYZ1234567890abcdef1234567890abcdef">
                             <div class="text-2xl mb-1">💲</div>
                             <div class="text-white text-sm font-medium">USDT</div>
@@ -135,18 +137,54 @@
             if (profile) {
                 document.getElementById('currentBalance').textContent = `$${(profile.balance || 0).toFixed(2)}`;
             }
-        }
-        init();
 
-        // Crypto Selection Logic
-        document.querySelectorAll('.crypto-option').forEach(option => {
-            option.addEventListener('click', function() {
-                document.querySelectorAll('.crypto-option').forEach(o => o.classList.remove('selected'));
-                this.classList.add('selected');
-                document.getElementById('walletAddress').value = this.dataset.address;
-                document.getElementById('selectedMethod').value = this.dataset.method;
+            // Initialize crypto selection after DOM is ready
+            initializeCryptoSelection();
+        }
+
+        // Crypto Selection Logic - Fixed Version
+        function initializeCryptoSelection() {
+            console.log('Initializing crypto selection...');
+            
+            const cryptoOptions = document.querySelectorAll('.crypto-option');
+            console.log(`Found ${cryptoOptions.length} crypto options`);
+            
+            cryptoOptions.forEach((option, index) => {
+                console.log(`Setting up option ${index}:`, option.dataset.method);
+                
+                option.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    console.log('Crypto option clicked:', this.dataset.method);
+                    
+                    // Remove selected class from all options
+                    cryptoOptions.forEach(o => {
+                        o.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    this.classList.add('selected');
+                    
+                    // Update wallet address
+                    const newAddress = this.dataset.address;
+                    const newMethod = this.dataset.method;
+                    
+                    console.log('Updating address to:', newAddress);
+                    console.log('Updating method to:', newMethod);
+                    
+                    document.getElementById('walletAddress').value = newAddress;
+                    document.getElementById('selectedMethod').value = newMethod;
+                    
+                    // Visual feedback
+                    const addressInput = document.getElementById('walletAddress');
+                    addressInput.style.borderColor = '#f59e0b';
+                    setTimeout(() => {
+                        addressInput.style.borderColor = '';
+                    }, 500);
+                });
             });
-        });
+        }
 
         // Copy Address
         function copyAddress() {
@@ -222,6 +260,13 @@
                 btn.disabled = false;
                 btn.classList.remove('opacity-75', 'cursor-not-allowed');
             }
+        }
+
+        // Initialize when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
         }
     </script>
 </body>
