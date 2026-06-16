@@ -12,7 +12,7 @@
         .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
         .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
         .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
-        .sidebar { background: rgba(15, 23, 42, 0.95); }
+        .sidebar { background: rgba(15, 23, 42, 0.95); overflow-y: auto; }
         .nav-item { transition: all 0.3s ease; }
         .nav-item:hover, .nav-item.active { background: rgba(245, 158, 11, 0.15); border-right: 3px solid #f59e0b; color: white; }
         .tab-content { display: none; }
@@ -30,6 +30,11 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        .sidebar::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
+        .sub-nav-item { transition: all 0.2s ease; font-size: 0.875rem; }
+        .sub-nav-item:hover, .sub-nav-item.active { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -59,7 +64,7 @@
         </div>
     </div>
 
-    <!-- NEW: Add Funds Modal -->
+    <!-- Add Funds Modal -->
     <div id="addFundsModal" class="modal">
         <div class="glass-card rounded-2xl p-6 max-w-md w-full mx-4">
             <div class="flex justify-between items-center mb-4">
@@ -106,40 +111,60 @@
                 <h1 class="text-2xl font-bold text-white"><span class="text-red-500">Admin</span> Panel</h1>
                 <p class="text-slate-500 text-xs mt-1">KutinFX Management</p>
             </div>
-            <nav class="mt-6 space-y-1">
-                <button onclick="switchTab('dashboard')" class="nav-item active w-full flex items-center px-6 py-3 text-white text-left">
+            <nav class="mt-2 space-y-1 pb-20">
+                <button onclick="switchTab('dashboard')" class="nav-item active w-full flex items-center px-6 py-2.5 text-white text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                     Dashboard
                 </button>
-                <button onclick="switchTab('users')" class="nav-item w-full flex items-center px-6 py-3 text-slate-400 hover:text-white text-left">
+                <button onclick="switchTab('users')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     Users
                 </button>
-                <button onclick="switchTab('transactions')" class="nav-item w-full flex items-center px-6 py-3 text-slate-400 hover:text-white text-left">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                    Transactions
+                <button onclick="switchTab('finance')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Finance
                 </button>
-                <button onclick="switchTab('kyc')" class="nav-item w-full flex items-center px-6 py-3 text-slate-400 hover:text-white text-left">
-                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                    KYC Verifications
+                <button onclick="switchTab('investments')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                    Investments
                 </button>
-                <button onclick="switchTab('support')" class="nav-item w-full flex items-center px-6 py-3 text-slate-400 hover:text-white text-left">
+                <button onclick="switchTab('agents')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                    Agents
+                </button>
+                <button onclick="switchTab('marketing')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                    Marketing
+                </button>
+                <button onclick="switchTab('reports')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                    Reports
+                </button>
+                <button onclick="switchTab('support')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
-                    Support Tickets
+                    Support
                     <span id="supportBadge" class="ml-auto px-2 py-0.5 bg-red-500 text-white text-xs rounded-full hidden">0</span>
                 </button>
-                <button onclick="switchTab('livechat')" class="nav-item w-full flex items-center px-6 py-3 text-slate-400 hover:text-white text-left">
+                <button onclick="switchTab('livechat')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                     Live Chat
                     <span class="w-2 h-2 bg-green-500 rounded-full ml-auto animate-pulse"></span>
                 </button>
+                <button onclick="switchTab('security')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    Security
+                </button>
+                <button onclick="switchTab('settings')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                    Settings
+                </button>
             </nav>
-            <div class="absolute bottom-0 w-full p-4 border-t border-slate-700/50">
-                <a href="dashboard.html" class="w-full flex items-center px-4 py-3 text-amber-500 hover:text-amber-400">
+            <div class="absolute bottom-0 w-full p-4 border-t border-slate-700/50 bg-[#0f172a]">
+                <a href="dashboard.html" class="w-full flex items-center px-4 py-2 text-amber-500 hover:text-amber-400 text-sm">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
                     Back to Site
                 </a>
-                <button onclick="logout()" class="w-full flex items-center px-4 py-3 text-red-400 hover:text-red-300 mt-2">
+                <button onclick="logout()" class="w-full flex items-center px-4 py-2 text-red-400 hover:text-red-300 text-sm mt-1">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                     Logout
                 </button>
@@ -206,7 +231,358 @@
                 </div>
             </div>
 
-            <!-- TRANSACTIONS TAB -->
+            <!-- FINANCE TAB -->
+            <div id="finance" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-green-500">
+                        <p class="text-slate-400 text-sm">Total Deposits</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1" id="finance-totalDeposits">$0</p>
+                        <p class="text-xs text-slate-500 mt-1" id="finance-depositCount">0 transactions</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-red-500">
+                        <p class="text-slate-400 text-sm">Total Withdrawals</p>
+                        <p class="text-2xl font-bold text-red-400 mt-1" id="finance-totalWithdrawals">$0</p>
+                        <p class="text-xs text-slate-500 mt-1" id="finance-withdrawalCount">0 transactions</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-amber-500">
+                        <p class="text-slate-400 text-sm">Pending Volume</p>
+                        <p class="text-2xl font-bold text-amber-400 mt-1" id="finance-pendingVolume">$0</p>
+                        <p class="text-xs text-slate-500 mt-1">Awaiting approval</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-blue-500">
+                        <p class="text-slate-400 text-sm">Net Flow</p>
+                        <p class="text-2xl font-bold text-blue-400 mt-1" id="finance-netFlow">$0</p>
+                        <p class="text-xs text-slate-500 mt-1">Deposits - Withdrawals</p>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-slate-700/50 flex flex-wrap gap-2 justify-between items-center">
+                        <h3 class="text-lg font-semibold text-white">All Transactions</h3>
+                        <div class="flex gap-2">
+                            <select id="financeFilterType" onchange="loadFinance()" class="input-dark px-3 py-1.5 rounded-lg text-sm">
+                                <option value="all" class="bg-slate-800">All Types</option>
+                                <option value="deposit" class="bg-slate-800">Deposits</option>
+                                <option value="withdrawal" class="bg-slate-800">Withdrawals</option>
+                            </select>
+                            <select id="financeFilterStatus" onchange="loadFinance()" class="input-dark px-3 py-1.5 rounded-lg text-sm">
+                                <option value="all" class="bg-slate-800">All Status</option>
+                                <option value="pending" class="bg-slate-800">Pending</option>
+                                <option value="approved" class="bg-slate-800">Approved</option>
+                                <option value="rejected" class="bg-slate-800">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-800/50 text-slate-400">
+                                <tr>
+                                    <th class="p-4">Date</th>
+                                    <th class="p-4">User</th>
+                                    <th class="p-4">Type</th>
+                                    <th class="p-4">Amount</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="financeTableBody" class="divide-y divide-slate-700/50">
+                                <tr><td colspan="6" class="p-8 text-center text-slate-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INVESTMENTS TAB -->
+            <div id="investments" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-purple-500">
+                        <p class="text-slate-400 text-sm">Active Investments</p>
+                        <p class="text-2xl font-bold text-purple-400 mt-1" id="invest-activeCount">0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-amber-500">
+                        <p class="text-slate-400 text-sm">Total Invested</p>
+                        <p class="text-2xl font-bold text-amber-400 mt-1" id="invest-totalAmount">$0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-green-500">
+                        <p class="text-slate-400 text-sm">Total Returns</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1" id="invest-totalReturns">$0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-blue-500">
+                        <p class="text-slate-400 text-sm">Available Plans</p>
+                        <p class="text-2xl font-bold text-blue-400 mt-1" id="invest-planCount">0</p>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-slate-700/50">
+                        <h3 class="text-lg font-semibold text-white">Investment Plans</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-800/50 text-slate-400">
+                                <tr>
+                                    <th class="p-4">Plan Name</th>
+                                    <th class="p-4">Min Deposit</th>
+                                    <th class="p-4">Daily ROI</th>
+                                    <th class="p-4">Duration</th>
+                                    <th class="p-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="investPlansTableBody" class="divide-y divide-slate-700/50">
+                                <tr><td colspan="5" class="p-8 text-center text-slate-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-slate-700/50">
+                        <h3 class="text-lg font-semibold text-white">Active User Investments</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-800/50 text-slate-400">
+                                <tr>
+                                    <th class="p-4">User</th>
+                                    <th class="p-4">Plan</th>
+                                    <th class="p-4">Amount</th>
+                                    <th class="p-4">Start Date</th>
+                                    <th class="p-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userInvestmentsTableBody" class="divide-y divide-slate-700/50">
+                                <tr><td colspan="5" class="p-8 text-center text-slate-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AGENTS TAB -->
+            <div id="agents" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-purple-500">
+                        <p class="text-slate-400 text-sm">Total Agents</p>
+                        <p class="text-2xl font-bold text-purple-400 mt-1" id="agents-totalCount">0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-blue-500">
+                        <p class="text-slate-400 text-sm">Total Referrals</p>
+                        <p class="text-2xl font-bold text-blue-400 mt-1" id="agents-totalReferrals">0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-green-500">
+                        <p class="text-slate-400 text-sm">Commissions Paid</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1" id="agents-totalCommissions">$0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-amber-500">
+                        <p class="text-slate-400 text-sm">Top Agent Earnings</p>
+                        <p class="text-2xl font-bold text-amber-400 mt-1" id="agents-topEarnings">$0</p>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-slate-700/50">
+                        <h3 class="text-lg font-semibold text-white">Agents & Referral Performance</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-800/50 text-slate-400">
+                                <tr>
+                                    <th class="p-4">Agent</th>
+                                    <th class="p-4">Referral Code</th>
+                                    <th class="p-4">Referrals</th>
+                                    <th class="p-4">Commissions</th>
+                                    <th class="p-4">Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody id="agentsTableBody" class="divide-y divide-slate-700/50">
+                                <tr><td colspan="5" class="p-8 text-center text-slate-500">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MARKETING TAB -->
+            <div id="marketing" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-pink-500">
+                        <p class="text-slate-400 text-sm">Active Promotions</p>
+                        <p class="text-2xl font-bold text-pink-400 mt-1">3</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-amber-500">
+                        <p class="text-slate-400 text-sm">Active Bonuses</p>
+                        <p class="text-2xl font-bold text-amber-400 mt-1">2</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-blue-500">
+                        <p class="text-slate-400 text-sm">Announcements</p>
+                        <p class="text-2xl font-bold text-blue-400 mt-1">5</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-green-500">
+                        <p class="text-slate-400 text-sm">Campaign Reach</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1">12.4K</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">🎁 Active Promotions</h3>
+                        <div class="space-y-3">
+                            <div class="bg-slate-800/50 rounded-lg p-4 border-l-4 border-green-500">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="text-white font-semibold">Welcome Bonus</h4>
+                                        <p class="text-slate-400 text-sm mt-1">$50 bonus on first deposit of $500+</p>
+                                    </div>
+                                    <span class="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded">Active</span>
+                                </div>
+                                <p class="text-slate-500 text-xs mt-2">Started: Jan 1, 2025 • Expires: Mar 31, 2025</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-lg p-4 border-l-4 border-amber-500">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="text-white font-semibold">Referral Boost</h4>
+                                        <p class="text-slate-400 text-sm mt-1">Double commissions ($20) this month</p>
+                                    </div>
+                                    <span class="px-2 py-1 bg-amber-500/20 text-amber-400 text-xs rounded">Active</span>
+                                </div>
+                                <p class="text-slate-500 text-xs mt-2">Started: Jan 15, 2025 • Expires: Feb 15, 2025</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-lg p-4 border-l-4 border-purple-500">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="text-white font-semibold">VIP Deposit Match</h4>
+                                        <p class="text-slate-400 text-sm mt-1">10% bonus on deposits over $5,000</p>
+                                    </div>
+                                    <span class="px-2 py-1 bg-purple-500/20 text-purple-400 text-xs rounded">Active</span>
+                                </div>
+                                <p class="text-slate-500 text-xs mt-2">Ongoing promotion</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">📢 Recent Announcements</h3>
+                        <div class="space-y-3">
+                            <div class="bg-slate-800/50 rounded-lg p-4">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="text-white font-semibold">New Trading Bot Released</h4>
+                                    <span class="text-slate-500 text-xs">2 hours ago</span>
+                                </div>
+                                <p class="text-slate-400 text-sm mt-1">Gold Master Pro bot is now available with 5% daily ROI.</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-lg p-4">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="text-white font-semibold">System Maintenance</h4>
+                                    <span class="text-slate-500 text-xs">1 day ago</span>
+                                </div>
+                                <p class="text-slate-400 text-sm mt-1">Scheduled maintenance completed. All systems operational.</p>
+                            </div>
+                            <div class="bg-slate-800/50 rounded-lg p-4">
+                                <div class="flex justify-between items-start">
+                                    <h4 class="text-white font-semibold">Withdrawal Speed Up</h4>
+                                    <span class="text-slate-500 text-xs">3 days ago</span>
+                                </div>
+                                <p class="text-slate-400 text-sm mt-1">Withdrawals now processed within 1 hour instead of 24 hours.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REPORTS TAB -->
+            <div id="reports" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-green-500">
+                        <p class="text-slate-400 text-sm">Total Revenue</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1" id="report-revenue">$0</p>
+                        <p class="text-xs text-green-500 mt-1">↑ All time</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-blue-500">
+                        <p class="text-slate-400 text-sm">Active Users</p>
+                        <p class="text-2xl font-bold text-blue-400 mt-1" id="report-activeUsers">0</p>
+                        <p class="text-xs text-slate-500 mt-1">Last 30 days</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-amber-500">
+                        <p class="text-slate-400 text-sm">Avg. Deposit</p>
+                        <p class="text-2xl font-bold text-amber-400 mt-1" id="report-avgDeposit">$0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-purple-500">
+                        <p class="text-slate-400 text-sm">Success Rate</p>
+                        <p class="text-2xl font-bold text-purple-400 mt-1" id="report-successRate">0%</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">📊 Financial Summary</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                                <span class="text-slate-400">Total Deposits (All Time)</span>
+                                <span class="text-green-400 font-bold" id="report-totalDep">$0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                                <span class="text-slate-400">Total Withdrawals (All Time)</span>
+                                <span class="text-red-400 font-bold" id="report-totalWith">$0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                                <span class="text-slate-400">Pending Transactions</span>
+                                <span class="text-amber-400 font-bold" id="report-pendingTx">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                                <span class="text-slate-400">Rejected Transactions</span>
+                                <span class="text-red-400 font-bold" id="report-rejectedTx">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">👥 User Statistics</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                                <span class="text-slate-400">Total Registered Users</span>
+                                <span class="text-white font-bold" id="report-totalUsers">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                                <span class="text-slate-400">Verified (KYC)</span>
+                                <span class="text-green-400 font-bold" id="report-verifiedUsers">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                                <span class="text-slate-400">Pending KYC</span>
+                                <span class="text-amber-400 font-bold" id="report-pendingKyc">0</span>
+                            </div>
+                            <div class="flex justify-between items-center p-3 bg-slate-800/50 rounded-lg">
+                                <span class="text-slate-400">Total Balance Held</span>
+                                <span class="text-amber-400 font-bold" id="report-totalBalance">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">📈 Trading Performance</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-slate-800/50 rounded-lg p-4 text-center">
+                            <p class="text-slate-400 text-xs mb-1">Active Bots</p>
+                            <p class="text-2xl font-bold text-green-400" id="report-activeBots">0</p>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-lg p-4 text-center">
+                            <p class="text-slate-400 text-xs mb-1">Total Bot Investment</p>
+                            <p class="text-2xl font-bold text-amber-400" id="report-botInvestment">$0</p>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-lg p-4 text-center">
+                            <p class="text-slate-400 text-xs mb-1">Bot Profits Paid</p>
+                            <p class="text-2xl font-bold text-green-400" id="report-botProfits">$0</p>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-lg p-4 text-center">
+                            <p class="text-slate-400 text-xs mb-1">Avg. Win Rate</p>
+                            <p class="text-2xl font-bold text-blue-400">96.5%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRANSACTIONS TAB (Original - Pending Only) -->
             <div id="transactions" class="tab-content space-y-6">
                 <div class="glass-card rounded-xl overflow-hidden">
                     <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
@@ -315,6 +691,209 @@
                     </div>
                 </div>
             </div>
+
+            <!-- SECURITY TAB -->
+            <div id="security" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-green-500">
+                        <p class="text-slate-400 text-sm">Secure Sessions</p>
+                        <p class="text-2xl font-bold text-green-400 mt-1">1</p>
+                        <p class="text-xs text-slate-500 mt-1">Current admin session</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-amber-500">
+                        <p class="text-slate-400 text-sm">2FA Status</p>
+                        <p class="text-2xl font-bold text-amber-400 mt-1">Disabled</p>
+                        <p class="text-xs text-slate-500 mt-1">Recommended: Enable</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-red-500">
+                        <p class="text-slate-400 text-sm">Failed Logins (24h)</p>
+                        <p class="text-2xl font-bold text-red-400 mt-1">0</p>
+                    </div>
+                    <div class="glass-card rounded-xl p-5 border-l-4 border-blue-500">
+                        <p class="text-slate-400 text-sm">IP Whitelist</p>
+                        <p class="text-2xl font-bold text-blue-400 mt-1">Off</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">🔐 Security Settings</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                <div>
+                                    <p class="text-white font-medium">Two-Factor Authentication</p>
+                                    <p class="text-slate-400 text-xs">Add extra security to admin account</p>
+                                </div>
+                                <button class="px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg text-sm hover:bg-amber-500/30">Enable</button>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                <div>
+                                    <p class="text-white font-medium">IP Whitelist</p>
+                                    <p class="text-slate-400 text-xs">Restrict access to specific IPs</p>
+                                </div>
+                                <button class="px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg text-sm hover:bg-amber-500/30">Configure</button>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                <div>
+                                    <p class="text-white font-medium">Change Admin Password</p>
+                                    <p class="text-slate-400 text-xs">Update your admin password</p>
+                                </div>
+                                <button class="px-4 py-2 bg-amber-500/20 text-amber-400 rounded-lg text-sm hover:bg-amber-500/30">Change</button>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                <div>
+                                    <p class="text-white font-medium">Session Timeout</p>
+                                    <p class="text-slate-400 text-xs">Auto-logout after inactivity</p>
+                                </div>
+                                <span class="text-slate-300 text-sm">30 minutes</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">📋 Recent Login Activity</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border-l-4 border-green-500">
+                                <div>
+                                    <p class="text-white text-sm font-medium">Admin Login - Successful</p>
+                                    <p class="text-slate-400 text-xs">Current session • Just now</p>
+                                </div>
+                                <span class="text-green-400 text-xs">Active</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                <div>
+                                    <p class="text-white text-sm font-medium">Admin Login - Successful</p>
+                                    <p class="text-slate-400 text-xs">Yesterday, 2:34 PM</p>
+                                </div>
+                                <span class="text-slate-500 text-xs">Ended</span>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                <div>
+                                    <p class="text-white text-sm font-medium">Admin Login - Successful</p>
+                                    <p class="text-slate-400 text-xs">2 days ago, 9:15 AM</p>
+                                </div>
+                                <span class="text-slate-500 text-xs">Ended</span>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 text-xs mt-4 text-center">Full login history available in detailed logs</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SETTINGS TAB -->
+            <div id="settings" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">🌐 Site Settings</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Site Name</label>
+                                <input type="text" value="KutinFX Trading Corporation" class="input-dark w-full px-4 py-2.5 rounded-xl text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Site Description</label>
+                                <textarea rows="3" class="input-dark w-full px-4 py-2.5 rounded-xl text-white">Leading online trading platform offering automated trading bots, live trading, and investment opportunities.</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Support Email</label>
+                                <input type="email" value="kutinfx@gmail.com" class="input-dark w-full px-4 py-2.5 rounded-xl text-white">
+                            </div>
+                            <button class="w-full gold-gradient text-white font-semibold py-2.5 rounded-xl hover:opacity-90 transition-all">Save Site Settings</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">💳 Payment Settings</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">USDT (TRC20) Wallet</label>
+                                <input type="text" value="TXYZ1234567890abcdef1234567890abcdef" class="input-dark w-full px-4 py-2.5 rounded-xl text-white font-mono text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Bitcoin (BTC) Wallet</label>
+                                <input type="text" value="bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh" class="input-dark w-full px-4 py-2.5 rounded-xl text-white font-mono text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Ethereum (ETH) Wallet</label>
+                                <input type="text" value="0x71C7656EC7ab88b098defB751B7401B5f6d8976F" class="input-dark w-full px-4 py-2.5 rounded-xl text-white font-mono text-sm">
+                            </div>
+                            <button class="w-full gold-gradient text-white font-semibold py-2.5 rounded-xl hover:opacity-90 transition-all">Save Payment Settings</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">🤖 Trading Bot Settings</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Default Daily ROI (%)</label>
+                                <input type="number" value="5" class="input-dark w-full px-4 py-2.5 rounded-xl text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Minimum Deposit ($)</label>
+                                <input type="number" value="10" class="input-dark w-full px-4 py-2.5 rounded-xl text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Profit Calculation Interval</label>
+                                <select class="input-dark w-full px-4 py-2.5 rounded-xl text-white">
+                                    <option class="bg-slate-800">Every 12 hours</option>
+                                    <option class="bg-slate-800">Every 24 hours</option>
+                                    <option class="bg-slate-800">Every hour</option>
+                                </select>
+                            </div>
+                            <button class="w-full gold-gradient text-white font-semibold py-2.5 rounded-xl hover:opacity-90 transition-all">Save Bot Settings</button>
+                        </div>
+                    </div>
+
+                    <div class="glass-card rounded-xl p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">🎁 Referral Settings</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Commission per Referral ($)</label>
+                                <input type="number" value="10" class="input-dark w-full px-4 py-2.5 rounded-xl text-white">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-300 mb-2">Max Referrals per User</label>
+                                <input type="number" value="100" class="input-dark w-full px-4 py-2.5 rounded-xl text-white">
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg">
+                                <div>
+                                    <p class="text-white font-medium">Auto-approve Referrals</p>
+                                    <p class="text-slate-400 text-xs">Automatically credit commissions</p>
+                                </div>
+                                <div class="relative inline-block w-12 align-middle select-none">
+                                    <input type="checkbox" id="autoApproveRef" checked class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer" style="top: 0; left: 0;"/>
+                                    <label for="autoApproveRef" class="toggle-label block overflow-hidden h-6 rounded-full bg-amber-500 cursor-pointer"></label>
+                                </div>
+                            </div>
+                            <button class="w-full gold-gradient text-white font-semibold py-2.5 rounded-xl hover:opacity-90 transition-all">Save Referral Settings</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card rounded-xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">⚙️ System Information</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-slate-800/50 rounded-lg p-4">
+                            <p class="text-slate-400 text-xs mb-1">Version</p>
+                            <p class="text-white font-bold">2.0.1</p>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-lg p-4">
+                            <p class="text-slate-400 text-xs mb-1">Last Update</p>
+                            <p class="text-white font-bold">Jan 2025</p>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-lg p-4">
+                            <p class="text-slate-400 text-xs mb-1">Database</p>
+                            <p class="text-green-400 font-bold">Connected</p>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-lg p-4">
+                            <p class="text-slate-400 text-xs mb-1">Status</p>
+                            <p class="text-green-400 font-bold">Operational</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -327,7 +906,7 @@
         let allTickets = [];
         let currentFilter = 'all';
         let chatSubscription = null;
-        let addFundsUserId = null; // NEW: Track which user we're adding funds to
+        let addFundsUserId = null;
 
         async function init() {
             const { data: { session } } = await mySupabase.auth.getSession();
@@ -348,6 +927,10 @@
             loadKYC();
             loadSupport();
             initLiveChat();
+            loadFinance();
+            loadInvestments();
+            loadAgents();
+            loadReports();
         }
 
         function switchTab(tabId) {
@@ -359,10 +942,17 @@
             const titles = { 
                 'dashboard': 'Admin Dashboard', 
                 'users': 'User Management', 
+                'finance': 'Finance Management',
+                'investments': 'Investments Management',
+                'agents': 'Agents & Referrals',
+                'marketing': 'Marketing & Promotions',
+                'reports': 'Reports & Analytics',
                 'transactions': 'Transaction Approvals', 
                 'kyc': 'KYC Verifications',
                 'support': 'Support Tickets',
-                'livechat': 'Live Chat'
+                'livechat': 'Live Chat',
+                'security': 'Security Center',
+                'settings': 'System Settings'
             };
             document.getElementById('pageTitle').textContent = titles[tabId];
         }
@@ -492,10 +1082,6 @@
             document.getElementById('userModal').classList.remove('active');
         }
 
-        // ============================================
-        // NEW: ADD FUNDS FUNCTIONS
-        // ============================================
-
         function openAddFundsModal(userId, userEmail, currentBalance) {
             addFundsUserId = userId;
             document.getElementById('addFundsUserName').textContent = userEmail;
@@ -540,7 +1126,6 @@
             submitBtn.textContent = 'Processing...';
 
             try {
-                // Get current user balance
                 const { data: user, error: userError } = await mySupabase
                     .from('users')
                     .select('balance')
@@ -551,7 +1136,6 @@
 
                 const newBalance = (user.balance || 0) + amount;
 
-                // Update user balance directly
                 const { error: updateError } = await mySupabase
                     .from('users')
                     .update({ balance: newBalance })
@@ -562,11 +1146,9 @@
                 successEl.textContent = `✅ Successfully added $${amount.toFixed(2)}! New balance: $${newBalance.toFixed(2)}`;
                 successEl.classList.remove('hidden');
 
-                // Refresh data
                 await loadUsers();
                 await loadDashboardStats();
 
-                // Close modal after 2 seconds
                 setTimeout(() => {
                     closeAddFundsModal();
                 }, 2000);
@@ -582,9 +1164,260 @@
         }
 
         // ============================================
+        // FINANCE FUNCTIONS
+        // ============================================
+        async function loadFinance() {
+            const typeFilter = document.getElementById('financeFilterType')?.value || 'all';
+            const statusFilter = document.getElementById('financeFilterStatus')?.value || 'all';
+
+            try {
+                let query = mySupabase.from('transactions').select('*, users(email, first_name, last_name)').order('created_at', { ascending: false });
+                
+                if (typeFilter !== 'all') query = query.eq('type', typeFilter);
+                if (statusFilter !== 'all') query = query.eq('status', statusFilter);
+
+                const { data: txs, error } = await query.limit(100);
+                if (error) throw error;
+
+                const tbody = document.getElementById('financeTableBody');
+                if (!txs || txs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500">No transactions found</td></tr>';
+                } else {
+                    tbody.innerHTML = txs.map(tx => {
+                        const userName = tx.users ? `${tx.users.first_name || ''} ${tx.users.last_name || ''}`.trim() || tx.users.email : 'Unknown';
+                        const statusColor = tx.status === 'approved' ? 'bg-green-500/20 text-green-400' : tx.status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400';
+                        const typeColor = tx.type === 'deposit' ? 'text-green-400' : 'text-red-400';
+                        const date = new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+                        
+                        return `
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="p-4 text-slate-300 text-xs">${date}</td>
+                                <td class="p-4 text-white text-xs">${userName}</td>
+                                <td class="p-4 ${typeColor} text-xs font-medium capitalize">${tx.type}</td>
+                                <td class="p-4 text-white font-bold text-xs">$${parseFloat(tx.amount).toFixed(2)}</td>
+                                <td class="p-4"><span class="px-2 py-1 rounded text-xs ${statusColor} capitalize">${tx.status}</span></td>
+                                <td class="p-4 text-xs text-slate-400">${tx.payment_method || '-'}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+
+                // Calculate stats
+                const { data: allTxs } = await mySupabase.from('transactions').select('type, amount, status');
+                if (allTxs) {
+                    const approvedDeposits = allTxs.filter(t => t.type === 'deposit' && t.status === 'approved');
+                    const approvedWithdrawals = allTxs.filter(t => t.type === 'withdrawal' && t.status === 'approved');
+                    const pending = allTxs.filter(t => t.status === 'pending');
+                    
+                    const totalDep = approvedDeposits.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+                    const totalWith = approvedWithdrawals.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+                    const pendingVol = pending.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+
+                    document.getElementById('finance-totalDeposits').textContent = `$${totalDep.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                    document.getElementById('finance-depositCount').textContent = `${approvedDeposits.length} transactions`;
+                    document.getElementById('finance-totalWithdrawals').textContent = `$${totalWith.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                    document.getElementById('finance-withdrawalCount').textContent = `${approvedWithdrawals.length} transactions`;
+                    document.getElementById('finance-pendingVolume').textContent = `$${pendingVol.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                    document.getElementById('finance-netFlow').textContent = `$${(totalDep - totalWith).toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                }
+            } catch (err) {
+                console.error('Finance error:', err);
+            }
+        }
+
+        // ============================================
+        // INVESTMENTS FUNCTIONS
+        // ============================================
+        async function loadInvestments() {
+            try {
+                // Load investment plans
+                const { data: plans } = await mySupabase.from('investment_plans').select('*').eq('is_active', true);
+                const plansBody = document.getElementById('investPlansTableBody');
+                
+                if (plans && plans.length > 0) {
+                    document.getElementById('invest-planCount').textContent = plans.length;
+                    plansBody.innerHTML = plans.map(p => `
+                        <tr class="hover:bg-slate-800/30">
+                            <td class="p-4 text-white font-medium">${p.name}</td>
+                            <td class="p-4 text-amber-400">$${(p.min_deposit || 0).toLocaleString()}</td>
+                            <td class="p-4 text-green-400 font-bold">${p.daily_roi || 0}%</td>
+                            <td class="p-4 text-slate-300">${p.duration_days || 30} days</td>
+                            <td class="p-4"><span class="px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">Active</span></td>
+                        </tr>
+                    `).join('');
+                } else {
+                    plansBody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500">No investment plans available</td></tr>';
+                }
+
+                // Try to load user investments (if table exists)
+                try {
+                    const { data: userInvestments } = await mySupabase
+                        .from('user_investments')
+                        .select('*, users(email, first_name, last_name), investment_plans(name)')
+                        .eq('status', 'active')
+                        .order('created_at', { ascending: false })
+                        .limit(50);
+
+                    const userInvBody = document.getElementById('userInvestmentsTableBody');
+                    if (userInvestments && userInvestments.length > 0) {
+                        let totalAmount = 0;
+                        let totalReturns = 0;
+                        userInvestments.forEach(inv => {
+                            totalAmount += parseFloat(inv.invested_amount || 0);
+                            totalReturns += parseFloat(inv.returns || 0);
+                        });
+                        document.getElementById('invest-activeCount').textContent = userInvestments.length;
+                        document.getElementById('invest-totalAmount').textContent = `$${totalAmount.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                        document.getElementById('invest-totalReturns').textContent = `$${totalReturns.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+
+                        userInvBody.innerHTML = userInvestments.map(inv => {
+                            const userName = inv.users ? `${inv.users.first_name || ''} ${inv.users.last_name || ''}`.trim() || inv.users.email : 'Unknown';
+                            const planName = inv.investment_plans?.name || 'Unknown Plan';
+                            const date = new Date(inv.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            return `
+                                <tr class="hover:bg-slate-800/30">
+                                    <td class="p-4 text-white text-xs">${userName}</td>
+                                    <td class="p-4 text-slate-300 text-xs">${planName}</td>
+                                    <td class="p-4 text-amber-400 font-bold text-xs">$${parseFloat(inv.invested_amount || 0).toFixed(2)}</td>
+                                    <td class="p-4 text-slate-300 text-xs">${date}</td>
+                                    <td class="p-4"><span class="px-2 py-1 rounded text-xs bg-green-500/20 text-green-400">Active</span></td>
+                                </tr>
+                            `;
+                        }).join('');
+                    } else {
+                        userInvBody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500">No active user investments</td></tr>';
+                    }
+                } catch (e) {
+                    document.getElementById('userInvestmentsTableBody').innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500">Investment tracking not available</td></tr>';
+                }
+            } catch (err) {
+                console.error('Investments error:', err);
+            }
+        }
+
+        // ============================================
+        // AGENTS FUNCTIONS
+        // ============================================
+        async function loadAgents() {
+            try {
+                // Get all users with referral codes
+                const { data: users } = await mySupabase
+                    .from('users')
+                    .select('id, email, first_name, last_name, referral_code, referral_earnings, created_at')
+                    .not('referral_code', 'is', null)
+                    .order('referral_earnings', { ascending: false });
+
+                const tbody = document.getElementById('agentsTableBody');
+                
+                if (users && users.length > 0) {
+                    let totalReferrals = 0;
+                    let totalCommissions = 0;
+                    let topEarnings = 0;
+
+                    // Get referral counts for each user
+                    const agentsData = await Promise.all(users.map(async u => {
+                        const { count } = await mySupabase
+                            .from('referrals')
+                            .select('*', { count: 'exact', head: true })
+                            .eq('referrer_id', u.id);
+                        
+                        const earnings = parseFloat(u.referral_earnings || 0);
+                        totalReferrals += count || 0;
+                        totalCommissions += earnings;
+                        if (earnings > topEarnings) topEarnings = earnings;
+
+                        return {
+                            ...u,
+                            referralCount: count || 0,
+                            earnings: earnings
+                        };
+                    }));
+
+                    document.getElementById('agents-totalCount').textContent = users.length;
+                    document.getElementById('agents-totalReferrals').textContent = totalReferrals;
+                    document.getElementById('agents-totalCommissions').textContent = `$${totalCommissions.toFixed(2)}`;
+                    document.getElementById('agents-topEarnings').textContent = `$${topEarnings.toFixed(2)}`;
+
+                    tbody.innerHTML = agentsData.map(a => {
+                        const name = `${a.first_name || ''} ${a.last_name || ''}`.trim() || a.email;
+                        const date = new Date(a.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        return `
+                            <tr class="hover:bg-slate-800/30">
+                                <td class="p-4 text-white text-xs">${name}</td>
+                                <td class="p-4"><span class="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs font-mono">${a.referral_code}</span></td>
+                                <td class="p-4 text-blue-400 font-bold text-xs">${a.referralCount}</td>
+                                <td class="p-4 text-green-400 font-bold text-xs">$${a.earnings.toFixed(2)}</td>
+                                <td class="p-4 text-slate-400 text-xs">${date}</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500">No agents found</td></tr>';
+                }
+            } catch (err) {
+                console.error('Agents error:', err);
+            }
+        }
+
+        // ============================================
+        // REPORTS FUNCTIONS
+        // ============================================
+        async function loadReports() {
+            try {
+                // Get all transactions
+                const { data: allTxs } = await mySupabase.from('transactions').select('type, amount, status');
+                const { data: allUsers } = await mySupabase.from('users').select('balance, kyc_status, created_at');
+                const { data: activeBots } = await mySupabase.from('user_bots').select('invested_amount, earnings').eq('status', 'active');
+
+                if (allTxs) {
+                    const approvedDep = allTxs.filter(t => t.type === 'deposit' && t.status === 'approved');
+                    const approvedWith = allTxs.filter(t => t.type === 'withdrawal' && t.status === 'approved');
+                    const pending = allTxs.filter(t => t.status === 'pending');
+                    const rejected = allTxs.filter(t => t.status === 'rejected');
+                    
+                    const totalDep = approvedDep.reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+                    const totalWith = approvedWith.reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+                    const totalApproved = approvedDep.length + approvedWith.length;
+                    const totalAll = allTxs.length;
+                    const successRate = totalAll > 0 ? ((totalApproved / totalAll) * 100).toFixed(1) : 0;
+                    const avgDep = approvedDep.length > 0 ? (totalDep / approvedDep.length) : 0;
+
+                    document.getElementById('report-revenue').textContent = `$${totalDep.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                    document.getElementById('report-totalDep').textContent = `$${totalDep.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                    document.getElementById('report-totalWith').textContent = `$${totalWith.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                    document.getElementById('report-pendingTx').textContent = pending.length;
+                    document.getElementById('report-rejectedTx').textContent = rejected.length;
+                    document.getElementById('report-successRate').textContent = `${successRate}%`;
+                    document.getElementById('report-avgDeposit').textContent = `$${avgDep.toFixed(2)}`;
+                }
+
+                if (allUsers) {
+                    document.getElementById('report-totalUsers').textContent = allUsers.length;
+                    const verified = allUsers.filter(u => u.kyc_status === 'verified').length;
+                    const pendingKyc = allUsers.filter(u => u.kyc_status === 'pending').length;
+                    const totalBalance = allUsers.reduce((s, u) => s + parseFloat(u.balance || 0), 0);
+                    
+                    document.getElementById('report-verifiedUsers').textContent = verified;
+                    document.getElementById('report-pendingKyc').textContent = pendingKyc;
+                    document.getElementById('report-totalBalance').textContent = `$${totalBalance.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                    document.getElementById('report-activeUsers').textContent = allUsers.length;
+                }
+
+                if (activeBots) {
+                    const totalBotInv = activeBots.reduce((s, b) => s + parseFloat(b.invested_amount || 0), 0);
+                    const totalBotProfits = activeBots.reduce((s, b) => s + parseFloat(b.earnings || 0), 0);
+                    document.getElementById('report-activeBots').textContent = activeBots.length;
+                    document.getElementById('report-botInvestment').textContent = `$${totalBotInv.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                    document.getElementById('report-botProfits').textContent = `$${totalBotProfits.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+                }
+            } catch (err) {
+                console.error('Reports error:', err);
+            }
+        }
+
+        // ============================================
         // EXISTING FUNCTIONS (unchanged)
         // ============================================
-
         async function loadTransactions() {
             const { data: txs } = await mySupabase.from('transactions').select('*, users(email)').eq('status', 'pending').order('created_at', { ascending: false });
             
@@ -653,7 +1486,7 @@
                 await mySupabase.from('users').update({ balance: newBal }).eq('id', userId);
             }
             alert('Transaction Approved!');
-            loadDashboardStats(); loadTransactions();
+            loadDashboardStats(); loadTransactions(); loadFinance(); loadReports();
         }
 
         async function rejectTx(txId, type, userId, amount) {
@@ -666,7 +1499,7 @@
                 await mySupabase.from('users').update({ balance: newBal }).eq('id', userId);
             }
             alert('Transaction Rejected!');
-            loadDashboardStats(); loadTransactions();
+            loadDashboardStats(); loadTransactions(); loadFinance(); loadReports();
         }
 
         async function loadKYC() {
@@ -716,16 +1549,12 @@
 
         async function approveKYC(userId) {
             await mySupabase.from('users').update({ kyc_status: 'verified' }).eq('id', userId);
-            alert('KYC Approved!'); loadDashboardStats(); loadKYC(); loadUsers();
+            alert('KYC Approved!'); loadDashboardStats(); loadKYC(); loadUsers(); loadReports();
         }
         async function rejectKYC(userId) {
             await mySupabase.from('users').update({ kyc_status: 'rejected' }).eq('id', userId);
-            alert('KYC Rejected!'); loadDashboardStats(); loadKYC(); loadUsers();
+            alert('KYC Rejected!'); loadDashboardStats(); loadKYC(); loadUsers(); loadReports();
         }
-
-        // ============================================
-        // SUPPORT TICKETS MANAGEMENT
-        // ============================================
 
         async function loadSupport() {
             const container = document.getElementById('supportContainer');
@@ -737,9 +1566,7 @@
 
                 if (error) throw error;
                 allTickets = tickets || [];
-
                 renderTickets();
-
             } catch (err) {
                 console.error('Error loading tickets:', err);
                 container.innerHTML = '<p class="text-red-400 text-center py-8">Failed to load tickets.</p>';
@@ -753,7 +1580,6 @@
 
         function renderTickets() {
             const container = document.getElementById('supportContainer');
-            
             let filtered = allTickets;
             if (currentFilter !== 'all') {
                 filtered = allTickets.filter(t => t.status === currentFilter);
@@ -769,19 +1595,15 @@
                                    ticket.status === 'in-progress' ? 'bg-amber-500/20 text-amber-400' :
                                    ticket.status === 'resolved' ? 'bg-green-500/20 text-green-400' :
                                    'bg-slate-500/20 text-slate-400';
-                
                 const priorityColor = ticket.priority === 'urgent' ? 'border-red-500/50' :
                                      ticket.priority === 'high' ? 'border-amber-500/50' :
                                      'border-slate-700/50';
-                
                 const priorityBadge = ticket.priority === 'urgent' ? 'bg-red-500/20 text-red-400' :
                                      ticket.priority === 'high' ? 'bg-amber-500/20 text-amber-400' :
                                      'bg-slate-500/20 text-slate-400';
-
                 const date = new Date(ticket.created_at).toLocaleDateString('en-US', { 
                     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                 });
-
                 const userName = ticket.users ? 
                     `${ticket.users.first_name || ''} ${ticket.users.last_name || ''}`.trim() || ticket.users.email : 
                     'Unknown User';
@@ -820,19 +1642,15 @@
         async function viewTicketDetail(ticketId) {
             const ticket = allTickets.find(t => t.id === ticketId);
             if (!ticket) return;
-
             const modal = document.getElementById('replyModal');
             const content = document.getElementById('replyModalContent');
-
             const statusColor = ticket.status === 'open' ? 'bg-blue-500/20 text-blue-400' :
                                ticket.status === 'in-progress' ? 'bg-amber-500/20 text-amber-400' :
                                ticket.status === 'resolved' ? 'bg-green-500/20 text-green-400' :
                                'bg-slate-500/20 text-slate-400';
-
             const date = new Date(ticket.created_at).toLocaleDateString('en-US', { 
                 month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
             });
-
             const userName = ticket.users ? 
                 `${ticket.users.first_name || ''} ${ticket.users.last_name || ''}`.trim() || ticket.users.email : 
                 'Unknown User';
@@ -848,19 +1666,16 @@
                     <p class="text-slate-500 text-sm mt-1">From: <span class="text-slate-300">${userName}</span> (${ticket.users?.email || 'N/A'})</p>
                     <p class="text-slate-500 text-sm">${date}</p>
                 </div>
-                
                 <div class="bg-slate-800/50 rounded-xl p-4 mb-4">
                     <p class="text-slate-400 text-xs mb-2 font-medium">USER MESSAGE:</p>
                     <p class="text-white whitespace-pre-wrap">${ticket.message}</p>
                 </div>
-
                 ${ticket.admin_response ? `
                     <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-4">
                         <p class="text-green-400 text-xs mb-2 font-medium">YOUR RESPONSE:</p>
                         <p class="text-white whitespace-pre-wrap">${ticket.admin_response}</p>
                     </div>
                 ` : ''}
-
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-slate-300 mb-2">Change Status</label>
                     <select id="ticketStatusSelect" class="input-dark w-full px-4 py-3 rounded-xl text-white">
@@ -870,23 +1685,19 @@
                         <option value="closed" ${ticket.status === 'closed' ? 'selected' : ''} class="bg-slate-800">Closed</option>
                     </select>
                 </div>
-
                 <div class="flex justify-end">
                     <button onclick="updateTicketStatus(${ticket.id})" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium">Update Status</button>
                     <button onclick="closeReplyModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg ml-2">Close</button>
                 </div>
             `;
-
             modal.classList.add('active');
         }
 
         async function replyToTicket(ticketId) {
             const ticket = allTickets.find(t => t.id === ticketId);
             if (!ticket) return;
-
             const modal = document.getElementById('replyModal');
             const content = document.getElementById('replyModalContent');
-
             const userName = ticket.users ? 
                 `${ticket.users.first_name || ''} ${ticket.users.last_name || ''}`.trim() || ticket.users.email : 
                 'Unknown User';
@@ -896,24 +1707,20 @@
                     <h3 class="text-xl font-bold text-white mb-2">${ticket.subject}</h3>
                     <p class="text-slate-500 text-sm">From: <span class="text-slate-300">${userName}</span></p>
                 </div>
-                
                 <div class="bg-slate-800/50 rounded-xl p-4 mb-4">
                     <p class="text-slate-400 text-xs mb-2 font-medium">USER MESSAGE:</p>
                     <p class="text-white whitespace-pre-wrap">${ticket.message}</p>
                 </div>
-
                 ${ticket.admin_response ? `
                     <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-4 mb-4">
                         <p class="text-green-400 text-xs mb-2 font-medium">PREVIOUS RESPONSE:</p>
                         <p class="text-white whitespace-pre-wrap">${ticket.admin_response}</p>
                     </div>
                 ` : ''}
-
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-slate-300 mb-2">Your Response</label>
                     <textarea id="adminResponse" rows="5" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 resize-none" placeholder="Type your response here...">${ticket.admin_response || ''}</textarea>
                 </div>
-
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-slate-300 mb-2">Update Status</label>
                     <select id="ticketStatusSelect" class="input-dark w-full px-4 py-3 rounded-xl text-white">
@@ -923,7 +1730,6 @@
                         <option value="closed" ${ticket.status === 'closed' ? 'selected' : ''} class="bg-slate-800">Closed</option>
                     </select>
                 </div>
-
                 <div class="flex justify-end gap-2">
                     <button onclick="submitReply(${ticket.id})" id="submitReplyBtn" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-medium flex items-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
@@ -932,7 +1738,6 @@
                     <button onclick="closeReplyModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Cancel</button>
                 </div>
             `;
-
             modal.classList.add('active');
         }
 
@@ -940,27 +1745,22 @@
             const response = document.getElementById('adminResponse').value.trim();
             const newStatus = document.getElementById('ticketStatusSelect').value;
             const btn = document.getElementById('submitReplyBtn');
-
             if (!response) {
                 alert('Please enter a response before sending.');
                 return;
             }
-
             btn.disabled = true;
             btn.innerHTML = '<svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Sending...';
-
             try {
                 await mySupabase.from('support_tickets').update({
                     admin_response: response,
                     status: newStatus,
                     updated_at: new Date().toISOString()
                 }).eq('id', ticketId);
-
                 alert('✅ Reply sent successfully!');
                 closeReplyModal();
                 await loadSupport();
                 await loadDashboardStats();
-
             } catch (err) {
                 console.error('Reply error:', err);
                 alert('Failed to send reply. Please try again.');
@@ -972,18 +1772,15 @@
 
         async function updateTicketStatus(ticketId) {
             const newStatus = document.getElementById('ticketStatusSelect').value;
-
             try {
                 await mySupabase.from('support_tickets').update({
                     status: newStatus,
                     updated_at: new Date().toISOString()
                 }).eq('id', ticketId);
-
                 alert(`✅ Ticket status updated to "${newStatus}"!`);
                 closeReplyModal();
                 await loadSupport();
                 await loadDashboardStats();
-
             } catch (err) {
                 console.error('Status update error:', err);
                 alert('Failed to update status. Please try again.');
@@ -994,12 +1791,7 @@
             document.getElementById('replyModal').classList.remove('active');
         }
 
-        // ============================================
-        // LIVE CHAT FOR ADMIN
-        // ============================================
-
         async function initLiveChat() {
-            console.log("Initializing admin live chat...");
             await loadAdminChatMessages();
             subscribeToAdminChat();
         }
@@ -1012,37 +1804,22 @@
                     .select('*')
                     .order('created_at', { ascending: true })
                     .limit(50);
-
                 if (error) throw error;
-
                 if (!messages || messages.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-slate-500 text-sm py-8">
-                            <p>No chat messages yet. Waiting for users to start chatting...</p>
-                        </div>
-                    `;
+                    container.innerHTML = `<div class="text-center text-slate-500 text-sm py-8"><p>No chat messages yet.</p></div>`;
                     return;
                 }
-
                 const messagesWithUsers = await Promise.all(messages.map(async msg => {
                     if (msg.user_id && !msg.is_admin) {
-                        const { data: userData } = await mySupabase
-                            .from('users')
-                            .select('email, first_name, last_name')
-                            .eq('id', msg.user_id)
-                            .single();
+                        const { data: userData } = await mySupabase.from('users').select('email, first_name, last_name').eq('id', msg.user_id).single();
                         return { ...msg, user: userData };
                     }
                     return { ...msg, user: null };
                 }));
-
                 container.innerHTML = messagesWithUsers.map(msg => {
                     const isAdmin = msg.is_admin;
                     const time = new Date(msg.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                    const userName = msg.user ? 
-                        `${msg.user.first_name || ''} ${msg.user.last_name || ''}`.trim() || msg.user.email : 
-                        (isAdmin ? 'Admin' : 'User');
-                    
+                    const userName = msg.user ? `${msg.user.first_name || ''} ${msg.user.last_name || ''}`.trim() || msg.user.email : (isAdmin ? 'Admin' : 'User');
                     return `
                         <div class="chat-message flex ${isAdmin ? 'justify-end' : 'justify-start'}">
                             <div class="${isAdmin ? 'bg-green-500/20 border-green-500/30' : 'bg-slate-700/50 border-slate-600/30'} border rounded-2xl px-4 py-2 max-w-[80%]">
@@ -1053,32 +1830,17 @@
                         </div>
                     `;
                 }).join('');
-
                 container.scrollTop = container.scrollHeight;
-
             } catch (err) {
                 console.error('Error loading admin chat:', err);
-                container.innerHTML = `
-                    <div class="text-center text-red-400 text-sm py-8">
-                        <p>Failed to load chat messages.</p>
-                        <p class="text-xs mt-2">${err.message}</p>
-                        <button onclick="loadAdminChatMessages()" class="mt-4 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs">
-                            Retry
-                        </button>
-                    </div>
-                `;
+                container.innerHTML = `<div class="text-center text-red-400 text-sm py-8"><p>Failed to load chat.</p><button onclick="loadAdminChatMessages()" class="mt-4 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs">Retry</button></div>`;
             }
         }
 
         function subscribeToAdminChat() {
             if (chatSubscription) chatSubscription.unsubscribe();
-            
-            chatSubscription = mySupabase
-                .channel('live_chat_admin')
-                .on('postgres_changes', 
-                    { event: 'INSERT', schema: 'public', table: 'live_chat_messages' }, 
-                    payload => { appendAdminChatMessage(payload.new); }
-                )
+            chatSubscription = mySupabase.channel('live_chat_admin')
+                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'live_chat_messages' }, payload => { appendAdminChatMessage(payload.new); })
                 .subscribe();
         }
 
@@ -1086,20 +1848,11 @@
             const container = document.getElementById('adminChatMessages');
             const isAdmin = message.is_admin;
             const time = new Date(message.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            
             let userName = isAdmin ? 'Admin' : 'User';
             if (!isAdmin && message.user_id) {
-                const { data: userData } = await mySupabase
-                    .from('users')
-                    .select('email, first_name, last_name')
-                    .eq('id', message.user_id)
-                    .single();
-                
-                if (userData) {
-                    userName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || userData.email;
-                }
+                const { data: userData } = await mySupabase.from('users').select('email, first_name, last_name').eq('id', message.user_id).single();
+                if (userData) userName = `${userData.first_name || ''} ${userData.last_name || ''}`.trim() || userData.email;
             }
-            
             const messageHTML = `
                 <div class="chat-message flex ${isAdmin ? 'justify-end' : 'justify-start'}">
                     <div class="${isAdmin ? 'bg-green-500/20 border-green-500/30' : 'bg-slate-700/50 border-slate-600/30'} border rounded-2xl px-4 py-2 max-w-[80%]">
@@ -1109,7 +1862,6 @@
                     </div>
                 </div>
             `;
-            
             container.insertAdjacentHTML('beforeend', messageHTML);
             container.scrollTop = container.scrollHeight;
         }
@@ -1119,26 +1871,18 @@
             const input = document.getElementById('adminChatInput');
             const sendBtn = document.getElementById('adminSendBtn');
             const message = input.value.trim();
-            
             if (!message) return;
-
             sendBtn.disabled = true;
             sendBtn.innerHTML = '<svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg> Sending...';
-
             try {
                 const { error } = await mySupabase.from('live_chat_messages').insert({
-                    user_id: currentUser.id,
-                    message: message,
-                    is_admin: true
+                    user_id: currentUser.id, message: message, is_admin: true
                 });
-
                 if (error) throw error;
-
                 input.value = '';
-                
             } catch (err) {
                 console.error('Error sending admin message:', err);
-                alert('Failed to send message. Please try again.');
+                alert('Failed to send message.');
             } finally {
                 sendBtn.disabled = false;
                 sendBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Send';
