@@ -59,6 +59,46 @@
         </div>
     </div>
 
+    <!-- NEW: Add Funds Modal -->
+    <div id="addFundsModal" class="modal">
+        <div class="glass-card rounded-2xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">💰 Add Funds</h3>
+                <button onclick="closeAddFundsModal()" class="text-slate-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-4">
+                <div class="bg-slate-800/50 rounded-xl p-4">
+                    <p class="text-slate-400 text-xs mb-1">User</p>
+                    <p class="text-white font-semibold" id="addFundsUserName">-</p>
+                    <p class="text-slate-400 text-xs mt-2">Current Balance</p>
+                    <p class="text-amber-500 font-bold text-lg" id="addFundsUserBalance">$0.00</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Amount to Add ($)</label>
+                    <input type="number" id="addFundsAmount" min="0.01" step="0.01"
+                        class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500"
+                        placeholder="Enter amount">
+                </div>
+
+                <div id="addFundsError" class="hidden p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+                <div id="addFundsSuccess" class="hidden p-3 bg-green-500/20 border border-green-500/50 rounded-xl text-green-300 text-sm text-center"></div>
+
+                <div class="flex gap-2">
+                    <button onclick="submitAddFunds()" id="addFundsSubmitBtn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-semibold py-3 rounded-xl transition-all">
+                        Add Funds
+                    </button>
+                    <button onclick="closeAddFundsModal()" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl transition-all">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="flex min-h-screen">
         <!-- Sidebar -->
         <aside class="sidebar w-64 fixed h-full border-r border-slate-700/50 z-20 hidden md:block">
@@ -287,6 +327,7 @@
         let allTickets = [];
         let currentFilter = 'all';
         let chatSubscription = null;
+        let addFundsUserId = null; // NEW: Track which user we're adding funds to
 
         async function init() {
             const { data: { session } } = await mySupabase.auth.getSession();
@@ -357,11 +398,12 @@
                     <td class="p-4 text-slate-300">${u.first_name || '-'} ${u.last_name || ''}</td>
                     <td class="p-4 text-amber-500 font-bold">$${(u.balance || 0).toFixed(2)}</td>
                     <td class="p-4"><span class="px-2 py-1 rounded text-xs ${u.kyc_status === 'verified' ? 'bg-green-500/20 text-green-400' : u.kyc_status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'}">${u.kyc_status || 'unverified'}</span></td>
-                    <td class="p-4 flex gap-2">
-                        <button onclick="viewUser('${u.id}')" class="px-3 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 text-xs">View</button>
+                    <td class="p-4 flex flex-wrap gap-1">
+                        <button onclick="viewUser('${u.id}')" class="px-2 py-1 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30 text-xs">View</button>
+                        <button onclick="openAddFundsModal('${u.id}', '${u.email}', ${u.balance || 0})" class="px-2 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-xs">💰 Add Funds</button>
                         ${u.kyc_status !== 'verified' ? `
-                            <button onclick="approveKYC('${u.id}')" class="px-3 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-xs">Verify</button>
-                            <button onclick="rejectKYC('${u.id}')" class="px-3 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs">Reject</button>
+                            <button onclick="approveKYC('${u.id}')" class="px-2 py-1 bg-emerald-500/20 text-emerald-400 rounded hover:bg-emerald-500/30 text-xs">Verify</button>
+                            <button onclick="rejectKYC('${u.id}')" class="px-2 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs">Reject</button>
                         ` : '<span class="text-green-400 text-xs">✓ Verified</span>'}
                     </td>
                 </tr>
@@ -437,7 +479,8 @@
                     ${frontImgHtml}
                     ${backImgHtml}
                 </div>
-                <div class="mt-4 flex justify-end">
+                <div class="mt-4 flex justify-end gap-2">
+                    <button onclick="closeUserModal(); openAddFundsModal('${user.id}', '${user.email}', ${user.balance || 0})" class="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg">💰 Add Funds</button>
                     <button onclick="closeUserModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg">Close</button>
                 </div>
             `;
@@ -448,6 +491,99 @@
         function closeUserModal() {
             document.getElementById('userModal').classList.remove('active');
         }
+
+        // ============================================
+        // NEW: ADD FUNDS FUNCTIONS
+        // ============================================
+
+        function openAddFundsModal(userId, userEmail, currentBalance) {
+            addFundsUserId = userId;
+            document.getElementById('addFundsUserName').textContent = userEmail;
+            document.getElementById('addFundsUserBalance').textContent = `$${currentBalance.toFixed(2)}`;
+            document.getElementById('addFundsAmount').value = '';
+            document.getElementById('addFundsError').classList.add('hidden');
+            document.getElementById('addFundsSuccess').classList.add('hidden');
+            document.getElementById('addFundsModal').classList.add('active');
+        }
+
+        function closeAddFundsModal() {
+            document.getElementById('addFundsModal').classList.remove('active');
+            addFundsUserId = null;
+        }
+
+        async function submitAddFunds() {
+            const amount = parseFloat(document.getElementById('addFundsAmount').value);
+            const errorEl = document.getElementById('addFundsError');
+            const successEl = document.getElementById('addFundsSuccess');
+            const submitBtn = document.getElementById('addFundsSubmitBtn');
+
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+
+            if (!amount || amount <= 0) {
+                errorEl.textContent = 'Please enter a valid amount greater than 0.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (!addFundsUserId) {
+                errorEl.textContent = 'No user selected.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to add $${amount.toFixed(2)} to this user's account?`)) {
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+
+            try {
+                // Get current user balance
+                const { data: user, error: userError } = await mySupabase
+                    .from('users')
+                    .select('balance')
+                    .eq('id', addFundsUserId)
+                    .single();
+
+                if (userError) throw userError;
+
+                const newBalance = (user.balance || 0) + amount;
+
+                // Update user balance directly
+                const { error: updateError } = await mySupabase
+                    .from('users')
+                    .update({ balance: newBalance })
+                    .eq('id', addFundsUserId);
+
+                if (updateError) throw updateError;
+
+                successEl.textContent = `✅ Successfully added $${amount.toFixed(2)}! New balance: $${newBalance.toFixed(2)}`;
+                successEl.classList.remove('hidden');
+
+                // Refresh data
+                await loadUsers();
+                await loadDashboardStats();
+
+                // Close modal after 2 seconds
+                setTimeout(() => {
+                    closeAddFundsModal();
+                }, 2000);
+
+            } catch (err) {
+                console.error('Add funds error:', err);
+                errorEl.textContent = 'Failed to add funds. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Add Funds';
+            }
+        }
+
+        // ============================================
+        // EXISTING FUNCTIONS (unchanged)
+        // ============================================
 
         async function loadTransactions() {
             const { data: txs } = await mySupabase.from('transactions').select('*, users(email)').eq('status', 'pending').order('created_at', { ascending: false });
@@ -859,7 +995,7 @@
         }
 
         // ============================================
-        // LIVE CHAT FOR ADMIN - FIXED VERSION
+        // LIVE CHAT FOR ADMIN
         // ============================================
 
         async function initLiveChat() {
@@ -871,21 +1007,13 @@
         async function loadAdminChatMessages() {
             const container = document.getElementById('adminChatMessages');
             try {
-                console.log("Loading chat messages...");
-                
-                // SIMPLIFIED QUERY - No join with users table
                 const { data: messages, error } = await mySupabase
                     .from('live_chat_messages')
                     .select('*')
                     .order('created_at', { ascending: true })
                     .limit(50);
 
-                if (error) {
-                    console.error("Error loading messages:", error);
-                    throw error;
-                }
-
-                console.log("Loaded messages:", messages);
+                if (error) throw error;
 
                 if (!messages || messages.length === 0) {
                     container.innerHTML = `
@@ -896,7 +1024,6 @@
                     return;
                 }
 
-                // Load user details separately for each message
                 const messagesWithUsers = await Promise.all(messages.map(async msg => {
                     if (msg.user_id && !msg.is_admin) {
                         const { data: userData } = await mySupabase
@@ -927,7 +1054,6 @@
                     `;
                 }).join('');
 
-                // Scroll to bottom
                 container.scrollTop = container.scrollHeight;
 
             } catch (err) {
@@ -945,27 +1071,15 @@
         }
 
         function subscribeToAdminChat() {
-            console.log("Subscribing to admin chat...");
-            if (chatSubscription) {
-                chatSubscription.unsubscribe();
-            }
+            if (chatSubscription) chatSubscription.unsubscribe();
             
             chatSubscription = mySupabase
                 .channel('live_chat_admin')
                 .on('postgres_changes', 
-                    { 
-                        event: 'INSERT', 
-                        schema: 'public', 
-                        table: 'live_chat_messages' 
-                    }, 
-                    payload => {
-                        console.log("New message received:", payload);
-                        appendAdminChatMessage(payload.new);
-                    }
+                    { event: 'INSERT', schema: 'public', table: 'live_chat_messages' }, 
+                    payload => { appendAdminChatMessage(payload.new); }
                 )
-                .subscribe(status => {
-                    console.log("Chat subscription status:", status);
-                });
+                .subscribe();
         }
 
         async function appendAdminChatMessage(message) {
@@ -973,7 +1087,6 @@
             const isAdmin = message.is_admin;
             const time = new Date(message.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             
-            // Load user name if not admin
             let userName = isAdmin ? 'Admin' : 'User';
             if (!isAdmin && message.user_id) {
                 const { data: userData } = await mySupabase
@@ -1033,9 +1146,7 @@
         }
 
         async function logout() {
-            if (chatSubscription) {
-                chatSubscription.unsubscribe();
-            }
+            if (chatSubscription) chatSubscription.unsubscribe();
             await mySupabase.auth.signOut();
             window.location.href = 'sign-in.html';
         }
