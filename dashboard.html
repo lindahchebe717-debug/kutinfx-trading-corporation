@@ -833,31 +833,32 @@
 
         let currentUser = null;
 
-        // Sample Reviews Data
+        // EXPANDED Reviews Data - 24 Reviews with African Countries
         const reviews = [
+            // Original 12 reviews (updated time frames)
             {
                 name: "Michael Chen",
                 avatar: "M",
                 profit: "$2,450",
-                time: "2 days ago",
+                time: "3 days ago",
                 rating: 5,
-                text: "Started with $500 and made $2,450 in just 3 weeks! The bots are incredible. Best investment decision I've made.",
+                text: "Started with $500 and made $2,450 in just 3 days! The bots are incredible. Best investment decision I've made.",
                 country: "🇺🇸 USA"
             },
             {
                 name: "Sarah Johnson",
                 avatar: "S",
                 profit: "$1,890",
-                time: "5 days ago",
+                time: "1 week ago",
                 rating: 5,
-                text: "The automated trading is amazing! I made $1,890 profit in my first month. Highly recommend KutinFX!",
+                text: "The automated trading is amazing! I made $1,890 profit in my first week. Highly recommend KutinFX!",
                 country: "🇬🇧 UK"
             },
             {
                 name: "Ahmed Hassan",
                 avatar: "A",
                 profit: "$3,200",
-                time: "1 week ago",
+                time: "2 weeks ago",
                 rating: 5,
                 text: "Withdrawals are fast and the platform is very reliable. Made over $3k in profits. Thank you KutinFX!",
                 country: "🇦🇪 UAE"
@@ -868,43 +869,43 @@
                 profit: "$980",
                 time: "3 days ago",
                 rating: 5,
-                text: "Started small with $200 and now I've earned $980. The daily profits are consistent and real!",
+                text: "Started small with $200 and earned $980 in just 3 days. The daily profits are consistent and real!",
                 country: "🇨🇦 Canada"
             },
             {
                 name: "David Kim",
                 avatar: "D",
                 profit: "$5,600",
-                time: "1 day ago",
+                time: "1 month ago",
                 rating: 5,
-                text: "Best trading platform ever! Made $5,600 in 2 months. The AI bots work perfectly. 10/10 would recommend!",
+                text: "Best trading platform ever! Made $5,600 in 1 month. The AI bots work perfectly. 10/10 would recommend!",
                 country: "🇰🇷 South Korea"
             },
             {
                 name: "Lisa Martinez",
                 avatar: "L",
                 profit: "$1,250",
-                time: "4 days ago",
+                time: "2 weeks ago",
                 rating: 5,
-                text: "I was skeptical at first but after making $1,250 in 3 weeks, I'm a believer. Great platform!",
+                text: "I was skeptical at first but after making $1,250 in 2 weeks, I'm a believer. Great platform!",
                 country: "🇲🇽 Mexico"
             },
             {
                 name: "James Wilson",
                 avatar: "J",
                 profit: "$4,100",
-                time: "6 days ago",
+                time: "1 month ago",
                 rating: 5,
-                text: "The profits are real! Made $4,100 in my first 6 weeks. Customer support is excellent too.",
+                text: "The profits are real! Made $4,100 in my first month. Customer support is excellent too.",
                 country: "🇦🇺 Australia"
             },
             {
                 name: "Fatima Al-Rashid",
                 avatar: "F",
                 profit: "$2,800",
-                time: "2 days ago",
+                time: "3 days ago",
                 rating: 5,
-                text: "Excellent platform! Very professional and the profits are consistent. Made $2,800 already!",
+                text: "Excellent platform! Very professional and the profits are consistent. Made $2,800 in just 3 days!",
                 country: "🇸🇦 Saudi Arabia"
             },
             {
@@ -913,35 +914,145 @@
                 profit: "$1,560",
                 time: "1 week ago",
                 rating: 5,
-                text: "Easy to use and very profitable. Made $1,560 in just one month. The bots do all the work!",
+                text: "Easy to use and very profitable. Made $1,560 in just one week. The bots do all the work!",
                 country: "🇿🇦 South Africa"
             },
             {
                 name: "Maria Garcia",
                 avatar: "M",
                 profit: "$3,450",
-                time: "3 days ago",
+                time: "2 weeks ago",
                 rating: 5,
-                text: "I love this platform! Made $3,450 in profits and still growing. The best investment I've made!",
+                text: "I love this platform! Made $3,450 in profits in 2 weeks. The best investment I've made!",
                 country: "🇪🇸 Spain"
             },
             {
                 name: "John Anderson",
                 avatar: "J",
                 profit: "$890",
-                time: "5 days ago",
+                time: "3 days ago",
                 rating: 5,
-                text: "Started with just $150 and made $890 in 2 weeks. The daily returns are amazing!",
+                text: "Started with just $150 and made $890 in 3 days. The daily returns are amazing!",
                 country: "🇳🇬 Nigeria"
             },
             {
                 name: "Yuki Tanaka",
                 avatar: "Y",
                 profit: "$2,100",
-                time: "4 days ago",
+                time: "1 week ago",
                 rating: 5,
-                text: "Very reliable platform. Made $2,100 profit in 5 weeks. Withdrawals are processed quickly!",
+                text: "Very reliable platform. Made $2,100 profit in 1 week. Withdrawals are processed quickly!",
                 country: "🇯🇵 Japan"
+            },
+            
+            // NEW 12 reviews with African countries emphasis
+            {
+                name: "Thabo Mokoena",
+                avatar: "T",
+                profit: "$1,750",
+                time: "3 days ago",
+                rating: 5,
+                text: "Incredible returns! Made $1,750 in just 3 days with the Gold Master bot. KutinFX is the real deal!",
+                country: "🇿🇦 South Africa"
+            },
+            {
+                name: "Kelebogile Mosweu",
+                avatar: "K",
+                profit: "$2,340",
+                time: "1 week ago",
+                rating: 5,
+                text: "Started with $300 and earned $2,340 in one week! The automated trading is phenomenal. Best decision ever!",
+                country: "🇧🇼 Botswana"
+            },
+            {
+                name: "Johannes van Wyk",
+                avatar: "J",
+                profit: "$3,890",
+                time: "2 weeks ago",
+                rating: 5,
+                text: "Made $3,890 in 2 weeks! The bots are intelligent and the profits are consistent. Highly recommended!",
+                country: "🇳🇦 Namibia"
+            },
+            {
+                name: "Chidinma Okafor",
+                avatar: "C",
+                profit: "$1,420",
+                time: "3 days ago",
+                rating: 5,
+                text: "Wow! Made $1,420 in just 3 days. The platform is easy to use and withdrawals are instant!",
+                country: "🇳🇬 Nigeria"
+            },
+            {
+                name: "Kwame Asante",
+                avatar: "K",
+                profit: "$2,680",
+                time: "1 week ago",
+                rating: 5,
+                text: "Invested $400 and made $2,680 in one week! The AI bots are incredibly smart. Thank you KutinFX!",
+                country: "🇬🇭 Ghana"
+            },
+            {
+                name: "Amina Diallo",
+                avatar: "A",
+                profit: "$1,950",
+                time: "2 weeks ago",
+                rating: 5,
+                text: "Amazing platform! Made $1,950 in 2 weeks. The customer support is excellent and very helpful.",
+                country: "🇸🇳 Senegal"
+            },
+            {
+                name: "Peter Mwangi",
+                avatar: "P",
+                profit: "$3,120",
+                time: "1 month ago",
+                rating: 5,
+                text: "Made $3,120 in one month! The daily profits are real and consistent. Best trading platform in Africa!",
+                country: "🇰🇪 Kenya"
+            },
+            {
+                name: "Grace Ndlovu",
+                avatar: "G",
+                profit: "$1,580",
+                time: "3 days ago",
+                rating: 5,
+                text: "Started yesterday and already made $1,580! The bots work 24/7 and never stop earning. Incredible!",
+                country: "🇿🇼 Zimbabwe"
+            },
+            {
+                name: "Mohamed Benali",
+                avatar: "M",
+                profit: "$2,950",
+                time: "1 week ago",
+                rating: 5,
+                text: "Made $2,950 in just one week! The platform is secure and the profits are guaranteed. Love it!",
+                country: "🇲🇦 Morocco"
+            },
+            {
+                name: "Tendai Chirwa",
+                avatar: "T",
+                profit: "$1,230",
+                time: "2 weeks ago",
+                rating: 5,
+                text: "Earned $1,230 in 2 weeks with minimal effort. The automated system does everything for you!",
+                country: "🇲🇼 Malawi"
+            },
+            {
+                name: "Samuel Osei",
+                avatar: "S",
+                profit: "$4,200",
+                time: "1 month ago",
+                rating: 5,
+                text: "Best investment ever! Made $4,200 in one month. The bots are profitable and reliable. 100% recommended!",
+                country: "🇨🇲 Cameroon"
+            },
+            {
+                name: "Aisha Mohammed",
+                avatar: "A",
+                profit: "$1,890",
+                time: "3 days ago",
+                rating: 5,
+                text: "Made $1,890 in just 3 days! The platform is user-friendly and the profits are amazing. Thank you!",
+                country: "🇹🇿 Tanzania"
             }
         ];
 
