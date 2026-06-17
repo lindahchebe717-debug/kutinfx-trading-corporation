@@ -226,7 +226,7 @@
     <script>
         const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
         let selectedCrypto = 'usdt-erc20';
@@ -269,14 +269,14 @@
 
         // Initialize
         async function init() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await mySupabase.auth.getSession();
             if (!session) {
                 window.location.href = 'login.html';
                 return;
             }
             currentUser = session.user;
             
-            const { data: profile } = await supabase.from('users').select('balance, first_name').eq('id', currentUser.id).single();
+            const { data: profile } = await mySupabase.from('users').select('balance, first_name').eq('id', currentUser.id).single();
             if (profile) {
                 document.getElementById('userBalance').textContent = `Balance: $${(profile.balance || 0).toFixed(2)}`;
                 document.getElementById('userAvatar').textContent = (profile.first_name || 'U')[0].toUpperCase();
@@ -364,7 +364,7 @@
             spinner.classList.remove('hidden');
 
             try {
-                const { error } = await supabase.from('transactions').insert([{
+                const { error } = await mySupabase.from('transactions').insert([{
                     user_id: currentUser.id,
                     type: 'deposit',
                     amount: amount,
