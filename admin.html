@@ -35,6 +35,9 @@
         .sidebar::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
         .sub-nav-item { transition: all 0.2s ease; font-size: 0.875rem; }
         .sub-nav-item:hover, .sub-nav-item.active { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .finance-stat-card { transition: all 0.3s ease; cursor: pointer; }
+        .finance-stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); }
+        .finance-stat-card.active-filter { border-width: 2px; box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -234,22 +237,22 @@
             <!-- FINANCE TAB -->
             <div id="finance" class="tab-content space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="glass-card rounded-xl p-5 border-l-4 border-green-500">
+                    <div class="finance-stat-card glass-card rounded-xl p-5 border-l-4 border-green-500" onclick="filterFinanceByCard('deposits')" id="financeCard-deposits">
                         <p class="text-slate-400 text-sm">Total Deposits</p>
                         <p class="text-2xl font-bold text-green-400 mt-1" id="finance-totalDeposits">$0</p>
                         <p class="text-xs text-slate-500 mt-1" id="finance-depositCount">0 transactions</p>
                     </div>
-                    <div class="glass-card rounded-xl p-5 border-l-4 border-red-500">
+                    <div class="finance-stat-card glass-card rounded-xl p-5 border-l-4 border-red-500" onclick="filterFinanceByCard('withdrawals')" id="financeCard-withdrawals">
                         <p class="text-slate-400 text-sm">Total Withdrawals</p>
                         <p class="text-2xl font-bold text-red-400 mt-1" id="finance-totalWithdrawals">$0</p>
                         <p class="text-xs text-slate-500 mt-1" id="finance-withdrawalCount">0 transactions</p>
                     </div>
-                    <div class="glass-card rounded-xl p-5 border-l-4 border-amber-500">
+                    <div class="finance-stat-card glass-card rounded-xl p-5 border-l-4 border-amber-500" onclick="filterFinanceByCard('pending')" id="financeCard-pending">
                         <p class="text-slate-400 text-sm">Pending Volume</p>
                         <p class="text-2xl font-bold text-amber-400 mt-1" id="finance-pendingVolume">$0</p>
                         <p class="text-xs text-slate-500 mt-1">Awaiting approval</p>
                     </div>
-                    <div class="glass-card rounded-xl p-5 border-l-4 border-blue-500">
+                    <div class="finance-stat-card glass-card rounded-xl p-5 border-l-4 border-blue-500" onclick="filterFinanceByCard('all')" id="financeCard-all">
                         <p class="text-slate-400 text-sm">Net Flow</p>
                         <p class="text-2xl font-bold text-blue-400 mt-1" id="finance-netFlow">$0</p>
                         <p class="text-xs text-slate-500 mt-1">Deposits - Withdrawals</p>
@@ -907,6 +910,7 @@
         let currentFilter = 'all';
         let chatSubscription = null;
         let addFundsUserId = null;
+        let currentFinanceFilter = 'all';
 
         async function init() {
             const { data: { session } } = await mySupabase.auth.getSession();
@@ -1166,6 +1170,40 @@
         // ============================================
         // FINANCE FUNCTIONS
         // ============================================
+        function filterFinanceByCard(filterType) {
+            // Remove active class from all cards
+            document.querySelectorAll('.finance-stat-card').forEach(card => {
+                card.classList.remove('active-filter');
+            });
+
+            // Add active class to clicked card
+            const clickedCard = document.getElementById(`financeCard-${filterType}`);
+            if (clickedCard) {
+                clickedCard.classList.add('active-filter');
+            }
+
+            // Set filters based on card clicked
+            const typeSelect = document.getElementById('financeFilterType');
+            const statusSelect = document.getElementById('financeFilterStatus');
+
+            if (filterType === 'deposits') {
+                typeSelect.value = 'deposit';
+                statusSelect.value = 'all';
+            } else if (filterType === 'withdrawals') {
+                typeSelect.value = 'withdrawal';
+                statusSelect.value = 'all';
+            } else if (filterType === 'pending') {
+                typeSelect.value = 'all';
+                statusSelect.value = 'pending';
+            } else if (filterType === 'all') {
+                typeSelect.value = 'all';
+                statusSelect.value = 'all';
+            }
+
+            currentFinanceFilter = filterType;
+            loadFinance();
+        }
+
         async function loadFinance() {
             const typeFilter = document.getElementById('financeFilterType')?.value || 'all';
             const statusFilter = document.getElementById('financeFilterStatus')?.value || 'all';
