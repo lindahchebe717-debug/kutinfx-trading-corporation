@@ -198,10 +198,10 @@
 
             <!-- Transaction Hash -->
             <div class="mb-6">
-                <label class="block text-sm font-medium text-slate-300 mb-2">Transaction Hash / ID <span class="text-slate-500">(After sending)</span></label>
+                <label class="block text-sm font-medium text-slate-300 mb-2">Transaction Hash / ID <span class="text-slate-500">(Optional - After sending)</span></label>
                 <input type="text" id="txHash"
                     class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500"
-                    placeholder="Paste transaction hash after sending">
+                    placeholder="Paste transaction hash after sending (optional)">
             </div>
 
             <!-- Messages -->
@@ -364,18 +364,49 @@
             spinner.classList.remove('hidden');
 
             try {
-                const { error } = await mySupabase.from('transactions').insert([{
+                // Build the transaction data - transaction_hash is optional
+                const transactionData = {
                     user_id: currentUser.id,
                     type: 'deposit',
                     amount: amount,
                     payment_method: `${crypto.name} (${crypto.network})`,
                     wallet_address: address,
-                    transaction_hash: txHash || null,
                     status: 'pending'
-                }]);
+                };
 
+                // Only include transaction_hash if user provided one
+                if (txHash) {
+                    transactionData.transaction_hash = txHash;
+                }
+
+                // Try to insert the transaction
+                const { data, error } = await mySupabase.from('transactions').insert([transactionData]);
+
+                // If error is about missing transaction_hash column, retry without it
+                if (error && error.code === 'PGRST204' && error.message.includes('transaction_hash')) {
+                    console.log('transaction_hash column not found, retrying without it...');
+                    
+                    // Remove transaction_hash and retry
+                    delete transactionData.transaction_hash;
+                    
+                    const { data: retryData, error: retryError } = await mySupabase.from('transactions').insert([transactionData]);
+                    
+                    if (retryError) throw retryError;
+                    
+                    // Success on retry
+                    successMsg.textContent = '✅ Deposit request submitted successfully! Our team will verify your transaction shortly.';
+                    successMsg.classList.remove('hidden');
+                    document.getElementById('amount').value = '';
+                    document.getElementById('txHash').value = '';
+                    
+                    setTimeout(() => window.location.href = 'dashboard.html', 3000);
+                    return;
+                }
+
+                // If there's any other error, throw it
                 if (error) throw error;
 
+                // Success on first try
                 successMsg.textContent = '✅ Deposit request submitted successfully! Our team will verify your transaction shortly.';
                 successMsg.classList.remove('hidden');
                 document.getElementById('amount').value = '';
