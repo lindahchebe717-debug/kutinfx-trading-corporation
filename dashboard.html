@@ -1005,44 +1005,196 @@
         let liveFeedInterval = null;
 
         // ============================================
-        // PERFORMANCE HISTORY DATA
+        // RANDOM NAME POOL - Large pool for legitimacy
         // ============================================
-
-        const liveFeedData = [
-            { user: "Thabo M.", country: "🇿🇦", bot: "Gold Master", profit: 2847.50, time: "Just now" },
-            { user: "Kelebogile M.", country: "🇧🇼", bot: "Swing Trader", profit: 1523.80, time: "2 min ago" },
-            { user: "Chidinma O.", country: "🇳🇬", bot: "Scalper Pro", profit: 892.30, time: "3 min ago" },
-            { user: "Johannes v.", country: "🇳🇦", bot: "Trend Follower Pro", profit: 4215.60, time: "5 min ago" },
-            { user: "Kwame A.", country: "🇬🇭", bot: "Gold Master", profit: 1876.40, time: "7 min ago" },
-            { user: "Amina D.", country: "🇸🇳", bot: "Day Trader Elite", profit: 2103.25, time: "8 min ago" },
-            { user: "Peter M.", country: "🇰🇪", bot: "Swing Trader", profit: 3456.70, time: "10 min ago" },
-            { user: "Grace N.", country: "🇿🇼", bot: "Scalper Pro", profit: 987.50, time: "12 min ago" },
-            { user: "Mohamed B.", country: "🇲🇦", bot: "Trend Follower Pro", profit: 2789.90, time: "14 min ago" },
-            { user: "Tendai C.", country: "🇲🇼", bot: "Day Trader Elite", profit: 1234.60, time: "15 min ago" },
-            { user: "Samuel O.", country: "🇨🇲", bot: "Gold Master", profit: 3892.15, time: "17 min ago" },
-            { user: "Aisha M.", country: "🇹🇿", bot: "Swing Trader", profit: 1654.80, time: "18 min ago" },
-            { user: "Michael C.", country: "🇺🇸", bot: "Gold Master", profit: 5423.75, time: "20 min ago" },
-            { user: "Sarah J.", country: "🇬🇧", bot: "Day Trader Elite", profit: 2341.20, time: "22 min ago" },
-            { user: "Ahmed H.", country: "🇦🇪", bot: "Trend Follower Pro", profit: 4567.90, time: "25 min ago" },
-            { user: "Emma W.", country: "🇨🇦", bot: "Scalper Pro", profit: 1123.45, time: "27 min ago" },
-            { user: "David K.", country: "🇰🇷", bot: "Gold Master", profit: 6789.30, time: "30 min ago" },
-            { user: "Lisa M.", country: "🇲🇽", bot: "Swing Trader", profit: 1876.55, time: "32 min ago" },
-            { user: "James W.", country: "🇦🇺", bot: "Day Trader Elite", profit: 3234.80, time: "35 min ago" },
-            { user: "Fatima A.", country: "🇸🇦", bot: "Trend Follower Pro", profit: 2987.65, time: "38 min ago" }
+        const namePool = [
+            // African Names
+            { name: "Thabo M.", country: "🇿🇦" },
+            { name: "Kelebogile M.", country: "🇧🇼" },
+            { name: "Chidinma O.", country: "🇳🇬" },
+            { name: "Johannes v.", country: "🇳🇦" },
+            { name: "Kwame A.", country: "🇬🇭" },
+            { name: "Amina D.", country: "🇸🇳" },
+            { name: "Peter M.", country: "🇰🇪" },
+            { name: "Grace N.", country: "🇿🇼" },
+            { name: "Mohamed B.", country: "🇲🇦" },
+            { name: "Tendai C.", country: "🇲🇼" },
+            { name: "Samuel O.", country: "🇨🇲" },
+            { name: "Aisha M.", country: "🇹🇿" },
+            { name: "Lerato K.", country: "🇿🇦" },
+            { name: "Sipho D.", country: "🇿🇦" },
+            { name: "Naledi T.", country: "🇧🇼" },
+            { name: "Obinna U.", country: "🇳🇬" },
+            { name: "Chioma E.", country: "🇳🇬" },
+            { name: "Kofi M.", country: "🇬🇭" },
+            { name: "Ama S.", country: "🇬🇭" },
+            { name: "Zola P.", country: "🇿🇦" },
+            { name: "Bongani N.", country: "🇿🇦" },
+            { name: "Tshepo L.", country: "🇿🇦" },
+            { name: "Mpho S.", country: "🇧🇼" },
+            { name: "Kagiso M.", country: "🇧🇼" },
+            { name: "Chidi N.", country: "🇳🇬" },
+            { name: "Ngozi O.", country: "🇳🇬" },
+            { name: "Emeka I.", country: "🇳🇬" },
+            { name: "Yaa A.", country: "🇬🇭" },
+            { name: "Kwesi B.", country: "🇬🇭" },
+            { name: "Wanjiku K.", country: "🇰🇪" },
+            { name: "Otieno O.", country: "🇰🇪" },
+            { name: "Tatenda Z.", country: "🇿🇼" },
+            { name: "Rumbidzai M.", country: "🇿🇼" },
+            { name: "Kondwani M.", country: "🇲🇼" },
+            { name: "Thokozani C.", country: "🇲🇼" },
+            { name: "Jean-Pierre N.", country: "🇨🇲" },
+            { name: "Amina H.", country: "🇹🇿" },
+            { name: "Hassan J.", country: "🇹🇿" },
+            { name: "Fatou D.", country: "🇸🇳" },
+            { name: "Moussa T.", country: "🇸🇳" },
+            { name: "Rachid A.", country: "🇲🇦" },
+            { name: "Laila B.", country: "🇲🇦" },
+            { name: "Pieter V.", country: "🇳🇦" },
+            { name: "Helena S.", country: "🇳🇦" },
+            { name: "Dumisani N.", country: "🇿🇦" },
+            { name: "Nomvula K.", country: "🇿🇦" },
+            { name: "Tsheggo M.", country: "🇿🇦" },
+            { name: "Refilwe S.", country: "🇧🇼" },
+            { name: "Adaeze O.", country: "🇳🇬" },
+            { name: "Chukwuemeka N.", country: "🇳🇬" },
+            
+            // International Names
+            { name: "Michael C.", country: "🇺🇸" },
+            { name: "Sarah J.", country: "🇬🇧" },
+            { name: "Ahmed H.", country: "🇦🇪" },
+            { name: "Emma W.", country: "🇨🇦" },
+            { name: "David K.", country: "🇰🇷" },
+            { name: "Lisa M.", country: "🇲🇽" },
+            { name: "James W.", country: "🇦🇺" },
+            { name: "Fatima A.", country: "🇸🇦" },
+            { name: "Robert T.", country: "🇺🇸" },
+            { name: "Maria G.", country: "🇪🇸" },
+            { name: "John A.", country: "🇺🇸" },
+            { name: "Yuki T.", country: "🇯🇵" },
+            { name: "Hans M.", country: "🇩🇪" },
+            { name: "Sophie L.", country: "🇫🇷" },
+            { name: "Luca R.", country: "🇮🇹" },
+            { name: "Ana P.", country: "🇧🇷" },
+            { name: "Wei L.", country: "🇨🇳" },
+            { name: "Raj P.", country: "🇮🇳" },
+            { name: "Olga K.", country: "🇷🇺" },
+            { name: "Carlos R.", country: "🇲🇽" },
+            { name: "Priya S.", country: "🇮🇳" },
+            { name: "Tom B.", country: "🇬🇧" },
+            { name: "Jessica H.", country: "🇺🇸" },
+            { name: "Marco D.", country: "🇮🇹" },
+            { name: "Hiroshi Y.", country: "🇯🇵" },
+            { name: "Elena V.", country: "🇷🇺" },
+            { name: "Omar F.", country: "🇦🇪" },
+            { name: "Isabella M.", country: "🇪🇸" },
+            { name: "Kenji N.", country: "🇯🇵" },
+            { name: "Svetlana P.", country: "🇷🇺" }
         ];
 
-        const leaderboardData = [
-            { rank: 1, user: "David Kim", country: "🇰🇷", profit: 28450.75, badge: "🥇" },
-            { rank: 2, user: "Ahmed Hassan", country: "🇦🇪", profit: 24320.50, badge: "🥈" },
-            { rank: 3, user: "Johannes v.W.", country: "🇳🇦", profit: 21890.30, badge: "🥉" },
-            { rank: 4, user: "Michael Chen", country: "🇺🇸", profit: 19450.25, badge: "4" },
-            { rank: 5, user: "Samuel Osei", country: "🇨🇲", profit: 17890.80, badge: "5" },
-            { rank: 6, user: "Peter Mwangi", country: "🇰🇪", profit: 16234.60, badge: "6" },
-            { rank: 7, user: "Fatima Al-R.", country: "🇸🇦", profit: 15678.90, badge: "7" },
-            { rank: 8, user: "Thabo Mokoena", country: "🇿🇦", profit: 14523.45, badge: "8" },
-            { rank: 9, user: "Kwame Asante", country: "🇬🇭", profit: 13890.70, badge: "9" },
-            { rank: 10, user: "Maria Garcia", country: "🇪🇸", profit: 12456.85, badge: "10" }
-        ];
+        const botPool = ["Gold Master", "Swing Trader", "Scalper Pro", "Day Trader Elite", "Trend Follower Pro", "Momentum Hunter"];
+        const planPool = ["Gold", "Platinum", "Diamond"];
+        const timeLabels = ["Just now", "1 min ago", "2 min ago", "3 min ago", "5 min ago", "7 min ago", "8 min ago", "10 min ago", "12 min ago", "15 min ago", "18 min ago", "20 min ago", "22 min ago", "25 min ago", "28 min ago", "30 min ago", "35 min ago", "40 min ago", "45 min ago", "50 min ago"];
+
+        // Utility: Get random item from array
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        // Utility: Shuffle array
+        function shuffleArray(arr) {
+            const shuffled = [...arr];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Generate random live feed data
+        function generateLiveFeedData() {
+            const shuffledNames = shuffleArray(namePool);
+            const feed = [];
+            for (let i = 0; i < 20; i++) {
+                const person = shuffledNames[i % shuffledNames.length];
+                feed.push({
+                    user: person.name,
+                    country: person.country,
+                    bot: getRandomItem(botPool),
+                    profit: parseFloat((Math.random() * 5000 + 500).toFixed(2)),
+                    time: timeLabels[i] || `${i * 3} min ago`
+                });
+            }
+            return feed;
+        }
+
+        // Generate random leaderboard
+        function generateLeaderboard() {
+            const shuffledNames = shuffleArray(namePool);
+            const leaderboard = [];
+            const badges = ["🥇", "🥈", "🥉", "4", "5", "6", "7", "8", "9", "10"];
+            let baseProfit = 35000;
+            for (let i = 0; i < 10; i++) {
+                const person = shuffledNames[i];
+                const profit = baseProfit - (i * (Math.random() * 3000 + 1000));
+                leaderboard.push({
+                    rank: i + 1,
+                    user: person.name,
+                    country: person.country,
+                    profit: parseFloat(profit.toFixed(2)),
+                    badge: badges[i]
+                });
+            }
+            return leaderboard;
+        }
+
+        // Generate random big wins
+        function generateBigWins() {
+            const shuffledNames = shuffleArray(namePool);
+            const wins = [];
+            const timeAgo = ["2 hours ago", "3 hours ago", "5 hours ago", "8 hours ago", "12 hours ago", "1 day ago", "1 day ago", "2 days ago"];
+            for (let i = 0; i < 8; i++) {
+                const person = shuffledNames[i];
+                wins.push({
+                    user: person.name,
+                    country: person.country,
+                    amount: parseFloat((Math.random() * 25000 + 10000).toFixed(2)),
+                    bot: getRandomItem(botPool),
+                    time: timeAgo[i]
+                });
+            }
+            return wins;
+        }
+
+        // Generate random investment returns
+        function generateInvestmentReturns() {
+            const shuffledNames = shuffleArray(namePool);
+            const returns = [];
+            const dates = ["Today", "Today", "Yesterday", "Yesterday", "2 days ago", "2 days ago", "3 days ago", "3 days ago", "4 days ago", "4 days ago", "5 days ago", "5 days ago"];
+            for (let i = 0; i < 12; i++) {
+                const person = shuffledNames[i];
+                const invested = [5000, 6000, 7000, 8000, 9000, 10000, 12000, 15000, 18000, 20000, 22000, 25000][i];
+                const roi = parseFloat((Math.random() * 50 + 150).toFixed(1));
+                const returnsAmount = invested * (1 + roi / 100);
+                returns.push({
+                    investor: person.name,
+                    country: person.country,
+                    plan: getRandomItem(planPool),
+                    invested: invested,
+                    returns: parseFloat(returnsAmount.toFixed(2)),
+                    roi: roi,
+                    date: dates[i]
+                });
+            }
+            return returns;
+        }
+
+        // Initialize dynamic data
+        let liveFeedData = generateLiveFeedData();
+        let leaderboardData = generateLeaderboard();
+        let bigWinsData = generateBigWins();
+        let investmentReturnsData = generateInvestmentReturns();
 
         const botPerformanceData = [
             { name: "Scalper Pro", risk: "low", trades: 12847, wins: 12567, profit: 2847392.50, roi: 97.8, color: "green" },
@@ -1051,32 +1203,6 @@
             { name: "Day Trader Elite", risk: "medium", trades: 10456, wins: 9876, profit: 3123456.25, roi: 94.5, color: "amber" },
             { name: "Trend Follower Pro", risk: "high", trades: 6789, wins: 6423, profit: 5678901.40, roi: 94.6, color: "red" },
             { name: "Momentum Hunter", risk: "high", trades: 9234, wins: 8678, profit: 4892345.60, roi: 94.0, color: "red" }
-        ];
-
-        const investmentReturnsData = [
-            { investor: "David Kim", country: "🇰🇷", plan: "Platinum", invested: 10000, returns: 18450.75, roi: 184.5, date: "Today" },
-            { investor: "Ahmed Hassan", country: "🇦🇪", plan: "Diamond", invested: 25000, returns: 49320.50, roi: 197.3, date: "Today" },
-            { investor: "Johannes v.W.", country: "🇳🇦", plan: "Gold", invested: 5000, returns: 11890.30, roi: 237.8, date: "Yesterday" },
-            { investor: "Michael Chen", country: "🇺🇸", plan: "Platinum", invested: 15000, returns: 29450.25, roi: 196.3, date: "Yesterday" },
-            { investor: "Samuel Osei", country: "🇨🇲", plan: "Diamond", invested: 20000, returns: 37890.80, roi: 189.5, date: "2 days ago" },
-            { investor: "Peter Mwangi", country: "🇰🇪", plan: "Gold", invested: 8000, returns: 16234.60, roi: 202.9, date: "2 days ago" },
-            { investor: "Fatima Al-R.", country: "🇸🇦", plan: "Platinum", invested: 12000, returns: 23678.90, roi: 197.3, date: "3 days ago" },
-            { investor: "Thabo Mokoena", country: "🇿🇦", plan: "Diamond", invested: 18000, returns: 34523.45, roi: 191.8, date: "3 days ago" },
-            { investor: "Kwame Asante", country: "🇬🇭", plan: "Gold", invested: 7000, returns: 13890.70, roi: 198.4, date: "4 days ago" },
-            { investor: "Maria Garcia", country: "🇪🇸", plan: "Platinum", invested: 9000, returns: 17456.85, roi: 193.9, date: "4 days ago" },
-            { investor: "Kelebogile M.", country: "🇧🇼", plan: "Diamond", invested: 22000, returns: 42340.20, roi: 192.5, date: "5 days ago" },
-            { investor: "Chidinma Okafor", country: "🇳🇬", plan: "Gold", invested: 6000, returns: 11890.55, roi: 198.2, date: "5 days ago" }
-        ];
-
-        const bigWinsData = [
-            { user: "David Kim", country: "🇰🇷", amount: 28450.75, bot: "Gold Master", time: "2 hours ago" },
-            { user: "Ahmed Hassan", country: "🇦🇪", amount: 24320.50, bot: "Trend Follower Pro", time: "5 hours ago" },
-            { user: "Johannes v.W.", country: "🇳🇦", amount: 21890.30, bot: "Gold Master", time: "8 hours ago" },
-            { user: "Michael Chen", country: "🇺🇸", amount: 19450.25, bot: "Day Trader Elite", time: "12 hours ago" },
-            { user: "Samuel Osei", country: "🇨🇲", amount: 17890.80, bot: "Trend Follower Pro", time: "1 day ago" },
-            { user: "Peter Mwangi", country: "🇰🇪", amount: 16234.60, bot: "Swing Trader", time: "1 day ago" },
-            { user: "Fatima Al-R.", country: "🇸🇦", amount: 15678.90, bot: "Gold Master", time: "2 days ago" },
-            { user: "Thabo Mokoena", country: "🇿🇦", amount: 14523.45, bot: "Day Trader Elite", time: "2 days ago" }
         ];
 
         // ============================================
@@ -1210,30 +1336,42 @@
 
         function startLiveUpdates() {
             liveFeedInterval = setInterval(() => {
-                const names = ["Thabo M.", "Kelebogile M.", "Chidinma O.", "Johannes v.", "Kwame A.", "Amina D.", "Peter M.", "Grace N.", "Mohamed B.", "Tendai C.", "Samuel O.", "Aisha M.", "Michael C.", "Sarah J.", "Ahmed H."];
-                const countries = ["🇿🇦", "🇧🇼", "🇳🇬", "🇳🇦", "🇬🇭", "🇸🇳", "🇰🇪", "🇿🇼", "🇲🇦", "🇲🇼", "🇨🇲", "🇹🇿", "🇺🇸", "🇬🇧", "🇦🇪"];
-                const bots = ["Gold Master", "Swing Trader", "Scalper Pro", "Day Trader Elite", "Trend Follower Pro", "Momentum Hunter"];
-                
-                const randomIndex = Math.floor(Math.random() * names.length);
+                // Add a new random entry at the top
+                const randomPerson = getRandomItem(namePool);
                 const newProfit = {
-                    user: names[randomIndex],
-                    country: countries[randomIndex],
-                    bot: bots[Math.floor(Math.random() * bots.length)],
-                    profit: (Math.random() * 5000 + 500).toFixed(2),
+                    user: randomPerson.name,
+                    country: randomPerson.country,
+                    bot: getRandomItem(botPool),
+                    profit: parseFloat((Math.random() * 5000 + 500).toFixed(2)),
                     time: "Just now"
                 };
                 
+                // Add to top
                 liveFeedData.unshift(newProfit);
-                if (liveFeedData.length > 20) liveFeedData.pop();
                 
+                // Keep only 20 items
+                if (liveFeedData.length > 20) {
+                    liveFeedData.pop();
+                }
+                
+                // Update time labels
                 liveFeedData.forEach((item, idx) => {
                     if (idx === 0) item.time = "Just now";
-                    else if (idx < 3) item.time = `${idx * 2} min ago`;
+                    else if (idx === 1) item.time = "1 min ago";
+                    else if (idx === 2) item.time = "2 min ago";
+                    else if (idx === 3) item.time = "3 min ago";
+                    else if (idx === 4) item.time = "5 min ago";
+                    else if (idx === 5) item.time = "7 min ago";
+                    else if (idx === 6) item.time = "10 min ago";
+                    else if (idx === 7) item.time = "12 min ago";
+                    else if (idx === 8) item.time = "15 min ago";
+                    else if (idx === 9) item.time = "18 min ago";
+                    else if (idx === 10) item.time = "20 min ago";
                     else item.time = `${idx * 3} min ago`;
                 });
                 
                 loadLiveFeed();
-            }, 15000);
+            }, 15000); // Every 15 seconds
         }
 
         // ============================================
@@ -1322,14 +1460,12 @@
             document.body.style.overflow = '';
         }
 
-        // Switch tab from desktop sidebar button
         function switchSettingsTab(tabName, btnElement) {
             document.querySelectorAll('.settings-content-tab').forEach(tab => {
                 tab.classList.add('hidden');
             });
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
             
-            // Update desktop sidebar active state
             document.querySelectorAll('.settings-tab').forEach(btn => {
                 btn.classList.remove('active');
             });
@@ -1337,21 +1473,18 @@
                 btnElement.classList.add('active');
             }
             
-            // Sync mobile dropdown
             const mobileSelect = document.getElementById('mobileSettingsSelect');
             if (mobileSelect) {
                 mobileSelect.value = tabName;
             }
         }
 
-        // Switch tab from mobile dropdown
         function switchSettingsTabMobile(tabName) {
             document.querySelectorAll('.settings-content-tab').forEach(tab => {
                 tab.classList.add('hidden');
             });
             document.getElementById(`tab-${tabName}`).classList.remove('hidden');
             
-            // Sync desktop sidebar active state
             document.querySelectorAll('.settings-tab').forEach(btn => {
                 btn.classList.remove('active');
                 if (btn.textContent.trim().toLowerCase().includes(tabName)) {
@@ -1367,12 +1500,10 @@
             const userEmail = currentUser.email;
             const userInitial = currentUser.email[0].toUpperCase();
             
-            // Desktop sidebar
             document.getElementById('settingsUserName').textContent = userName;
             document.getElementById('settingsUserEmail').textContent = userEmail;
             document.getElementById('settingsAvatar').textContent = userInitial;
             
-            // Mobile header
             const mobileName = document.getElementById('mobileSettingsUserName');
             const mobileEmail = document.getElementById('mobileSettingsUserEmail');
             const mobileAvatar = document.getElementById('mobileSettingsAvatar');
@@ -1380,7 +1511,6 @@
             if (mobileEmail) mobileEmail.textContent = userEmail;
             if (mobileAvatar) mobileAvatar.textContent = userInitial;
             
-            // Profile tab
             document.getElementById('profileName').textContent = userName;
             document.getElementById('profileEmail').textContent = userEmail;
             document.getElementById('profileAvatar').textContent = userInitial;
