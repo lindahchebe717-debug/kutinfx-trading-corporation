@@ -99,7 +99,7 @@
                     </button>
                     <div>
                         <h2 class="text-xl font-semibold text-white">Trading Bots</h2>
-                        <p class="text-slate-400 text-sm">Real-time profit calculation every 5 minutes</p>
+                        <p class="text-slate-400 text-sm">Real-time profit calculation every minute</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
@@ -208,7 +208,7 @@
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-slate-400">Profit Calculation:</span>
-                            <span class="text-cyan-400 font-medium">Every 5 Minutes</span>
+                            <span class="text-cyan-400 font-medium">Every 1 Minute</span>
                         </div>
                     </div>
                     <button onclick="activateBot()" id="activateBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all shadow-lg">
@@ -274,10 +274,10 @@
         init();
 
         function startProfitCalculation() {
-            // Calculate profits every 5 minutes (300000ms)
+            // Calculate profits every 1 minute (60000ms)
             profitCalculationInterval = setInterval(async () => {
                 await calculateAndAddProfits();
-            }, 300000);
+            }, 60000);
             
             // Also run immediately
             calculateAndAddProfits();
@@ -305,10 +305,10 @@
                     const lastCalc = userBot.last_profit_calculation ? new Date(userBot.last_profit_calculation) : new Date(userBot.activated_at);
                     const hoursElapsed = (now - lastCalc) / (1000 * 60 * 60);
                     
-                    // Calculate profit for elapsed time (every 5 minutes = 5/60 hours)
+                    // Calculate profit for elapsed time (every 1 minute = 1/60 hours)
                     const minutesElapsed = (now - lastCalc) / (1000 * 60);
                     
-                    if (minutesElapsed >= 5) { // Every 5 minutes
+                    if (minutesElapsed >= 1) { // Every 1 minute
                         // Calculate profit for this period
                         const hourlyProfit = investedAmount * (dailyROI / 100) / 24;
                         const profitForPeriod = hourlyProfit * (minutesElapsed / 60);
@@ -336,13 +336,13 @@
                         }
                     }
                     
-                    // Auto-stop after 12 hours
-                    if (hoursElapsed >= 12) {
+                    // Auto-stop after 24 hours
+                    if (hoursElapsed >= 24) {
                         botsToStop.push({ id: userBot.id, name: bot.name, profit: userBot.earnings || 0 });
                     }
                 }
 
-                // Stop bots that completed 12 hours
+                // Stop bots that completed 24 hours
                 for (const bot of botsToStop) {
                     await mySupabase.from('user_bots').update({ status: 'stopped' }).eq('id', bot.id);
                 }
@@ -364,7 +364,7 @@
         function showProfitNotification(amount) {
             const notification = document.getElementById('profitNotification');
             const text = document.getElementById('profitNotificationText');
-            text.textContent = `💰 Profit calculated! +$${amount.toFixed(2)} earned in the last 5 minutes.`;
+            text.textContent = `💰 Profit calculated! +$${amount.toFixed(2)} earned in the last minute.`;
             notification.classList.remove('hidden');
             setTimeout(() => {
                 notification.classList.add('hidden');
@@ -374,7 +374,7 @@
         function showStopNotification(count) {
             const notification = document.getElementById('profitNotification');
             const text = document.getElementById('profitNotificationText');
-            text.textContent = `⏰ ${count} bot(s) completed 12-hour cycle and auto-stopped.`;
+            text.textContent = `⏰ ${count} bot(s) completed 24-hour cycle and auto-stopped.`;
             notification.classList.remove('hidden');
             setTimeout(() => {
                 notification.classList.add('hidden');
@@ -473,7 +473,7 @@
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-slate-400">Profit Update:</span>
-                                <span class="text-cyan-400 font-medium">Every 5 min</span>
+                                <span class="text-cyan-400 font-medium">Every 1 min</span>
                             </div>
                         </div>
                         <button onclick="openModal(${bot.id})" class="w-full gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
@@ -524,7 +524,7 @@
                     const lastCalc = ub.last_profit_calculation ? new Date(ub.last_profit_calculation) : new Date(ub.activated_at);
                     const now = new Date();
                     const hoursElapsed = (now - lastCalc) / (1000 * 60 * 60);
-                    const hoursRemaining = Math.max(0, 12 - hoursElapsed);
+                    const hoursRemaining = Math.max(0, 24 - hoursElapsed);
                     const timeDisplay = ub.status === 'active' ? 
                         `${hoursRemaining.toFixed(1)}h remaining` : 
                         ub.status === 'paused' ? 'Paused' : 'Stopped';
@@ -775,7 +775,7 @@
                     await loadMyBots();
                     userBalance = newBalance;
                     document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
-                    alert(`✅ ${bot.name} reactivated! Profits will start calculating every 5 minutes.`);
+                    alert(`✅ ${bot.name} reactivated! Profits will start calculating every minute.`);
                     
                 } else {
                     const newBalance = userBalance - amount;
@@ -789,7 +789,7 @@
                     await loadMyBots();
                     userBalance = newBalance;
                     document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
-                    alert(`✅ ${bot.name} activated! Profits will calculate every 5 minutes. Bot auto-stops after 12 hours.`);
+                    alert(`✅ ${bot.name} activated! Profits will calculate every minute. Bot auto-stops after 24 hours.`);
                 }
                 
             } catch (err) {
