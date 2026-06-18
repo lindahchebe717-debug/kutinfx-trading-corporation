@@ -38,6 +38,8 @@
         .finance-stat-card { transition: all 0.3s ease; cursor: pointer; }
         .finance-stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); }
         .finance-stat-card.active-filter { border-width: 2px; box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+        .dashboard-stat-card { transition: all 0.3s ease; cursor: pointer; }
+        .dashboard-stat-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); border-color: rgba(245, 158, 11, 0.5); }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -123,9 +125,19 @@
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                     Users
                 </button>
+                <button onclick="switchTab('transactions')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    Transactions
+                    <span id="transactionsBadge" class="ml-auto px-2 py-0.5 bg-amber-500 text-white text-xs rounded-full hidden">0</span>
+                </button>
                 <button onclick="switchTab('finance')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                     Finance
+                </button>
+                <button onclick="switchTab('kyc')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                    KYC Verifications
+                    <span id="kycBadge" class="ml-auto px-2 py-0.5 bg-blue-500 text-white text-xs rounded-full hidden">0</span>
                 </button>
                 <button onclick="switchTab('investments')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
@@ -188,25 +200,30 @@
             <!-- DASHBOARD TAB -->
             <div id="dashboard" class="tab-content active space-y-6">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div class="glass-card rounded-xl p-5">
+                    <div class="dashboard-stat-card glass-card rounded-xl p-5" onclick="switchTab('users')">
                         <p class="text-slate-400 text-sm">Total Users</p>
                         <p class="text-2xl font-bold text-white mt-1" id="stat-users">0</p>
+                        <p class="text-xs text-slate-500 mt-1">Click to manage →</p>
                     </div>
-                    <div class="glass-card rounded-xl p-5">
+                    <div class="dashboard-stat-card glass-card rounded-xl p-5 border-l-4 border-amber-500" onclick="switchTab('transactions')">
                         <p class="text-slate-400 text-sm">Pending Deposits</p>
                         <p class="text-2xl font-bold text-amber-500 mt-1" id="stat-deposits">0</p>
+                        <p class="text-xs text-amber-500/70 mt-1">Click to approve →</p>
                     </div>
-                    <div class="glass-card rounded-xl p-5">
+                    <div class="dashboard-stat-card glass-card rounded-xl p-5 border-l-4 border-red-500" onclick="switchTab('transactions')">
                         <p class="text-slate-400 text-sm">Pending Withdrawals</p>
                         <p class="text-2xl font-bold text-red-400 mt-1" id="stat-withdrawals">0</p>
+                        <p class="text-xs text-red-400/70 mt-1">Click to approve →</p>
                     </div>
-                    <div class="glass-card rounded-xl p-5">
+                    <div class="dashboard-stat-card glass-card rounded-xl p-5 border-l-4 border-blue-500" onclick="switchTab('kyc')">
                         <p class="text-slate-400 text-sm">Pending KYC</p>
                         <p class="text-2xl font-bold text-blue-400 mt-1" id="stat-kyc">0</p>
+                        <p class="text-xs text-blue-400/70 mt-1">Click to verify →</p>
                     </div>
-                    <div class="glass-card rounded-xl p-5 border-2 border-purple-500/30">
+                    <div class="dashboard-stat-card glass-card rounded-xl p-5 border-l-4 border-purple-500" onclick="switchTab('support')">
                         <p class="text-slate-400 text-sm">Open Tickets</p>
                         <p class="text-2xl font-bold text-purple-400 mt-1" id="stat-tickets">0</p>
+                        <p class="text-xs text-purple-400/70 mt-1">Click to respond →</p>
                     </div>
                 </div>
             </div>
@@ -585,11 +602,15 @@
                 </div>
             </div>
 
-            <!-- TRANSACTIONS TAB (Original - Pending Only) -->
+            <!-- TRANSACTIONS TAB (Pending Only - With Approve/Reject Buttons) -->
             <div id="transactions" class="tab-content space-y-6">
                 <div class="glass-card rounded-xl overflow-hidden">
                     <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
                         <h3 class="text-lg font-semibold text-white">Pending Deposits</h3>
+                        <button onclick="loadTransactions()" class="text-amber-500 text-sm hover:text-amber-400 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Refresh
+                        </button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
@@ -608,8 +629,12 @@
                 </div>
 
                 <div class="glass-card rounded-xl overflow-hidden">
-                    <div class="p-4 border-b border-slate-700/50">
+                    <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
                         <h3 class="text-lg font-semibold text-white">Pending Withdrawals</h3>
+                        <button onclick="loadTransactions()" class="text-amber-500 text-sm hover:text-amber-400 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Refresh
+                        </button>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left text-sm">
@@ -630,8 +655,12 @@
             <!-- KYC TAB -->
             <div id="kyc" class="tab-content">
                 <div class="glass-card rounded-xl overflow-hidden">
-                    <div class="p-4 border-b border-slate-700/50">
+                    <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
                         <h3 class="text-lg font-semibold text-white">Pending KYC Verifications</h3>
+                        <button onclick="loadKYC()" class="text-amber-500 text-sm hover:text-amber-400 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            Refresh
+                        </button>
                     </div>
                     <div class="p-4 space-y-4" id="kycContainer"></div>
                 </div>
@@ -941,8 +970,16 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => { el.classList.remove('active', 'text-white'); el.classList.add('text-slate-400'); });
             document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active', 'text-white');
-            event.currentTarget.classList.remove('text-slate-400');
+            
+            // Find the clicked nav button and activate it
+            const navButtons = document.querySelectorAll('.nav-item');
+            navButtons.forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(`'${tabId}'`)) {
+                    btn.classList.add('active', 'text-white');
+                    btn.classList.remove('text-slate-400');
+                }
+            });
+            
             const titles = { 
                 'dashboard': 'Admin Dashboard', 
                 'users': 'User Management', 
@@ -973,6 +1010,24 @@
             document.getElementById('stat-withdrawals').textContent = withCount || 0;
             document.getElementById('stat-kyc').textContent = kycCount || 0;
             document.getElementById('stat-tickets').textContent = ticketCount || 0;
+
+            // Update sidebar badges
+            const totalPending = (depCount || 0) + (withCount || 0);
+            const transBadge = document.getElementById('transactionsBadge');
+            if (totalPending > 0) {
+                transBadge.textContent = totalPending;
+                transBadge.classList.remove('hidden');
+            } else {
+                transBadge.classList.add('hidden');
+            }
+
+            const kycBadge = document.getElementById('kycBadge');
+            if (kycCount > 0) {
+                kycBadge.textContent = kycCount;
+                kycBadge.classList.remove('hidden');
+            } else {
+                kycBadge.classList.add('hidden');
+            }
 
             const badge = document.getElementById('supportBadge');
             if (ticketCount > 0) {
@@ -1171,18 +1226,15 @@
         // FINANCE FUNCTIONS
         // ============================================
         function filterFinanceByCard(filterType) {
-            // Remove active class from all cards
             document.querySelectorAll('.finance-stat-card').forEach(card => {
                 card.classList.remove('active-filter');
             });
 
-            // Add active class to clicked card
             const clickedCard = document.getElementById(`financeCard-${filterType}`);
             if (clickedCard) {
                 clickedCard.classList.add('active-filter');
             }
 
-            // Set filters based on card clicked
             const typeSelect = document.getElementById('financeFilterType');
             const statusSelect = document.getElementById('financeFilterStatus');
 
@@ -1227,6 +1279,17 @@
                         const typeColor = tx.type === 'deposit' ? 'text-green-400' : 'text-red-400';
                         const date = new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
                         
+                        // Add approve/reject buttons for pending transactions
+                        let actionsHtml = '<span class="text-slate-500 text-xs">-</span>';
+                        if (tx.status === 'pending') {
+                            actionsHtml = `
+                                <div class="flex gap-1">
+                                    <button onclick="approveTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-2 py-1 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30 text-xs">Approve</button>
+                                    <button onclick="rejectTx('${tx.id}', '${tx.type}', '${tx.user_id}', ${tx.amount})" class="px-2 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs">Reject</button>
+                                </div>
+                            `;
+                        }
+                        
                         return `
                             <tr class="hover:bg-slate-800/30">
                                 <td class="p-4 text-slate-300 text-xs">${date}</td>
@@ -1234,7 +1297,7 @@
                                 <td class="p-4 ${typeColor} text-xs font-medium capitalize">${tx.type}</td>
                                 <td class="p-4 text-white font-bold text-xs">$${parseFloat(tx.amount).toFixed(2)}</td>
                                 <td class="p-4"><span class="px-2 py-1 rounded text-xs ${statusColor} capitalize">${tx.status}</span></td>
-                                <td class="p-4 text-xs text-slate-400">${tx.payment_method || '-'}</td>
+                                <td class="p-4">${actionsHtml}</td>
                             </tr>
                         `;
                     }).join('');
@@ -1268,7 +1331,6 @@
         // ============================================
         async function loadInvestments() {
             try {
-                // Load investment plans
                 const { data: plans } = await mySupabase.from('investment_plans').select('*').eq('is_active', true);
                 const plansBody = document.getElementById('investPlansTableBody');
                 
@@ -1287,7 +1349,6 @@
                     plansBody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-slate-500">No investment plans available</td></tr>';
                 }
 
-                // Try to load user investments (if table exists)
                 try {
                     const { data: userInvestments } = await mySupabase
                         .from('user_investments')
@@ -1338,7 +1399,6 @@
         // ============================================
         async function loadAgents() {
             try {
-                // Get all users with referral codes
                 const { data: users } = await mySupabase
                     .from('users')
                     .select('id, email, first_name, last_name, referral_code, referral_earnings, created_at')
@@ -1352,7 +1412,6 @@
                     let totalCommissions = 0;
                     let topEarnings = 0;
 
-                    // Get referral counts for each user
                     const agentsData = await Promise.all(users.map(async u => {
                         const { count } = await mySupabase
                             .from('referrals')
@@ -1402,7 +1461,6 @@
         // ============================================
         async function loadReports() {
             try {
-                // Get all transactions
                 const { data: allTxs } = await mySupabase.from('transactions').select('type, amount, status');
                 const { data: allUsers } = await mySupabase.from('users').select('balance, kyc_status, created_at');
                 const { data: activeBots } = await mySupabase.from('user_bots').select('invested_amount, earnings').eq('status', 'active');
@@ -1454,7 +1512,7 @@
         }
 
         // ============================================
-        // EXISTING FUNCTIONS (unchanged)
+        // TRANSACTIONS FUNCTIONS (Approve/Reject)
         // ============================================
         async function loadTransactions() {
             const { data: txs } = await mySupabase.from('transactions').select('*, users(email)').eq('status', 'pending').order('created_at', { ascending: false });
@@ -1523,7 +1581,7 @@
                 const newBal = (user.balance || 0) + amount;
                 await mySupabase.from('users').update({ balance: newBal }).eq('id', userId);
             }
-            alert('Transaction Approved!');
+            alert('✅ Transaction Approved!');
             loadDashboardStats(); loadTransactions(); loadFinance(); loadReports();
         }
 
@@ -1536,7 +1594,7 @@
                 const newBal = (user.balance || 0) + amount;
                 await mySupabase.from('users').update({ balance: newBal }).eq('id', userId);
             }
-            alert('Transaction Rejected!');
+            alert('❌ Transaction Rejected!');
             loadDashboardStats(); loadTransactions(); loadFinance(); loadReports();
         }
 
@@ -1587,11 +1645,11 @@
 
         async function approveKYC(userId) {
             await mySupabase.from('users').update({ kyc_status: 'verified' }).eq('id', userId);
-            alert('KYC Approved!'); loadDashboardStats(); loadKYC(); loadUsers(); loadReports();
+            alert('✅ KYC Approved!'); loadDashboardStats(); loadKYC(); loadUsers(); loadReports();
         }
         async function rejectKYC(userId) {
             await mySupabase.from('users').update({ kyc_status: 'rejected' }).eq('id', userId);
-            alert('KYC Rejected!'); loadDashboardStats(); loadKYC(); loadUsers(); loadReports();
+            alert('❌ KYC Rejected!'); loadDashboardStats(); loadKYC(); loadUsers(); loadReports();
         }
 
         async function loadSupport() {
