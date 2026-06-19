@@ -226,12 +226,12 @@
                     // Step 2: Generate referral code for this user
                     const userReferralCode = generateReferralCode(userId, firstName);
                     
-                    // Step 3: Update user profile with referral code
+                    // Step 3: Update user profile with referral code (NO welcome bonus)
                     const { error: updateError } = await mySupabase
                         .from('users')
                         .update({ 
                             referral_code: userReferralCode,
-                            balance: 10 // Welcome bonus for new user
+                            balance: 0 // Starting balance is $0
                         })
                         .eq('id', userId);
 
@@ -275,7 +275,7 @@
                         }
                     }
 
-                    showSuccess('✅ Account created successfully! You received a $10 welcome bonus. Redirecting to sign in...');
+                    showSuccess('✅ Account created successfully! Redirecting to sign in...');
                     registerForm.reset();
                     setTimeout(() => {
                         window.location.href = 'sign-in.html'; 
