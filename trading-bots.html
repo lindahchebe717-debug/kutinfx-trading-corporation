@@ -489,7 +489,12 @@
                     return;
                 }
                 
-                container.innerHTML = allBots.map(bot => `
+                container.innerHTML = allBots.map(bot => {
+                    // Scalper Pro has no minimum deposit
+                    const isScalperPro = bot.name && bot.name.toLowerCase().includes('scalper pro');
+                    const minDepositDisplay = isScalperPro ? 'No minimum' : `$${(bot.min_deposit || 0).toFixed(2)}`;
+                    
+                    return `
                     <div class="bot-card glass-card rounded-xl p-5">
                         <div class="flex items-center justify-between mb-3">
                             <h4 class="text-white font-semibold">${bot.name}</h4>
@@ -501,7 +506,7 @@
                         <div class="space-y-2 mb-4 text-sm">
                             <div class="flex justify-between">
                                 <span class="text-slate-400">Min. Deposit:</span>
-                                <span class="text-white font-medium">$${(bot.min_deposit || 0).toFixed(2)}</span>
+                                <span class="text-white font-medium">${minDepositDisplay}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span class="text-slate-400">Daily ROI:</span>
@@ -516,7 +521,7 @@
                             Activate Bot
                         </button>
                     </div>
-                `).join('');
+                `}).join('');
             } catch (err) {
                 console.error('Error loading bots:', err);
                 container.innerHTML = '<p class="text-red-400 col-span-full">Failed to load trading bots.</p>';
@@ -748,13 +753,22 @@
             selectedBotId = botId;
             document.getElementById('modalBotName').textContent = bot.name;
             document.getElementById('modalROI').textContent = `${bot.expected_roi}% / day`;
-            document.getElementById('minDepositText').textContent = `Minimum deposit: $${(bot.min_deposit || 0).toFixed(2)} | Your balance: $${userBalance.toFixed(2)}`;
+            
+            // Check if this is Scalper Pro (no minimum deposit)
+            const isScalperPro = bot.name && bot.name.toLowerCase().includes('scalper pro');
+            
+            if (isScalperPro) {
+                document.getElementById('minDepositText').textContent = `No minimum deposit | Your balance: $${userBalance.toFixed(2)}`;
+                document.getElementById('investAmount').min = 1;
+            } else {
+                document.getElementById('minDepositText').textContent = `Minimum deposit: $${(bot.min_deposit || 0).toFixed(2)} | Your balance: $${userBalance.toFixed(2)}`;
+                document.getElementById('investAmount').min = bot.min_deposit || 0;
+            }
             
             const riskEl = document.getElementById('modalRisk');
             riskEl.textContent = bot.risk_level.charAt(0).toUpperCase() + bot.risk_level.slice(1);
             riskEl.className = `font-medium ${bot.risk_level === 'low' ? 'text-green-400' : bot.risk_level === 'medium' ? 'text-amber-400' : 'text-red-400'}`;
             
-            document.getElementById('investAmount').min = bot.min_deposit || 0;
             document.getElementById('investAmount').value = '';
             document.getElementById('modalError').classList.add('hidden');
             document.getElementById('activateModal').classList.remove('hidden');
@@ -776,7 +790,9 @@
                 return;
             }
             
-            if (amount < (bot.min_deposit || 0)) {
+            // Skip minimum deposit check for Scalper Pro
+            const isScalperPro = bot.name && bot.name.toLowerCase().includes('scalper pro');
+            if (!isScalperPro && amount < (bot.min_deposit || 0)) {
                 errorEl.textContent = `Minimum deposit is $${bot.min_deposit.toFixed(2)}.`;
                 errorEl.classList.remove('hidden');
                 return;
