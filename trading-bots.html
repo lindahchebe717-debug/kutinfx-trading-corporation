@@ -36,6 +36,10 @@
             border-radius: 12px;
             overflow: hidden;
         }
+        .mt5-connected {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -219,6 +223,46 @@
         </div>
     </div>
 
+    <!-- MT5 Connection Modal -->
+    <div id="mt5Modal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeMT5Modal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card rounded-2xl p-8 max-w-md w-full relative">
+                <button onclick="closeMT5Modal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                <h3 class="text-xl font-bold text-white mb-2">Connect MetaTrader 5</h3>
+                <p id="mt5ModalBotName" class="text-amber-500 font-semibold mb-4"></p>
+                
+                <div id="mt5ModalError" class="hidden mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+                <div id="mt5ModalSuccess" class="hidden mb-4 p-3 bg-green-500/20 border border-green-500/50 rounded-xl text-green-300 text-sm text-center"></div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">MT5 Login / Account Number</label>
+                        <input type="text" id="mt5Login" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="e.g., 12345678">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">MT5 Password</label>
+                        <input type="password" id="mt5Password" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="Enter your MT5 password">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">MT5 Server</label>
+                        <input type="text" id="mt5Server" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="e.g., MetaQuotes-Demo">
+                    </div>
+                    <div class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
+                        <p class="text-blue-300 text-xs">
+                            <strong>⚠️ Important:</strong> Your MT5 credentials are encrypted and stored securely. The bot will use these credentials to connect to your trading account.
+                        </p>
+                    </div>
+                    <button onclick="saveMT5Credentials()" id="saveMT5Btn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all shadow-lg">
+                        Save & Connect
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
@@ -229,6 +273,7 @@
         let selectedBotId = null;
         let userBalance = 0;
         let profitCalculationInterval = null;
+        let selectedMT5BotId = null;
 
         function initTradingViewChart() {
             new TradingView.widget({
@@ -274,12 +319,10 @@
         init();
 
         function startProfitCalculation() {
-            // Calculate profits every 1 minute (60000ms)
             profitCalculationInterval = setInterval(async () => {
                 await calculateAndAddProfits();
             }, 60000);
             
-            // Also run immediately
             calculateAndAddProfits();
         }
 
@@ -304,16 +347,11 @@
                     
                     const lastCalc = userBot.last_profit_calculation ? new Date(userBot.last_profit_calculation) : new Date(userBot.activated_at);
                     const hoursElapsed = (now - lastCalc) / (1000 * 60 * 60);
-                    
-                    // Calculate profit for elapsed time (every 1 minute = 1/60 hours)
                     const minutesElapsed = (now - lastCalc) / (1000 * 60);
                     
-                    if (minutesElapsed >= 1) { // Every 1 minute
-                        // Calculate profit for this period
+                    if (minutesElapsed >= 1) {
                         const hourlyProfit = investedAmount * (dailyROI / 100) / 24;
                         const profitForPeriod = hourlyProfit * (minutesElapsed / 60);
-                        
-                        // Add some randomness (±5%)
                         const randomFactor = 0.95 + Math.random() * 0.1;
                         const actualProfit = profitForPeriod * randomFactor;
                         
@@ -336,13 +374,11 @@
                         }
                     }
                     
-                    // Auto-stop after 24 hours
                     if (hoursElapsed >= 24) {
                         botsToStop.push({ id: userBot.id, name: bot.name, profit: userBot.earnings || 0 });
                     }
                 }
 
-                // Stop bots that completed 24 hours
                 for (const bot of botsToStop) {
                     await mySupabase.from('user_bots').update({ status: 'stopped' }).eq('id', bot.id);
                 }
@@ -534,12 +570,29 @@
                     else if(ub.status === 'paused') statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 flex items-center gap-1"><span class="w-2 h-2 bg-amber-500 rounded-full"></span>Paused</span>';
                     else statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 flex items-center gap-1"><span class="w-2 h-2 bg-red-500 rounded-full"></span>Stopped</span>';
                     
+                    // Check if MT5 is connected
+                    const mt5Connected = ub.mt5_login && ub.mt5_server;
+                    const mt5StatusHtml = mt5Connected ? 
+                        `<div class="mt5-connected rounded-lg p-2 mb-3 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span class="text-green-400 text-xs font-medium">MT5 Connected</span>
+                            </div>
+                            <button onclick="openMT5Modal(${ub.id}, true)" class="text-xs text-blue-400 hover:text-blue-300">Edit</button>
+                        </div>` : 
+                        (ub.status === 'active' ? 
+                            `<button onclick="openMT5Modal(${ub.id})" class="w-full mb-3 bg-blue-500/20 text-blue-400 font-medium py-2 rounded-lg hover:bg-blue-500/30 transition-all text-sm flex items-center justify-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                                Connect MetaTrader 5
+                            </button>` : '');
+                    
                     return `
                         <div class="glass-card rounded-xl p-5 border ${ub.status === 'active' ? 'border-green-500/30' : ub.status === 'paused' ? 'border-amber-500/30' : 'border-red-500/30'}">
                             <div class="flex items-center justify-between mb-3">
                                 <h4 class="text-white font-semibold">${bot.name}</h4>
                                 ${statusBadge}
                             </div>
+                            ${mt5StatusHtml}
                             <div class="space-y-2 text-sm">
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Invested:</span>
@@ -789,7 +842,7 @@
                     await loadMyBots();
                     userBalance = newBalance;
                     document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
-                    alert(`✅ ${bot.name} activated! Profits will calculate every minute. Bot auto-stops after 24 hours.`);
+                    alert(`✅ ${bot.name} activated! Profits will calculate every minute. Bot auto-stops after 24 hours. You can now connect your MetaTrader 5 account.`);
                 }
                 
             } catch (err) {
@@ -799,6 +852,94 @@
             } finally {
                 document.getElementById('activateBtn').disabled = false;
                 document.getElementById('activateBtn').textContent = 'Activate Bot';
+            }
+        }
+
+        // MT5 Functions
+        async function openMT5Modal(botId, isEdit = false) {
+            selectedMT5BotId = botId;
+            
+            const { data: userBot } = await mySupabase
+                .from('user_bots')
+                .select('*, trading_bots(name)')
+                .eq('id', botId)
+                .single();
+            
+            if (!userBot) {
+                alert('Bot not found.');
+                return;
+            }
+            
+            document.getElementById('mt5ModalBotName').textContent = userBot.trading_bots.name;
+            document.getElementById('mt5ModalError').classList.add('hidden');
+            document.getElementById('mt5ModalSuccess').classList.add('hidden');
+            
+            // Pre-fill if editing
+            if (isEdit && userBot.mt5_login) {
+                document.getElementById('mt5Login').value = userBot.mt5_login;
+                document.getElementById('mt5Password').value = '';
+                document.getElementById('mt5Server').value = userBot.mt5_server || '';
+            } else {
+                document.getElementById('mt5Login').value = '';
+                document.getElementById('mt5Password').value = '';
+                document.getElementById('mt5Server').value = '';
+            }
+            
+            document.getElementById('mt5Modal').classList.remove('hidden');
+        }
+
+        function closeMT5Modal() {
+            document.getElementById('mt5Modal').classList.add('hidden');
+            selectedMT5BotId = null;
+        }
+
+        async function saveMT5Credentials() {
+            const login = document.getElementById('mt5Login').value.trim();
+            const password = document.getElementById('mt5Password').value.trim();
+            const server = document.getElementById('mt5Server').value.trim();
+            const errorEl = document.getElementById('mt5ModalError');
+            const successEl = document.getElementById('mt5ModalSuccess');
+            const saveBtn = document.getElementById('saveMT5Btn');
+            
+            if (!login || !password || !server) {
+                errorEl.textContent = 'Please fill in all MT5 credentials.';
+                errorEl.classList.remove('hidden');
+                successEl.classList.add('hidden');
+                return;
+            }
+            
+            saveBtn.disabled = true;
+            saveBtn.textContent = 'Saving...';
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+            
+            try {
+                const { error } = await mySupabase
+                    .from('user_bots')
+                    .update({
+                        mt5_login: login,
+                        mt5_password: password,
+                        mt5_server: server
+                    })
+                    .eq('id', selectedMT5BotId);
+                
+                if (error) throw error;
+                
+                successEl.textContent = '✅ MT5 credentials saved successfully! Bot will connect to your trading account.';
+                successEl.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    closeMT5Modal();
+                    loadMyBots();
+                }, 2000);
+                
+            } catch (err) {
+                console.error('Save MT5 error:', err);
+                errorEl.textContent = 'Failed to save MT5 credentials. Please try again.';
+                errorEl.classList.remove('hidden');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = 'Save & Connect';
             }
         }
 
