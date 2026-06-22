@@ -20,6 +20,14 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
         ::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.5); border-radius: 3px; }
+        
+        @keyframes crownShine {
+            0%, 100% { filter: drop-shadow(0 0 3px rgba(251, 191, 36, 0.5)); }
+            50% { filter: drop-shadow(0 0 8px rgba(251, 191, 36, 0.8)); }
+        }
+        .crown-icon {
+            animation: crownShine 2s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -188,6 +196,23 @@
         let selectedPlanId = null;
         let userBalance = 0;
 
+        // Crown SVG icon function
+        function getCrownIcon() {
+            return `<svg class="crown-icon w-8 h-8 mx-auto mb-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 8L5 12L12 4L19 12L22 8V18H2V8Z" fill="url(#goldGradient)" stroke="#fbbf24" stroke-width="1.5"/>
+                <path d="M2 18H22V20C22 21.1046 21.1046 22 20 22H4C2.89543 22 2 21.1046 2 20V18Z" fill="url(#goldGradient)" stroke="#fbbf24" stroke-width="1.5"/>
+                <circle cx="5" cy="12" r="1.5" fill="#fbbf24"/>
+                <circle cx="12" cy="4" r="1.5" fill="#fbbf24"/>
+                <circle cx="19" cy="12" r="1.5" fill="#fbbf24"/>
+                <defs>
+                    <linearGradient id="goldGradient" x1="2" y1="4" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#fbbf24"/>
+                        <stop offset="1" stop-color="#d97706"/>
+                    </linearGradient>
+                </defs>
+            </svg>`;
+        }
+
         async function init() {
             const { data: { session } } = await mySupabase.auth.getSession();
             if (!session) {
@@ -234,6 +259,7 @@
                     return `
                     <div class="glass-card rounded-xl p-5 relative ${index === 2 ? 'border-amber-500/50 ring-1 ring-amber-500/30' : ''}">
                         ${index === 2 ? '<div class="absolute -top-3 left-1/2 -translate-x-1/2"><span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500 text-slate-900 shadow-lg">MOST POPULAR</span></div>' : ''}
+                        ${getCrownIcon()}
                         <h4 class="text-white font-semibold text-lg text-center mb-3 mt-1">${plan.name}</h4>
                         <div class="text-center mb-4">
                             <span class="text-3xl font-bold text-amber-500">${displayROI}%</span>
@@ -300,6 +326,7 @@
                     return `
                         <div class="glass-card rounded-xl p-5 border border-green-500/30">
                             <div class="flex items-center justify-between mb-3">
+                                ${getCrownIcon()}
                                 <h4 class="text-white font-semibold">${plan.name}</h4>
                                 <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Active</span>
                             </div>
