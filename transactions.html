@@ -126,7 +126,7 @@
     <script>
         const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
         let allTransactions = [];
@@ -134,12 +134,13 @@
 
         // Auth Check
         async function init() {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await mySupabase.auth.getSession();
             if (!session) {
-                window.location.href = 'login.html';
+                window.location.href = 'sign-in.html';
                 return;
             }
             currentUser = session.user;
+            console.log('User logged in:', currentUser.id);
             await loadTransactions();
         }
 
@@ -150,23 +151,32 @@
             const emptyState = document.getElementById('emptyState');
             const refreshIcon = document.getElementById('refreshIcon');
             
+            console.log('Loading transactions for user:', currentUser.id);
+            
             // Show loading
             loadingRow.classList.remove('hidden');
             emptyState.classList.add('hidden');
             tbody.innerHTML = '';
             tbody.appendChild(loadingRow);
-            refreshIcon.classList.add('animate-spin');
+            if (refreshIcon) refreshIcon.classList.add('animate-spin');
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await mySupabase
                     .from('transactions')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false });
 
-                if (error) throw error;
+                console.log('Query result:', { data, error });
+
+                if (error) {
+                    console.error('Supabase error:', error);
+                    throw error;
+                }
                 
                 allTransactions = data || [];
+                console.log('Transactions loaded:', allTransactions.length);
+                
                 updateSummary();
                 renderTransactions();
                 
@@ -174,13 +184,17 @@
                 console.error('Error loading transactions:', err);
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-red-400">
-                            Failed to load transactions. Please try again.
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <div class="text-red-400 mb-2">Failed to load transactions</div>
+                            <p class="text-slate-500 text-sm">${err.message}</p>
+                            <button onclick="loadTransactions()" class="mt-4 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm">
+                                Try Again
+                            </button>
                         </td>
                     </tr>
                 `;
             } finally {
-                refreshIcon.classList.remove('animate-spin');
+                if (refreshIcon) refreshIcon.classList.remove('animate-spin');
             }
         }
 
@@ -228,10 +242,11 @@
                 ? allTransactions 
                 : allTransactions.filter(tx => tx.type === currentFilter);
 
+            console.log('Rendering transactions. Filter:', currentFilter, 'Count:', filteredData.length);
+
             tbody.innerHTML = '';
 
             if (filteredData.length === 0) {
-                tbody.appendChild(loadingRow); // Keep structure, hide via class if needed, but empty state is better
                 loadingRow.classList.add('hidden');
                 emptyState.classList.remove('hidden');
                 return;
