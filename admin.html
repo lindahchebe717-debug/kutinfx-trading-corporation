@@ -1171,24 +1171,76 @@ statusSelect.value = 'all';
 currentFinanceFilter = filterType;
 loadFinance();
 }
+// ============================================
+// FIXED: FINANCE FUNCTIONS - Now with proper error handling and fallback
+// ============================================
 async function loadFinance() {
 const typeFilter = document.getElementById('financeFilterType')?.value || 'all';
 const statusFilter = document.getElementById('financeFilterStatus')?.value || 'all';
+const tbody = document.getElementById('financeTableBody');
+
+console.log('Loading finance data...', { typeFilter, statusFilter });
+
 try {
+// First try with user relation
 let query = mySupabase.from('transactions').select('*, users(email, first_name, last_name)').order('created_at', { ascending: false });
 if (typeFilter !== 'all') query = query.eq('type', typeFilter);
 if (statusFilter !== 'all') query = query.eq('status', statusFilter);
-const { data: txs, error } = await query.limit(100);
-if (error) throw error;
-const tbody = document.getElementById('financeTableBody');
+
+let { data: txs, error } = await query.limit(100);
+
+// If error (e.g., RLS or missing relation), try without relation
+if (error) {
+console.log('First query failed, trying fallback:', error);
+let fallbackQuery = mySupabase.from('transactions').select('*').order('created_at', { ascending: false });
+if (typeFilter !== 'all') fallbackQuery = fallbackQuery.eq('type', typeFilter);
+if (statusFilter !== 'all') fallbackQuery = fallbackQuery.eq('status', statusFilter);
+
+const fallback = await fallbackQuery.limit(100);
+txs = fallback.data;
+error = fallback.error;
+}
+
+if (error) {
+console.error('Finance load error:', error);
+tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-400">Error loading transactions: ${error.message}</td></tr>`;
+return;
+}
+
+console.log('Loaded transactions:', txs);
+
 if (!txs || txs.length === 0) {
 tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500">No transactions found</td></tr>';
 } else {
+// Fetch user emails separately if the relation didn't work
+const userIds = [...new Set(txs.map(tx => tx.user_id).filter(id => id))];
+let userMap = {};
+
+if (userIds.length > 0) {
+const { data: usersData } = await mySupabase
+.from('users')
+.select('id, email, first_name, last_name')
+.in('id', userIds);
+
+if (usersData) {
+usersData.forEach(user => {
+userMap[user.id] = user;
+});
+}
+}
+
 tbody.innerHTML = txs.map(tx => {
-const userName = tx.users ? `${tx.users.first_name || ''} ${tx.users.last_name || ''}`.trim() || tx.users.email : 'Unknown';
+// Get user info from relation OR from our map
+const user = tx.users || userMap[tx.user_id] || {};
+const userName = user.first_name && user.last_name ? 
+    `${user.first_name} ${user.last_name}`.trim() : 
+    user.email || 'Unknown';
+    
 const statusColor = tx.status === 'approved' ? 'bg-green-500/20 text-green-400' : tx.status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400';
 const typeColor = tx.type === 'deposit' ? 'text-green-400' : 'text-red-400';
 const date = new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+// Add approve/reject buttons for pending transactions
 let actionsHtml = '<span class="text-slate-500 text-xs">-</span>';
 if (tx.status === 'pending') {
 actionsHtml = `
@@ -1198,6 +1250,7 @@ actionsHtml = `
 </div>
 `;
 }
+
 return `
 <tr class="hover:bg-slate-800/30">
 <td class="p-4 text-slate-300 text-xs">${date}</td>
@@ -1210,23 +1263,33 @@ return `
 `;
 }).join('');
 }
-const { data: allTxs } = await mySupabase.from('transactions').select('type, amount, status');
-if (allTxs) {
+
+// Calculate stats - fetch ALL transactions for accurate stats
+const { data: allTxs, error: statsError } = await mySupabase.from('transactions').select('type, amount, status');
+
+if (statsError) {
+console.error('Stats calculation error:', statsError);
+} else if (allTxs) {
 const approvedDeposits = allTxs.filter(t => t.type === 'deposit' && t.status === 'approved');
 const approvedWithdrawals = allTxs.filter(t => t.type === 'withdrawal' && t.status === 'approved');
 const pending = allTxs.filter(t => t.status === 'pending');
+
 const totalDep = approvedDeposits.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
 const totalWith = approvedWithdrawals.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
 const pendingVol = pending.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
+
 document.getElementById('finance-totalDeposits').textContent = `$${totalDep.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
 document.getElementById('finance-depositCount').textContent = `${approvedDeposits.length} transactions`;
 document.getElementById('finance-totalWithdrawals').textContent = `$${totalWith.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
 document.getElementById('finance-withdrawalCount').textContent = `${approvedWithdrawals.length} transactions`;
 document.getElementById('finance-pendingVolume').textContent = `$${pendingVol.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
 document.getElementById('finance-netFlow').textContent = `$${(totalDep - totalWith).toLocaleString('en-US', {maximumFractionDigits: 2})}`;
+
+console.log('Finance stats updated:', { totalDep, totalWith, pendingVol });
 }
 } catch (err) {
 console.error('Finance error:', err);
+tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-400">Error: ${err.message}</td></tr>`;
 }
 }
 async function loadInvestments() {
@@ -1385,20 +1448,15 @@ document.getElementById('report-botProfits').textContent = `$${totalBotProfits.t
 console.error('Reports error:', err);
 }
 }
-// ============================================
-// FIXED: TRANSACTIONS FUNCTIONS - Now fetches user emails properly
-// ============================================
 async function loadTransactions() {
 console.log('Loading transactions...');
 try {
-// First try with user relation
 let { data: txs, error } = await mySupabase
 .from('transactions')
 .select('*, users(email)')
 .eq('status', 'pending')
 .order('created_at', { ascending: false });
 
-// If error (e.g., RLS or missing relation), try without relation
 if (error) {
 console.log('First query failed, trying fallback:', error);
 const fallback = await mySupabase
@@ -1425,7 +1483,6 @@ document.getElementById('withdrawalsTableBody').innerHTML = '<tr><td colspan="4"
 return;
 }
 
-// FIX: Fetch user emails separately if the relation didn't work
 const userIds = [...new Set(txs.map(tx => tx.user_id).filter(id => id))];
 let userMap = {};
 
@@ -1447,7 +1504,6 @@ let withHtml = '';
 
 for (const tx of txs) {
 const method = tx.payment_method ? tx.payment_method.replace('_', ' ').toUpperCase() : 'N/A';
-// FIX: Get email from relation OR from our map
 const userEmail = tx.users?.email || userMap[tx.user_id] || 'Unknown User';
 
 if (tx.type === 'deposit') {
