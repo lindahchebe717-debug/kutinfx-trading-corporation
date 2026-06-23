@@ -134,7 +134,7 @@
     <script>
         const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let currentUser = null;
         let userBalance = 0;
@@ -142,14 +142,14 @@
         // Auth Check & Load Balance
         async function init() {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session } } = await mySupabase.auth.getSession();
                 if (!session) {
                     window.location.href = 'sign-in.html';
                     return;
                 }
                 currentUser = session.user;
                 
-                const { data: profile, error } = await supabase.from('users').select('balance').eq('id', currentUser.id).single();
+                const { data: profile, error } = await mySupabase.from('users').select('balance').eq('id', currentUser.id).single();
                 if (error) {
                     console.error('Error loading balance:', error);
                     return;
@@ -221,7 +221,7 @@
                 };
 
                 // Try to insert the transaction
-                const { data, error } = await supabase.from('transactions').insert([transactionData]);
+                const { data, error } = await mySupabase.from('transactions').insert([transactionData]);
 
                 // Handle column missing error (fallback)
                 if (error && error.code === 'PGRST204') {
@@ -236,7 +236,7 @@
                         status: 'pending'
                     };
                     
-                    const { data: retryData, error: retryError } = await supabase.from('transactions').insert([fallbackData]);
+                    const { data: retryData, error: retryError } = await mySupabase.from('transactions').insert([fallbackData]);
                     
                     if (retryError) {
                         throw new Error('Database error: ' + retryError.message);
