@@ -490,9 +490,9 @@
                 }
                 
                 container.innerHTML = allBots.map(bot => {
-                    // Scalper Pro has no minimum deposit
+                    // Scalper Pro has $30 minimum deposit
                     const isScalperPro = bot.name && bot.name.toLowerCase().includes('scalper pro');
-                    const minDepositDisplay = isScalperPro ? 'No minimum' : `$${(bot.min_deposit || 0).toFixed(2)}`;
+                    const minDepositDisplay = isScalperPro ? '$30.00' : `$${(bot.min_deposit || 0).toFixed(2)}`;
                     
                     return `
                     <div class="bot-card glass-card rounded-xl p-5">
@@ -754,12 +754,12 @@
             document.getElementById('modalBotName').textContent = bot.name;
             document.getElementById('modalROI').textContent = `${bot.expected_roi}% / day`;
             
-            // Check if this is Scalper Pro (no minimum deposit)
+            // Check if this is Scalper Pro ($30 minimum deposit)
             const isScalperPro = bot.name && bot.name.toLowerCase().includes('scalper pro');
             
             if (isScalperPro) {
-                document.getElementById('minDepositText').textContent = `No minimum deposit | Your balance: $${userBalance.toFixed(2)}`;
-                document.getElementById('investAmount').min = 1;
+                document.getElementById('minDepositText').textContent = `Minimum deposit: $30.00 | Your balance: $${userBalance.toFixed(2)}`;
+                document.getElementById('investAmount').min = 30;
             } else {
                 document.getElementById('minDepositText').textContent = `Minimum deposit: $${(bot.min_deposit || 0).toFixed(2)} | Your balance: $${userBalance.toFixed(2)}`;
                 document.getElementById('investAmount').min = bot.min_deposit || 0;
@@ -790,10 +790,12 @@
                 return;
             }
             
-            // Skip minimum deposit check for Scalper Pro
+            // Check minimum deposit for Scalper Pro ($30) and other bots
             const isScalperPro = bot.name && bot.name.toLowerCase().includes('scalper pro');
-            if (!isScalperPro && amount < (bot.min_deposit || 0)) {
-                errorEl.textContent = `Minimum deposit is $${bot.min_deposit.toFixed(2)}.`;
+            const minRequired = isScalperPro ? 30 : (bot.min_deposit || 0);
+            
+            if (amount < minRequired) {
+                errorEl.textContent = `Minimum deposit is $${minRequired.toFixed(2)}.`;
                 errorEl.classList.remove('hidden');
                 return;
             }
