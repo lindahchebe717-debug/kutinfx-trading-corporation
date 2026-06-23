@@ -40,6 +40,19 @@
             background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%);
             border: 1px solid rgba(34, 197, 94, 0.3);
         }
+        .countdown-timer {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .countdown-warning {
+            color: #f59e0b !important;
+            animation: profitPulse 1s ease-in-out infinite;
+        }
+        .countdown-critical {
+            color: #ef4444 !important;
+            animation: profitPulse 0.5s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -273,7 +286,9 @@
         let selectedBotId = null;
         let userBalance = 0;
         let profitCalculationInterval = null;
+        let countdownInterval = null;
         let selectedMT5BotId = null;
+        let myBotsData = []; // Store bots data for countdown updates
 
         function initTradingViewChart() {
             new TradingView.widget({
@@ -315,6 +330,7 @@
             initTradingViewChart();
             await Promise.all([loadAllBots(), loadMyBots()]);
             startProfitCalculation();
+            startCountdownTimer();
         }
         init();
 
@@ -324,6 +340,51 @@
             }, 60000);
             
             calculateAndAddProfits();
+        }
+
+        // Start live countdown timer - updates every second
+        function startCountdownTimer() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            
+            countdownInterval = setInterval(() => {
+                const now = new Date();
+                
+                myBotsData.forEach(ub => {
+                    const timerEl = document.getElementById(`countdown-${ub.id}`);
+                    if (!timerEl) return;
+                    
+                    if (ub.status !== 'active') {
+                        return;
+                    }
+                    
+                    // Use activated_at to calculate total runtime
+                    const activatedAt = new Date(ub.activated_at);
+                    const endTime = new Date(activatedAt.getTime() + (24 * 60 * 60 * 1000)); // 24 hours after activation
+                    const remainingMs = endTime - now;
+                    
+                    if (remainingMs <= 0) {
+                        timerEl.textContent = '00:00:00';
+                        timerEl.className = 'text-cyan-400 font-medium countdown-timer countdown-critical';
+                        return;
+                    }
+                    
+                    const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+                    const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+                    
+                    const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    timerEl.textContent = timeStr;
+                    
+                    // Color coding based on remaining time
+                    if (remainingMs < 10 * 60 * 1000) { // Less than 10 minutes
+                        timerEl.className = 'text-cyan-400 font-medium countdown-timer countdown-critical';
+                    } else if (remainingMs < 60 * 60 * 1000) { // Less than 1 hour
+                        timerEl.className = 'text-cyan-400 font-medium countdown-timer countdown-warning';
+                    } else {
+                        timerEl.className = 'text-cyan-400 font-medium countdown-timer';
+                    }
+                });
+            }, 1000); // Update every second
         }
 
         async function calculateAndAddProfits() {
@@ -345,10 +406,15 @@
                     const investedAmount = userBot.invested_amount || 0;
                     const dailyROI = bot.expected_roi || 0;
                     
+                    // For profit calculation: use last_profit_calculation (every 1 minute)
                     const lastCalc = userBot.last_profit_calculation ? new Date(userBot.last_profit_calculation) : new Date(userBot.activated_at);
-                    const hoursElapsed = (now - lastCalc) / (1000 * 60 * 60);
                     const minutesElapsed = (now - lastCalc) / (1000 * 60);
                     
+                    // ✅ FIX: For 24-hour auto-stop: use activated_at (total runtime since activation)
+                    const activatedAt = new Date(userBot.activated_at);
+                    const totalHoursRunning = (now - activatedAt) / (1000 * 60 * 60);
+                    
+                    // Calculate profit every 1 minute
                     if (minutesElapsed >= 1) {
                         const hourlyProfit = investedAmount * (dailyROI / 100) / 24;
                         const profitForPeriod = hourlyProfit * (minutesElapsed / 60);
@@ -374,11 +440,13 @@
                         }
                     }
                     
-                    if (hoursElapsed >= 24) {
+                    // ✅ FIX: Check total hours since ACTIVATION (not since last calculation)
+                    if (totalHoursRunning >= 24) {
                         botsToStop.push({ id: userBot.id, name: bot.name, profit: userBot.earnings || 0 });
                     }
                 }
 
+                // Stop bots that completed 24 hours
                 for (const bot of botsToStop) {
                     await mySupabase.from('user_bots').update({ status: 'stopped' }).eq('id', bot.id);
                 }
@@ -390,6 +458,7 @@
 
                 if (botsToStop.length > 0) {
                     showStopNotification(botsToStop.length);
+                    await loadMyBots(); // Reload to reflect stopped bots
                 }
 
             } catch (err) {
@@ -539,6 +608,9 @@
 
                 if (error) throw error;
 
+                // Store bots data for countdown timer
+                myBotsData = myBots || [];
+
                 if (!myBots || myBots.length === 0) {
                     container.innerHTML = '<p class="text-slate-400 col-span-full text-center py-8">You haven\'t activated any bots yet. Choose a bot below to get started!</p>';
                     document.getElementById('activeBotsCount').textContent = '0';
@@ -554,6 +626,8 @@
                 let totalPending = 0;
                 let activeCount = 0;
 
+                const now = new Date();
+
                 container.innerHTML = myBots.map(ub => {
                     totalInvestment += ub.invested_amount || 0;
                     totalEarnings += ub.earnings || 0;
@@ -562,13 +636,39 @@
                     
                     const bot = ub.trading_bots;
                     
-                    const lastCalc = ub.last_profit_calculation ? new Date(ub.last_profit_calculation) : new Date(ub.activated_at);
-                    const now = new Date();
-                    const hoursElapsed = (now - lastCalc) / (1000 * 60 * 60);
-                    const hoursRemaining = Math.max(0, 24 - hoursElapsed);
-                    const timeDisplay = ub.status === 'active' ? 
-                        `${hoursRemaining.toFixed(1)}h remaining` : 
-                        ub.status === 'paused' ? 'Paused' : 'Stopped';
+                    // ✅ FIX: Calculate time remaining based on ACTIVATION time (24 hours from activation)
+                    const activatedAt = new Date(ub.activated_at);
+                    const endTime = new Date(activatedAt.getTime() + (24 * 60 * 60 * 1000)); // 24 hours after activation
+                    const remainingMs = endTime - now;
+                    
+                    let timeDisplay = '';
+                    let countdownClass = 'text-cyan-400 font-medium countdown-timer';
+                    
+                    if (ub.status === 'active') {
+                        if (remainingMs <= 0) {
+                            timeDisplay = '00:00:00';
+                            countdownClass = 'text-cyan-400 font-medium countdown-timer countdown-critical';
+                        } else {
+                            const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+                            const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+                            const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
+                            
+                            timeDisplay = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                            
+                            // Color coding
+                            if (remainingMs < 10 * 60 * 1000) { // Less than 10 minutes
+                                countdownClass = 'text-cyan-400 font-medium countdown-timer countdown-critical';
+                            } else if (remainingMs < 60 * 60 * 1000) { // Less than 1 hour
+                                countdownClass = 'text-cyan-400 font-medium countdown-timer countdown-warning';
+                            }
+                        }
+                    } else if (ub.status === 'paused') {
+                        timeDisplay = 'Paused';
+                        countdownClass = 'text-amber-400 font-medium';
+                    } else {
+                        timeDisplay = 'Stopped';
+                        countdownClass = 'text-red-400 font-medium';
+                    }
                     
                     let statusBadge = '';
                     if(ub.status === 'active') statusBadge = `<span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>Active</span>`;
@@ -613,7 +713,7 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Time Left:</span>
-                                    <span class="text-cyan-400 font-medium">${timeDisplay}</span>
+                                    <span id="countdown-${ub.id}" class="${countdownClass}">${timeDisplay}</span>
                                 </div>
                             </div>
                             <div class="grid grid-cols-2 gap-2 mt-4">
@@ -965,6 +1065,7 @@
 
         async function logout() {
             if (profitCalculationInterval) clearInterval(profitCalculationInterval);
+            if (countdownInterval) clearInterval(countdownInterval);
             await mySupabase.auth.signOut();
             window.location.href = 'sign-in.html';
         }
