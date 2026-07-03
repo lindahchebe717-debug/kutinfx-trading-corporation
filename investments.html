@@ -28,6 +28,24 @@
         .crown-icon {
             animation: crownShine 2s ease-in-out infinite;
         }
+
+        @keyframes profitPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        .countdown-timer {
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        .countdown-warning {
+            color: #f59e0b !important;
+            animation: profitPulse 1s ease-in-out infinite;
+        }
+        .countdown-critical {
+            color: #ef4444 !important;
+            animation: profitPulse 0.5s ease-in-out infinite;
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -191,6 +209,10 @@
         let allPlans = [];
         let selectedPlanId = null;
         let userBalance = 0;
+        
+        // New variables for real-time tracking
+        let activeInvestments = [];
+        let countdownInterval = null;
 
         // Calculate expected return based on investment amount
         function calculateReturn(amount) {
@@ -315,28 +337,50 @@
                     document.getElementById('activeInvestmentsCount').textContent = '0';
                     document.getElementById('totalInvestedAmount').textContent = '$0.00';
                     document.getElementById('totalEarningsAmount').textContent = '$0.00';
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+                    activeInvestments = [];
                     return;
                 }
 
+                activeInvestments = [];
                 let totalInvested = 0;
-                let totalEarnings = 0;
+                
+                // Check for any investments that have already expired but are still marked active
+                for (const inv of investments) {
+                    if (inv.end_date && new Date(inv.end_date) <= new Date()) {
+                        await completeInvestment(inv);
+                    } else {
+                        activeInvestments.push(inv);
+                    }
+                }
+                
+                // If all were expired, reload to show empty state
+                if (activeInvestments.length === 0) {
+                    container.innerHTML = '<p class="text-slate-400 col-span-full text-center py-8">You haven\'t made any investments yet. Choose a plan below to start earning!</p>';
+                    document.getElementById('activeInvestmentsCount').textContent = '0';
+                    document.getElementById('totalInvestedAmount').textContent = '$0.00';
+                    document.getElementById('totalEarningsAmount').textContent = '$0.00';
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+                    return;
+                }
 
-                container.innerHTML = investments.map(inv => {
+                container.innerHTML = activeInvestments.map(inv => {
                     totalInvested += inv.invested_amount || 0;
-                    totalEarnings += inv.total_earnings || 0;
                     const plan = inv.investment_plans;
-                    
-                    // Calculate hours left instead of days
-                    const hoursLeft = inv.end_date ? Math.max(0, Math.ceil((new Date(inv.end_date) - new Date()) / (1000 * 60 * 60))) : 0;
-                    
                     const expectedReturn = calculateReturn(inv.invested_amount || 0);
                     
                     return `
-                        <div class="glass-card rounded-xl p-5 border border-green-500/30">
+                        <div id="card-${inv.id}" class="glass-card rounded-xl p-5 border border-green-500/30">
                             <div class="flex items-center justify-between mb-3">
                                 ${getCrownIcon()}
                                 <h4 class="text-white font-semibold">${plan.name}</h4>
-                                <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Active</span>
+                                <span class="status-badge px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400">Active</span>
                             </div>
                             <div class="space-y-2 text-sm">
                                 <div class="flex justify-between">
@@ -349,32 +393,142 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Current Earnings:</span>
-                                    <span class="text-green-400 font-medium">+$${(inv.total_earnings || 0).toFixed(2)}</span>
+                                    <span id="earnings-${inv.id}" class="text-green-400 font-medium">+$0.00</span>
                                 </div>
                                 <div class="flex justify-between">
-                                    <span class="text-slate-400">Hours Left:</span>
-                                    <span class="text-white font-medium">${hoursLeft} hours</span>
+                                    <span class="text-slate-400">Time Left:</span>
+                                    <span id="countdown-${inv.id}" class="text-white font-medium countdown-timer">24:00:00</span>
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Start Time:</span>
-                                    <span class="text-slate-300">${new Date(inv.invested_at).toLocaleString()}</span>
+                                    <span class="text-slate-300">${new Date(new Date(inv.end_date).getTime() - (24 * 60 * 60 * 1000)).toLocaleString()}</span>
                                 </div>
-                                ${inv.end_date ? `<div class="flex justify-between">
-                                    <span class="text-slate-400">End Time:</span>
-                                    <span class="text-slate-300">${new Date(inv.end_date).toLocaleString()}</span>
-                                </div>` : ''}
                             </div>
                         </div>
                     `;
                 }).join('');
 
-                document.getElementById('activeInvestmentsCount').textContent = investments.length;
+                document.getElementById('activeInvestmentsCount').textContent = activeInvestments.length;
                 document.getElementById('totalInvestedAmount').textContent = `$${totalInvested.toFixed(2)}`;
-                document.getElementById('totalEarningsAmount').textContent = `$${totalEarnings.toFixed(2)}`;
+                document.getElementById('totalEarningsAmount').textContent = '$0.00';
+
+                // Start or restart the countdown interval
+                if (countdownInterval) clearInterval(countdownInterval);
+                countdownInterval = setInterval(updateCountdowns, 1000);
+                updateCountdowns(); // Initial call to update immediately
 
             } catch (err) {
                 console.error('Error loading investments:', err);
                 container.innerHTML = '<p class="text-red-400 col-span-full">Failed to load your investments.</p>';
+            }
+        }
+
+        async function updateCountdowns() {
+            let totalRealTimeEarnings = 0;
+            let hasActive = false;
+            
+            for (const inv of activeInvestments) {
+                if (inv.status !== 'active') continue; // Skip if already processed in this session
+                
+                const endDate = new Date(inv.end_date);
+                const startDate = new Date(endDate.getTime() - (24 * 60 * 60 * 1000));
+                const now = new Date();
+                const timeLeft = endDate - now;
+                
+                const countdownEl = document.getElementById(`countdown-${inv.id}`);
+                const earningsEl = document.getElementById(`earnings-${inv.id}`);
+                
+                if (!countdownEl || !earningsEl) continue;
+                
+                const expectedReturn = calculateReturn(inv.invested_amount);
+                
+                if (timeLeft <= 0) {
+                    // Time is up!
+                    countdownEl.textContent = "00:00:00";
+                    earningsEl.textContent = `+$${expectedReturn.toFixed(2)}`;
+                    totalRealTimeEarnings += expectedReturn;
+                    
+                    // Complete the investment
+                    await completeInvestment(inv);
+                    inv.status = 'completed'; // Mark as processed so we don't do it again in the next second
+                } else {
+                    hasActive = true;
+                    const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                    
+                    countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    
+                    // Add color changes for warning/critical
+                    countdownEl.classList.remove('countdown-warning', 'countdown-critical');
+                    if (timeLeft < 10 * 60 * 1000) { // Less than 10 mins
+                        countdownEl.classList.add('countdown-critical');
+                    } else if (timeLeft < 60 * 60 * 1000) { // Less than 1 hour
+                        countdownEl.classList.add('countdown-warning');
+                    }
+                    
+                    // Calculate current earnings based on elapsed time
+                    const totalDuration = endDate - startDate;
+                    const elapsed = now - startDate;
+                    const progress = Math.min(1, elapsed / totalDuration);
+                    const currentEarnings = expectedReturn * progress;
+                    
+                    earningsEl.textContent = `+$${currentEarnings.toFixed(2)}`;
+                    totalRealTimeEarnings += currentEarnings;
+                }
+            }
+            
+            // Update total earnings stat
+            document.getElementById('totalEarningsAmount').textContent = `$${totalRealTimeEarnings.toFixed(2)}`;
+            
+            // If no active investments left in this session, reload the list to clear them out
+            if (!hasActive && countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                // Small delay to allow UI to update before reloading
+                setTimeout(() => loadMyInvestments(), 1000); 
+            }
+        }
+
+        async function completeInvestment(inv) {
+            try {
+                const expectedReturn = calculateReturn(inv.invested_amount);
+                
+                // 1. Update investment status in DB
+                await mySupabase.from('user_investments').update({
+                    status: 'completed',
+                    total_earnings: expectedReturn
+                }).eq('id', inv.id);
+                
+                // 2. Add earnings to user balance
+                const { data: profile } = await mySupabase.from('users').select('balance').eq('id', currentUser.id).single();
+                const newBalance = (profile.balance || 0) + expectedReturn;
+                await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+                
+                // 3. Create transaction record
+                await mySupabase.from('transactions').insert({
+                    user_id: currentUser.id,
+                    type: 'earning',
+                    amount: expectedReturn,
+                    status: 'approved',
+                    description: `Return from ${inv.investment_plans.name} investment`
+                });
+                
+                // 4. Update local state and UI
+                userBalance = newBalance;
+                document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
+                
+                // Update UI card
+                const card = document.getElementById(`card-${inv.id}`);
+                if (card) {
+                    const statusBadge = card.querySelector('.status-badge');
+                    if (statusBadge) {
+                        statusBadge.textContent = 'Completed';
+                        statusBadge.className = 'px-2 py-1 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400 status-badge';
+                    }
+                }
+            } catch (err) {
+                console.error('Error completing investment:', err);
             }
         }
 
