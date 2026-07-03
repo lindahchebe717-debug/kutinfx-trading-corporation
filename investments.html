@@ -511,7 +511,8 @@
                     type: 'earning',
                     amount: expectedReturn,
                     status: 'approved',
-                    description: `Return from ${inv.investment_plans.name} investment`
+                    description: `Return from ${inv.investment_plans.name} investment`,
+                    created_at: new Date().toISOString()
                 });
                 
                 // 4. Update local state and UI
@@ -605,7 +606,7 @@
                 
                 if (balanceError) throw balanceError;
 
-                // Create investment record
+                // Create investment record (Added invested_at to prevent database errors)
                 const { error: investError } = await mySupabase
                     .from('user_investments')
                     .insert({
@@ -613,7 +614,8 @@
                         plan_id: selectedPlanId,
                         invested_amount: amount,
                         status: 'active',
-                        end_date: endDate.toISOString()
+                        end_date: endDate.toISOString(),
+                        invested_at: new Date().toISOString()
                     });
 
                 if (investError) {
@@ -621,13 +623,14 @@
                     throw investError;
                 }
 
-                // Create transaction record
+                // Create transaction record (Added created_at to prevent database errors)
                 await mySupabase.from('transactions').insert({
                     user_id: currentUser.id,
                     type: 'investment',
                     amount: amount,
                     status: 'approved',
-                    description: `Invested in ${plan.name}`
+                    description: `Invested in ${plan.name}`,
+                    created_at: new Date().toISOString()
                 });
 
                 closeModal();
@@ -638,7 +641,7 @@
                 const expectedReturn = calculateReturn(amount);
                 alert(`✅ Investment successful! You invested $${amount.toFixed(2)} in ${plan.name}. Expected return: $${expectedReturn.toLocaleString()} over 24 hours.`);
             } catch (err) {
-                console.error('Investment error:', err);
+                console.error('Investment error details:', err);
                 errorEl.textContent = 'Failed to process investment. Please try again.';
                 errorEl.classList.remove('hidden');
             } finally {
