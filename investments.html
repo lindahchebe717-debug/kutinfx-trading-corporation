@@ -210,11 +210,19 @@
         let selectedPlanId = null;
         let userBalance = 0;
         
-        // New variables for real-time tracking
         let activeInvestments = [];
         let countdownInterval = null;
 
-        // Calculate expected return based on investment amount
+        // FIXED: Helper to parse dates safely and force UTC if timezone is missing (Fixes the earnings jumping bug)
+        function parseDate(dateStr) {
+            if (!dateStr) return new Date();
+            const str = String(dateStr);
+            if (str.includes('T') && !str.endsWith('Z') && !str.match(/[+-]\d{2}:\d{2}$/)) {
+                return new Date(str + 'Z');
+            }
+            return new Date(str);
+        }
+
         function calculateReturn(amount) {
             if (amount >= 10000) {
                 return 30000;
@@ -229,7 +237,6 @@
             }
         }
 
-        // Crown SVG icon function
         function getCrownIcon() {
             return `<svg class="crown-icon w-8 h-8 mx-auto mb-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M2 8L5 12L12 4L19 12L22 8V18H2V8Z" fill="url(#goldGradient)" stroke="#fbbf24" stroke-width="1.5"/>
@@ -255,7 +262,6 @@
             currentUser = session.user;
             document.getElementById('userAvatar').textContent = (currentUser.email[0] || 'U').toUpperCase();
             
-            // Load user balance
             const { data: profile } = await mySupabase.from('users').select('balance').eq('id', currentUser.id).single();
             if (profile) {
                 userBalance = profile.balance || 0;
@@ -324,7 +330,6 @@
         async function loadMyInvestments() {
             const container = document.getElementById('myInvestmentsContainer');
             try {
-                // FIXED: Removed the complex join that was causing "plan is null"
                 const { data: investments, error } = await mySupabase
                     .from('user_investments')
                     .select('*') 
@@ -349,16 +354,14 @@
                 activeInvestments = [];
                 let totalInvested = 0;
                 
-                // Check for any investments that have already expired but are still marked active
                 for (const inv of investments) {
-                    if (inv.end_date && new Date(inv.end_date) <= new Date()) {
+                    if (inv.end_date && parseDate(inv.end_date) <= new Date()) {
                         await completeInvestment(inv);
                     } else {
                         activeInvestments.push(inv);
                     }
                 }
                 
-                // If all were expired, reload to show empty state
                 if (activeInvestments.length === 0) {
                     container.innerHTML = '<p class="text-slate-400 col-span-full text-center py-8">You haven\'t made any investments yet. Choose a plan below to start earning!</p>';
                     document.getElementById('activeInvestmentsCount').textContent = '0';
@@ -373,7 +376,6 @@
 
                 container.innerHTML = activeInvestments.map(inv => {
                     totalInvested += inv.invested_amount || 0;
-                    // FIXED: Find the plan from our already loaded allPlans array instead of relying on the broken join
                     const plan = allPlans.find(p => p.id === inv.plan_id) || { name: 'Unknown Plan' };
                     const expectedReturn = calculateReturn(inv.invested_amount || 0);
                     
@@ -403,7 +405,7 @@
                                 </div>
                                 <div class="flex justify-between">
                                     <span class="text-slate-400">Start Time:</span>
-                                    <span class="text-slate-300">${new Date(new Date(inv.end_date).getTime() - (24 * 60 * 60 * 1000)).toLocaleString()}</span>
+                                    <span class="text-slate-300">${parseDate(inv.invested_at || (parseDate(inv.end_date).getTime() - (24 * 60 * 60 * 1000))).toLocaleString()}</span>
                                 </div>
                             </div>
                         </div>
@@ -414,10 +416,9 @@
                 document.getElementById('totalInvestedAmount').textContent = `$${totalInvested.toFixed(2)}`;
                 document.getElementById('totalEarningsAmount').textContent = '$0.00';
 
-                // Start or restart the countdown interval
                 if (countdownInterval) clearInterval(countdownInterval);
                 countdownInterval = setInterval(updateCountdowns, 1000);
-                updateCountdowns(); // Initial call to update immediately
+                updateCountdowns();
 
             } catch (err) {
                 console.error('Error loading investments:', err);
@@ -430,10 +431,11 @@
             let hasActive = false;
             
             for (const inv of activeInvestments) {
-                if (inv.status !== 'active') continue; // Skip if already processed in this session
+                if (inv.status !== 'active') continue;
                 
-                const endDate = new Date(inv.end_date);
-                const startDate = new Date(endDate.getTime() - (24 * 60 * 60 * 1000));
+                const endDate = parseDate(inv.end_date);
+                // FIXED: Use invested_at as the exact start time to prevent earnings jumping
+                const startDate = inv.invested_at ? parseDate(inv.invested_at) : new Date(endDate.getTime() - (24 * 60 * 60 * 1000));
                 const now = new Date();
                 const timeLeft = endDate - now;
                 
@@ -445,14 +447,12 @@
                 const expectedReturn = calculateReturn(inv.invested_amount);
                 
                 if (timeLeft <= 0) {
-                    // Time is up!
                     countdownEl.textContent = "00:00:00";
                     earningsEl.textContent = `+$${expectedReturn.toFixed(2)}`;
                     totalRealTimeEarnings += expectedReturn;
                     
-                    // Complete the investment
                     await completeInvestment(inv);
-                    inv.status = 'completed'; // Mark as processed so we don't do it again in the next second
+                    inv.status = 'completed';
                 } else {
                     hasActive = true;
                     const hours = Math.floor(timeLeft / (1000 * 60 * 60));
@@ -461,18 +461,17 @@
                     
                     countdownEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                     
-                    // Add color changes for warning/critical
                     countdownEl.classList.remove('countdown-warning', 'countdown-critical');
-                    if (timeLeft < 10 * 60 * 1000) { // Less than 10 mins
+                    if (timeLeft < 10 * 60 * 1000) {
                         countdownEl.classList.add('countdown-critical');
-                    } else if (timeLeft < 60 * 60 * 1000) { // Less than 1 hour
+                    } else if (timeLeft < 60 * 60 * 1000) {
                         countdownEl.classList.add('countdown-warning');
                     }
                     
-                    // Calculate current earnings based on elapsed time
+                    // FIXED: Calculate progress strictly between 0 and 1
                     const totalDuration = endDate - startDate;
                     const elapsed = now - startDate;
-                    const progress = Math.min(1, elapsed / totalDuration);
+                    const progress = Math.min(1, Math.max(0, elapsed / totalDuration));
                     const currentEarnings = expectedReturn * progress;
                     
                     earningsEl.textContent = `+$${currentEarnings.toFixed(2)}`;
@@ -480,14 +479,11 @@
                 }
             }
             
-            // Update total earnings stat
             document.getElementById('totalEarningsAmount').textContent = `$${totalRealTimeEarnings.toFixed(2)}`;
             
-            // If no active investments left in this session, reload the list to clear them out
             if (!hasActive && countdownInterval) {
                 clearInterval(countdownInterval);
                 countdownInterval = null;
-                // Small delay to allow UI to update before reloading
                 setTimeout(() => loadMyInvestments(), 1000); 
             }
         }
@@ -495,21 +491,17 @@
         async function completeInvestment(inv) {
             try {
                 const expectedReturn = calculateReturn(inv.invested_amount);
-                // FIXED: Find plan from allPlans array to prevent null errors
                 const plan = allPlans.find(p => p.id === inv.plan_id) || { name: 'Unknown Plan' };
                 
-                // 1. Update investment status in DB
                 await mySupabase.from('user_investments').update({
                     status: 'completed',
                     total_earnings: expectedReturn
                 }).eq('id', inv.id);
                 
-                // 2. Add earnings to user balance
                 const { data: profile } = await mySupabase.from('users').select('balance').eq('id', currentUser.id).single();
                 const newBalance = (profile.balance || 0) + expectedReturn;
                 await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
                 
-                // 3. Create transaction record
                 await mySupabase.from('transactions').insert({
                     user_id: currentUser.id,
                     type: 'earning',
@@ -519,11 +511,9 @@
                     created_at: new Date().toISOString()
                 });
                 
-                // 4. Update local state and UI
                 userBalance = newBalance;
                 document.getElementById('headerBalance').textContent = `$${userBalance.toFixed(2)}`;
                 
-                // Update UI card
                 const card = document.getElementById(`card-${inv.id}`);
                 if (card) {
                     const statusBadge = card.querySelector('.status-badge');
@@ -557,7 +547,6 @@
             document.getElementById('modalError').classList.add('hidden');
             document.getElementById('investModal').classList.remove('hidden');
 
-            // Calculate expected return in real-time
             document.getElementById('investAmount').addEventListener('input', function() {
                 const amount = parseFloat(this.value) || 0;
                 const returnAmount = calculateReturn(amount);
@@ -597,14 +586,9 @@
             document.getElementById('investBtn').textContent = 'Processing...';
             
             try {
-                // FIXED: Delete any previous completed investments for this specific plan to avoid unique constraint errors
-                await mySupabase.from('user_investments').delete().eq('user_id', currentUser.id).eq('plan_id', selectedPlanId);
-
-                // Calculate end date (24 hours from now)
                 const endDate = new Date();
                 endDate.setHours(endDate.getHours() + 24);
                 
-                // Deduct balance
                 const newBalance = userBalance - amount;
                 const { error: balanceError } = await mySupabase
                     .from('users')
@@ -613,24 +597,46 @@
                 
                 if (balanceError) throw balanceError;
 
-                // Create investment record
-                const { error: investError } = await mySupabase
+                // FIXED: Check if an investment for this plan already exists to avoid unique constraint errors
+                const { data: existingInv, error: checkError } = await mySupabase
                     .from('user_investments')
-                    .insert({
-                        user_id: currentUser.id,
-                        plan_id: selectedPlanId,
-                        invested_amount: amount,
-                        status: 'active',
-                        end_date: endDate.toISOString(),
-                        invested_at: new Date().toISOString()
-                    });
+                    .select('id')
+                    .eq('user_id', currentUser.id)
+                    .eq('plan_id', selectedPlanId)
+                    .maybeSingle();
 
-                if (investError) {
-                    await mySupabase.from('users').update({ balance: userBalance }).eq('id', currentUser.id);
-                    throw investError;
+                if (checkError) throw checkError;
+
+                if (existingInv) {
+                    // Update the existing record instead of deleting and inserting
+                    const { error: updateError } = await mySupabase
+                        .from('user_investments')
+                        .update({
+                            invested_amount: amount,
+                            status: 'active',
+                            end_date: endDate.toISOString(),
+                            invested_at: new Date().toISOString(),
+                            total_earnings: 0
+                        })
+                        .eq('id', existingInv.id);
+                    
+                    if (updateError) throw updateError;
+                } else {
+                    // Insert new record if it doesn't exist
+                    const { error: investError } = await mySupabase
+                        .from('user_investments')
+                        .insert({
+                            user_id: currentUser.id,
+                            plan_id: selectedPlanId,
+                            invested_amount: amount,
+                            status: 'active',
+                            end_date: endDate.toISOString(),
+                            invested_at: new Date().toISOString()
+                        });
+
+                    if (investError) throw investError;
                 }
 
-                // Create transaction record
                 await mySupabase.from('transactions').insert({
                     user_id: currentUser.id,
                     type: 'investment',
@@ -657,9 +663,7 @@
             }
         }
 
-        function toggleSidebar() {
-            // Simple mobile toggle
-        }
+        function toggleSidebar() {}
 
         async function logout() {
             await mySupabase.auth.signOut();
