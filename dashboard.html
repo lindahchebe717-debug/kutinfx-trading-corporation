@@ -1623,8 +1623,31 @@
                     document.getElementById('balance').textContent = balanceStr;
                     document.getElementById('headerBalance').textContent = balanceStr;
                     document.getElementById('userAvatar').textContent = (profile.first_name || 'U')[0].toUpperCase();
-                    document.getElementById('totalInvested').textContent = `$${(profile.total_invested || 0).toFixed(2)}`;
+                    
+                    // FIXED: Query actual investments table instead of relying on non-existent column
+                    const { data: investments, error: invError } = await mySupabase
+                        .from('user_investments')
+                        .select('invested_amount')
+                        .eq('user_id', currentUser.id)
+                        .eq('status', 'active');
+                    
+                    if (!invError && investments) {
+                        const totalInvested = investments.reduce((sum, inv) => sum + (parseFloat(inv.invested_amount) || 0), 0);
+                        document.getElementById('totalInvested').textContent = `$${totalInvested.toFixed(2)}`;
+                    }
+                    
                     document.getElementById('totalEarnings').textContent = `$${(profile.total_earnings || 0).toFixed(2)}`;
+                    
+                    // FIXED: Query actual user_bots table to count active bots
+                    const { data: userBots, error: botsError } = await mySupabase
+                        .from('user_bots')
+                        .select('id')
+                        .eq('user_id', currentUser.id)
+                        .eq('status', 'active');
+                    
+                    if (!botsError && userBots) {
+                        document.getElementById('activeBots').textContent = userBots.length;
+                    }
                     
                     document.getElementById('referralEarnings').textContent = `$${(profile.referral_earnings || 0).toFixed(2)}`;
                     document.getElementById('myReferralCode').textContent = profile.referral_code || 'NO CODE';
