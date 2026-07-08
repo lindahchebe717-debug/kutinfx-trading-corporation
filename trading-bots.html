@@ -990,7 +990,12 @@
 
         async function resumeBot(userBotId) {
             try {
-                await mySupabase.from('user_bots').update({ status: 'active', last_profit_calculation: new Date().toISOString() }).eq('id', userBotId);
+                // FIXED: Reset activated_at so the 24-hour timer restarts properly
+                await mySupabase.from('user_bots').update({ 
+                    status: 'active', 
+                    last_profit_calculation: new Date().toISOString(),
+                    activated_at: new Date().toISOString()
+                }).eq('id', userBotId);
                 alert('Bot resumed! Profit calculation restarted.');
                 await loadMyBots();
             } catch (err) {
@@ -1001,7 +1006,12 @@
 
         async function startBot(userBotId) {
             try {
-                await mySupabase.from('user_bots').update({ status: 'active', last_profit_calculation: new Date().toISOString() }).eq('id', userBotId);
+                // FIXED: Reset activated_at so the 24-hour timer restarts properly
+                await mySupabase.from('user_bots').update({ 
+                    status: 'active', 
+                    last_profit_calculation: new Date().toISOString(),
+                    activated_at: new Date().toISOString()
+                }).eq('id', userBotId);
                 alert('Bot started! Profit calculation restarted.');
                 await loadMyBots();
             } catch (err) {
@@ -1134,7 +1144,14 @@
                     const { error: balanceError } = await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
                     if (balanceError) throw balanceError;
 
-                    await mySupabase.from('user_bots').update({ status: 'active', invested_amount: amount, earnings: 0, last_profit_calculation: new Date().toISOString() }).eq('id', existingBot.id);
+                    // ✅ FIX: Reset activated_at so the 24-hour countdown timer starts fresh from 24:00:00
+                    await mySupabase.from('user_bots').update({ 
+                        status: 'active', 
+                        invested_amount: amount, 
+                        earnings: 0, 
+                        last_profit_calculation: new Date().toISOString(),
+                        activated_at: new Date().toISOString()
+                    }).eq('id', existingBot.id);
                     await mySupabase.from('transactions').insert({ user_id: currentUser.id, type: 'bot_reactivation', amount: amount, status: 'approved', description: `Reactivated ${bot.name}` });
                     
                     closeModal();
@@ -1148,7 +1165,16 @@
                     const { error: balanceError } = await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
                     if (balanceError) throw balanceError;
 
-                    await mySupabase.from('user_bots').insert({ user_id: currentUser.id, bot_id: selectedBotId, invested_amount: amount, status: 'active', earnings: 0, last_profit_calculation: new Date().toISOString() });
+                    // ✅ FIX: Set initial activated_at timestamp
+                    await mySupabase.from('user_bots').insert({ 
+                        user_id: currentUser.id, 
+                        bot_id: selectedBotId, 
+                        invested_amount: amount, 
+                        status: 'active', 
+                        earnings: 0, 
+                        last_profit_calculation: new Date().toISOString(),
+                        activated_at: new Date().toISOString()
+                    });
                     await mySupabase.from('transactions').insert({ user_id: currentUser.id, type: 'bot_activation', amount: amount, status: 'approved', description: `Activated ${bot.name}` });
                     
                     closeModal();
