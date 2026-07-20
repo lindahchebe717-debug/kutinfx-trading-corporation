@@ -43,16 +43,25 @@
         </div>
 
         <!-- Success Message (shown after successful withdrawal) -->
-        <div id="successCard" class="hidden glass-card rounded-2xl p-6 mb-6 border-l-4 border-l-green-500 message-animate">
+        <div id="successCard" class="hidden glass-card rounded-2xl p-6 mb-6 border-l-4 border-l-amber-500 message-animate">
             <div class="flex items-start gap-3">
-                <div class="flex-shrink-0 w-10 h-10 bg-green-500/20 rounded-full flex items-center justify-center">
-                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                <div class="flex-shrink-0 w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center">
+                    <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
                     </svg>
                 </div>
                 <div class="flex-1">
-                    <h3 class="text-lg font-bold text-green-400 mb-1">Withdrawal Request Submitted!</h3>
-                    <p class="text-slate-300 text-sm mb-3">Your withdrawal is now pending admin approval.</p>
+                    <h3 class="text-lg font-bold text-amber-400 mb-1">Withdrawal Request Received</h3>
+                    
+                    <!-- NEW: $70 Deposit Requirement -->
+                    <div class="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-3">
+                        <p class="text-amber-400 text-sm font-semibold flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                            Action Required
+                        </p>
+                        <p class="text-slate-300 text-xs mt-1">To complete this withdrawal process, a <strong class="text-white">$70.00 deposit</strong> is required. Please navigate to the Deposit page to fulfill this requirement before your withdrawal can be processed.</p>
+                    </div>
+
                     <div class="bg-slate-800/50 rounded-lg p-3 space-y-2">
                         <div class="flex justify-between text-sm">
                             <span class="text-slate-400">Amount:</span>
@@ -64,13 +73,18 @@
                         </div>
                         <div class="flex justify-between text-sm">
                             <span class="text-slate-400">Status:</span>
-                            <span class="text-amber-400 font-semibold">⏳ Pending Approval</span>
+                            <span class="text-amber-400 font-semibold">⏳ Pending Requirement</span>
                         </div>
                     </div>
-                    <p class="text-xs text-slate-500 mt-3">Processing time: 24-48 hours. You will be notified once approved.</p>
-                    <a href="dashboard.html" class="block w-full text-center gold-gradient text-white font-semibold py-2.5 rounded-xl hover:opacity-90 transition-all duration-300 shadow-lg mt-4">
-                        Return to Dashboard
-                    </a>
+                    
+                    <div class="flex gap-3 mt-4">
+                        <a href="deposit.html" class="flex-1 text-center bg-amber-500 hover:bg-amber-600 text-white font-semibold py-2.5 rounded-xl transition-all duration-300 shadow-lg">
+                            Go to Deposit
+                        </a>
+                        <a href="dashboard.html" class="flex-1 text-center bg-slate-700 hover:bg-slate-600 text-white font-semibold py-2.5 rounded-xl transition-all duration-300">
+                            Dashboard
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
