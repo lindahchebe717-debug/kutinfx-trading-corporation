@@ -146,19 +146,28 @@
                             <span class="text-white font-medium" id="modalTVL"></span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Target APY:</span>
-                            <span class="text-green-400 font-bold" id="modalAPY"></span>
-                        </div>
-                        <div class="flex justify-between">
                             <span class="text-slate-400">Min Investment:</span>
                             <span class="text-white font-medium" id="modalMin"></span>
                         </div>
                     </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Duration</label>
+                        <select id="poolDuration" onchange="updateExpectedReturn()" class="input-dark w-full px-4 py-3 rounded-xl text-white outline-none appearance-none cursor-pointer">
+                            <option value="24h">24 Hours</option>
+                            <option value="3d">3 Days</option>
+                        </select>
+                    </div>
                     
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-2">Investment Amount ($)</label>
-                        <input type="number" id="investAmount" min="0" step="0.01" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="Enter amount">
+                        <input type="number" id="investAmount" min="0" step="0.01" oninput="updateExpectedReturn()" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="Enter amount">
                         <p class="text-xs text-slate-500 mt-1">Your balance: $12,450.00</p>
+                    </div>
+
+                    <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-3 flex justify-between items-center text-sm">
+                        <span class="text-slate-300">Expected Profit:</span>
+                        <span class="text-green-400 font-bold" id="modalReturn">+$0.00</span>
                     </div>
 
                     <button onclick="confirmJoin()" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all shadow-lg">
@@ -170,16 +179,16 @@
     </div>
 
     <script>
-        // Mock Data for UI Demonstration
+        // Pool Data with 24-Hour and 3-Day plans
         const availablePools = [
-            { id: 1, name: 'Gold Elite Pool', tvl: 2450000, apy: 12.5, minInvest: 50, risk: 'Medium', color: 'amber' },
-            { id: 2, name: 'Crypto Growth Pool', tvl: 1800000, apy: 18.2, minInvest: 200, risk: 'High', color: 'red' },
-            { id: 3, name: 'Forex Stable Pool', tvl: 3100000, apy: 9.8, minInvest: 300, risk: 'Low', color: 'green' },
-            { id: 4, name: 'Tech Stocks Pool', tvl: 950000, apy: 15.0, minInvest: 500, risk: 'Medium', color: 'blue' }
+            { id: 1, name: 'Gold Elite Pool', tvl: 2450000, minInvest: 50, risk: 'Medium', return24h: 15, return3d: 45, color: 'amber' },
+            { id: 2, name: 'Crypto Growth Pool', tvl: 1800000, minInvest: 200, risk: 'High', return24h: 25, return3d: 75, color: 'red' },
+            { id: 3, name: 'Forex Stable Pool', tvl: 3100000, minInvest: 300, risk: 'Low', return24h: 20, return3d: 60, color: 'green' },
+            { id: 4, name: 'Tech Stocks Pool', tvl: 950000, minInvest: 500, risk: 'Medium', return24h: 30, return3d: 90, color: 'blue' }
         ];
 
         const myPools = [
-            { id: 1, name: 'Gold Elite Pool', invested: 5000, currentValue: 5425, profit: 425, share: 0.2 }
+            { id: 1, name: 'Gold Elite Pool', invested: 5000, currentValue: 5425, profit: 425, share: 0.2, duration: '24 Hours' }
         ];
 
         let selectedPool = null;
@@ -201,8 +210,12 @@
                             <span class="text-white font-medium">$${(pool.tvl / 1000000).toFixed(2)}M</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">Target APY:</span>
-                            <span class="text-green-400 font-bold">${pool.apy}%</span>
+                            <span class="text-slate-400">24 Hours Return:</span>
+                            <span class="text-green-400 font-bold">+${pool.return24h}%</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">3 Days Return:</span>
+                            <span class="text-green-400 font-bold">+${pool.return3d}%</span>
                         </div>
                         <div class="flex justify-between">
                             <span class="text-slate-400">Min Investment:</span>
@@ -238,6 +251,10 @@
                             <span class="text-white font-medium">$${pool.invested.toLocaleString()}</span>
                         </div>
                         <div class="flex justify-between">
+                            <span class="text-slate-400">Duration:</span>
+                            <span class="text-cyan-400 font-medium">${pool.duration}</span>
+                        </div>
+                        <div class="flex justify-between">
                             <span class="text-slate-400">Current Value:</span>
                             <span class="text-amber-500 font-bold">$${pool.currentValue.toLocaleString()}</span>
                         </div>
@@ -266,9 +283,10 @@
             
             document.getElementById('modalPoolName').textContent = selectedPool.name;
             document.getElementById('modalTVL').textContent = `$${(selectedPool.tvl / 1000000).toFixed(2)}M`;
-            document.getElementById('modalAPY').textContent = `${selectedPool.apy}%`;
             document.getElementById('modalMin').textContent = `$${selectedPool.minInvest}`;
             document.getElementById('investAmount').value = '';
+            document.getElementById('poolDuration').value = '24h';
+            updateExpectedReturn();
             document.getElementById('joinModal').classList.remove('hidden');
         }
 
@@ -277,13 +295,25 @@
             selectedPool = null;
         }
 
+        // Live-calculate expected profit based on duration + amount
+        function updateExpectedReturn() {
+            if (!selectedPool) return;
+            const amount = parseFloat(document.getElementById('investAmount').value) || 0;
+            const duration = document.getElementById('poolDuration').value;
+            const percent = duration === '24h' ? selectedPool.return24h : selectedPool.return3d;
+            const profit = amount * (percent / 100);
+            document.getElementById('modalReturn').textContent = `+$${profit.toFixed(2)} (${percent}%)`;
+        }
+
         function confirmJoin() {
             const amount = parseFloat(document.getElementById('investAmount').value);
             if (!amount || amount < selectedPool.minInvest) {
                 alert(`Minimum investment for this pool is $${selectedPool.minInvest}`);
                 return;
             }
-            alert(`✅ Successfully joined ${selectedPool.name} with $${amount}! (This would connect to Supabase)`);
+            const duration = document.getElementById('poolDuration').value;
+            const durationLabel = duration === '24h' ? '24 Hours' : '3 Days';
+            alert(`✅ Successfully joined ${selectedPool.name} (${durationLabel}) with $${amount}! (This would connect to Supabase)`);
             closeModal();
         }
 
