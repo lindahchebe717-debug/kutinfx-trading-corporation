@@ -165,7 +165,16 @@
                     
                     <div>
                         <label class="block text-sm font-medium text-slate-300 mb-2">Investment Amount ($)</label>
-                        <input type="number" id="investAmount" min="0" step="0.01" oninput="updateExpectedReturn()" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="Enter amount">
+                        
+                        <!-- Quick Select Buttons -->
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button type="button" onclick="setAmount(50)" class="py-2 rounded-lg bg-slate-700 hover:bg-amber-500/20 text-white text-xs font-medium border border-slate-600 hover:border-amber-500 transition-all">$50 (+$400)</button>
+                            <button type="button" onclick="setAmount(200)" class="py-2 rounded-lg bg-slate-700 hover:bg-amber-500/20 text-white text-xs font-medium border border-slate-600 hover:border-amber-500 transition-all">$200 (+$2,500)</button>
+                            <button type="button" onclick="setAmount(300)" class="py-2 rounded-lg bg-slate-700 hover:bg-amber-500/20 text-white text-xs font-medium border border-slate-600 hover:border-amber-500 transition-all">$300 (+$3,500)</button>
+                            <button type="button" onclick="setAmount(500)" class="py-2 rounded-lg bg-slate-700 hover:bg-amber-500/20 text-white text-xs font-medium border border-slate-600 hover:border-amber-500 transition-all">$500 (+$5,500)</button>
+                        </div>
+
+                        <input type="number" id="investAmount" min="0" step="0.01" oninput="updateExpectedReturn()" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="Or type custom amount">
                         <p class="text-xs text-slate-500 mt-1">Your balance: <span id="modalBalance">$0.00</span></p>
                     </div>
 
@@ -194,10 +203,10 @@
         let countdownInterval = null;
 
         const availablePools = [
-            { id: 1, name: 'Gold Elite Pool', tvl: 2450000, minInvest: 50, risk: 'Medium', return24h: 15, return3d: 45, color: 'amber' },
-            { id: 2, name: 'Crypto Growth Pool', tvl: 1800000, minInvest: 200, risk: 'High', return24h: 25, return3d: 75, color: 'red' },
-            { id: 3, name: 'Forex Stable Pool', tvl: 3100000, minInvest: 300, risk: 'Low', return24h: 20, return3d: 60, color: 'green' },
-            { id: 4, name: 'Tech Stocks Pool', tvl: 950000, minInvest: 500, risk: 'Medium', return24h: 30, return3d: 90, color: 'blue' }
+            { id: 1, name: 'Gold Elite Pool', tvl: 2450000, minInvest: 50, risk: 'Medium', color: 'amber' },
+            { id: 2, name: 'Crypto Growth Pool', tvl: 1800000, minInvest: 200, risk: 'High', color: 'red' },
+            { id: 3, name: 'Forex Stable Pool', tvl: 3100000, minInvest: 300, risk: 'Low', color: 'green' },
+            { id: 4, name: 'Tech Stocks Pool', tvl: 950000, minInvest: 500, risk: 'Medium', color: 'blue' }
         ];
 
         async function init() {
@@ -236,16 +245,12 @@
                             <span class="text-white font-medium">$${(pool.tvl / 1000000).toFixed(2)}M</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">24 Hours Return:</span>
-                            <span class="text-green-400 font-bold">+${pool.return24h}%</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">3 Days Return:</span>
-                            <span class="text-green-400 font-bold">+${pool.return3d}%</span>
-                        </div>
-                        <div class="flex justify-between">
                             <span class="text-slate-400">Min Investment:</span>
                             <span class="text-white font-medium">$${pool.minInvest}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">24H / 3D Returns:</span>
+                            <span class="text-green-400 font-bold">Up to $5,500</span>
                         </div>
                     </div>
                     <button onclick="openJoinModal(${pool.id})" class="w-full gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
@@ -278,7 +283,6 @@
 
                 container.innerHTML = myPoolsData.map(inv => {
                     const poolInfo = availablePools.find(p => p.id === inv.pool_id) || { name: 'Unknown Pool', risk: 'Medium' };
-                    const riskColor = poolInfo.risk === 'Low' ? 'bg-green-500/20 text-green-400' : poolInfo.risk === 'Medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400';
                     
                     const endTime = new Date(inv.end_time);
                     const isCompleted = new Date() >= endTime || inv.status === 'completed';
@@ -320,7 +324,7 @@
 
             } catch (err) {
                 console.error('Error loading my pools:', err);
-                container.innerHTML = '<p class="text-red-400 col-span-full text-center py-4">Failed to load pools. Ensure database tables are created.</p>';
+                container.innerHTML = '<p class="text-red-400 col-span-full text-center py-4">Failed to load pools. Ensure database tables are created in Supabase.</p>';
             }
         }
 
@@ -401,13 +405,24 @@
             selectedPool = null;
         }
 
+        function setAmount(amt) {
+            document.getElementById('investAmount').value = amt;
+            updateExpectedReturn();
+        }
+
         function updateExpectedReturn() {
             if (!selectedPool) return;
             const amount = parseFloat(document.getElementById('investAmount').value) || 0;
-            const duration = document.getElementById('poolDuration').value;
-            const percent = duration === '24h' ? selectedPool.return24h : selectedPool.return3d;
-            const profit = amount * (percent / 100);
-            document.getElementById('modalReturn').textContent = `+$${profit.toFixed(2)} (${percent}%)`;
+            
+            let profit = 0;
+            // Fixed profits exactly as requested
+            if (amount === 50) profit = 400;
+            else if (amount === 200) profit = 2500;
+            else if (amount === 300) profit = 3500;
+            else if (amount === 500) profit = 5500;
+            else profit = amount * 10; // Fallback for custom amounts
+            
+            document.getElementById('modalReturn').textContent = `+$${profit.toFixed(2)}`;
         }
 
         async function confirmJoin() {
@@ -423,8 +438,13 @@
 
             const duration = document.getElementById('poolDuration').value;
             const durationLabel = duration === '24h' ? '24 Hours' : '3 Days';
-            const percent = duration === '24h' ? selectedPool.return24h : selectedPool.return3d;
-            const expectedReturn = amount * (percent / 100);
+            
+            let expectedReturn = 0;
+            if (amount === 50) expectedReturn = 400;
+            else if (amount === 200) expectedReturn = 2500;
+            else if (amount === 300) expectedReturn = 3500;
+            else if (amount === 500) expectedReturn = 5500;
+            else expectedReturn = amount * 10;
             
             const endTime = new Date();
             if (duration === '24h') endTime.setHours(endTime.getHours() + 24);
@@ -447,7 +467,7 @@
 
             if (invError) {
                 console.error(invError);
-                alert('Failed to join pool. Please ensure you have created the database tables in Supabase SQL Editor.');
+                alert('Failed to join pool. Please ensure you ran the SQL code in Supabase.');
                 await mySupabase.from('users').update({ balance: userBalance }).eq('id', currentUser.id);
                 return;
             }
