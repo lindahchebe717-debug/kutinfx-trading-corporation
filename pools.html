@@ -202,11 +202,12 @@
         let myPoolsData = [];
         let countdownInterval = null;
 
+        // ✅ UPDATED: Each pool now has its own unique expectedProfit value
         const availablePools = [
-            { id: 1, name: 'Gold Elite Pool', tvl: 2450000, minInvest: 50, risk: 'Medium', color: 'amber' },
-            { id: 2, name: 'Crypto Growth Pool', tvl: 1800000, minInvest: 200, risk: 'High', color: 'red' },
-            { id: 3, name: 'Forex Stable Pool', tvl: 3100000, minInvest: 300, risk: 'Low', color: 'green' },
-            { id: 4, name: 'Tech Stocks Pool', tvl: 950000, minInvest: 500, risk: 'Medium', color: 'blue' }
+            { id: 1, name: 'Gold Elite Pool', tvl: 2450000, minInvest: 50, risk: 'Medium', color: 'amber', expectedProfit: 400 },
+            { id: 2, name: 'Crypto Growth Pool', tvl: 1800000, minInvest: 200, risk: 'High', color: 'red', expectedProfit: 2500 },
+            { id: 3, name: 'Forex Stable Pool', tvl: 3100000, minInvest: 300, risk: 'Low', color: 'green', expectedProfit: 3500 },
+            { id: 4, name: 'Tech Stocks Pool', tvl: 950000, minInvest: 500, risk: 'Medium', color: 'blue', expectedProfit: 5500 }
         ];
 
         async function init() {
@@ -249,8 +250,8 @@
                             <span class="text-white font-medium">$${pool.minInvest}</span>
                         </div>
                         <div class="flex justify-between">
-                            <span class="text-slate-400">24H / 3D Returns:</span>
-                            <span class="text-green-400 font-bold">Up to $5,500</span>
+                            <span class="text-slate-400">Expected Profit:</span>
+                            <span class="text-green-400 font-bold">+$${pool.expectedProfit.toLocaleString()}</span>
                         </div>
                     </div>
                     <button onclick="openJoinModal(${pool.id})" class="w-full gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
