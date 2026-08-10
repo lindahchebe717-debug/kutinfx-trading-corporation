@@ -340,11 +340,6 @@
         let selectedMT5BotId = null;
         let myBotsData = []; // Store bots data for countdown updates
 
-        // Helper function to get the specific minimum deposit for each bot (200, 300, 400, 500, 600...)
-        function getBotMinDeposit(index) {
-            return 200 + (index * 100);
-        }
-
         function initTradingViewChart() {
             new TradingView.widget({
                 "width": "100%",
@@ -395,6 +390,7 @@
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
             
+            // Display yesterday's date
             const dateStr = yesterday.toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 year: 'numeric', 
@@ -403,13 +399,16 @@
             });
             document.getElementById('yesterdayDate').textContent = dateStr;
             
+            // Generate realistic trades for yesterday
             const trades = generateYesterdayTrades(yesterday);
             renderYesterdayTrades(trades);
         }
 
         function generateYesterdayTrades(date) {
+            // Use date as seed for consistent daily results
             const dateSeed = date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
             
+            // Pairs - mostly XAU/USD (70%) with some others (30%)
             const pairs = [
                 { symbol: 'XAU/USD', basePrice: 2650, volatility: 30, weight: 70 },
                 { symbol: 'EUR/USD', basePrice: 1.0850, volatility: 0.0050, weight: 10 },
@@ -419,9 +418,10 @@
             ];
             
             const trades = [];
-            const numTrades = 25 + Math.floor(Math.random() * 15);
+            const numTrades = 25 + Math.floor(Math.random() * 15); // 25-40 trades
             
             for (let i = 0; i < numTrades; i++) {
+                // Weighted random pair selection (70% XAU/USD)
                 const rand = Math.random() * 100;
                 let cumulative = 0;
                 let selectedPair = pairs[0];
@@ -433,16 +433,21 @@
                     }
                 }
                 
-                const isBuy = Math.random() > 0.45;
+                const isBuy = Math.random() > 0.45; // 55% buy, 45% sell
                 const hour = Math.floor(Math.random() * 24);
                 const minute = Math.floor(Math.random() * 60);
                 
+                // Generate entry price with some randomness
                 const entryOffset = (Math.random() - 0.5) * selectedPair.volatility * 0.5;
                 const entryPrice = selectedPair.basePrice + entryOffset;
                 
-                const profit = 1500 + Math.random() * 3500;
+                // ALL trades are profitable with minimum $1500 profit
+                // Profit ranges from $1500 to $5000
+                const profit = 1500 + Math.random() * 3500; // $1500 - $5000
+                
+                // Calculate exit price based on profit
                 let exitPrice;
-                const profitPips = profit / 10;
+                const profitPips = profit / 10; // Convert profit to pips
                 
                 if (isBuy) {
                     exitPrice = entryPrice + profitPips;
@@ -450,6 +455,7 @@
                     exitPrice = entryPrice - profitPips;
                 }
                 
+                // Duration between 15 minutes and 3 hours (realistic for profitable trades)
                 const durationMinutes = Math.floor(Math.random() * 165) + 15;
                 
                 trades.push({
@@ -462,11 +468,13 @@
                     exit: exitPrice.toFixed(selectedPair.symbol.includes('JPY') ? 3 : 5),
                     duration: durationMinutes < 60 ? `${durationMinutes}m` : `${Math.floor(durationMinutes/60)}h ${durationMinutes%60}m`,
                     profit: profit,
-                    isProfitable: true
+                    isProfitable: true // All profitable
                 });
             }
             
+            // Sort by time
             trades.sort((a, b) => (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));
+            
             return trades;
         }
 
@@ -488,7 +496,7 @@
             
             tbody.innerHTML = trades.map(trade => {
                 totalProfit += trade.profit;
-                const profitColor = 'text-green-400';
+                const profitColor = 'text-green-400'; // Always green since all profitable
                 const profitSign = '+';
                 const typeBg = trade.type === 'BUY' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400';
                 const typeIcon = trade.type === 'BUY' ? '↑' : '↓';
@@ -516,6 +524,7 @@
                 `;
             }).join('');
             
+            // Update totals
             document.getElementById('totalTradesCount').textContent = trades.length;
             document.getElementById('totalProfitYesterday').textContent = `$${totalProfit.toFixed(2)}`;
         }
@@ -524,9 +533,11 @@
             profitCalculationInterval = setInterval(async () => {
                 await calculateAndAddProfits();
             }, 60000);
+            
             calculateAndAddProfits();
         }
 
+        // Start live countdown timer - updates every second
         function startCountdownTimer() {
             if (countdownInterval) clearInterval(countdownInterval);
             
@@ -537,10 +548,13 @@
                     const timerEl = document.getElementById(`countdown-${ub.id}`);
                     if (!timerEl) return;
                     
-                    if (ub.status !== 'active') return;
+                    if (ub.status !== 'active') {
+                        return;
+                    }
                     
+                    // Use activated_at to calculate total runtime
                     const activatedAt = new Date(ub.activated_at);
-                    const endTime = new Date(activatedAt.getTime() + (24 * 60 * 60 * 1000));
+                    const endTime = new Date(activatedAt.getTime() + (24 * 60 * 60 * 1000)); // 24 hours after activation
                     const remainingMs = endTime - now;
                     
                     if (remainingMs <= 0) {
@@ -553,17 +567,19 @@
                     const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
                     
-                    timerEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    const timeStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                    timerEl.textContent = timeStr;
                     
-                    if (remainingMs < 10 * 60 * 1000) {
+                    // Color coding based on remaining time
+                    if (remainingMs < 10 * 60 * 1000) { // Less than 10 minutes
                         timerEl.className = 'text-cyan-400 font-medium countdown-timer countdown-critical';
-                    } else if (remainingMs < 60 * 60 * 1000) {
+                    } else if (remainingMs < 60 * 60 * 1000) { // Less than 1 hour
                         timerEl.className = 'text-cyan-400 font-medium countdown-timer countdown-warning';
                     } else {
                         timerEl.className = 'text-cyan-400 font-medium countdown-timer';
                     }
                 });
-            }, 1000);
+            }, 1000); // Update every second
         }
 
         async function calculateAndAddProfits() {
@@ -585,12 +601,15 @@
                     const investedAmount = userBot.invested_amount || 0;
                     const dailyROI = bot.expected_roi || 0;
                     
+                    // For profit calculation: use last_profit_calculation (every 1 minute)
                     const lastCalc = userBot.last_profit_calculation ? new Date(userBot.last_profit_calculation) : new Date(userBot.activated_at);
                     const minutesElapsed = (now - lastCalc) / (1000 * 60);
                     
+                    // ✅ FIX: For 24-hour auto-stop: use activated_at (total runtime since activation)
                     const activatedAt = new Date(userBot.activated_at);
                     const totalHoursRunning = (now - activatedAt) / (1000 * 60 * 60);
                     
+                    // Calculate profit every 1 minute
                     if (minutesElapsed >= 1) {
                         const hourlyProfit = investedAmount * (dailyROI / 100) / 24;
                         const profitForPeriod = hourlyProfit * (minutesElapsed / 60);
@@ -616,11 +635,13 @@
                         }
                     }
                     
+                    // ✅ FIX: Check total hours since ACTIVATION (not since last calculation)
                     if (totalHoursRunning >= 24) {
                         botsToStop.push({ id: userBot.id, name: bot.name, profit: userBot.earnings || 0 });
                     }
                 }
 
+                // Stop bots that completed 24 hours
                 for (const bot of botsToStop) {
                     await mySupabase.from('user_bots').update({ status: 'stopped' }).eq('id', bot.id);
                 }
@@ -632,7 +653,7 @@
 
                 if (botsToStop.length > 0) {
                     showStopNotification(botsToStop.length);
-                    await loadMyBots();
+                    await loadMyBots(); // Reload to reflect stopped bots
                 }
 
             } catch (err) {
@@ -645,7 +666,9 @@
             const text = document.getElementById('profitNotificationText');
             text.textContent = `💰 Profit calculated! +$${amount.toFixed(2)} earned in the last minute.`;
             notification.classList.remove('hidden');
-            setTimeout(() => notification.classList.add('hidden'), 5000);
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
         }
 
         function showStopNotification(count) {
@@ -653,7 +676,9 @@
             const text = document.getElementById('profitNotificationText');
             text.textContent = `⏰ ${count} bot(s) completed 24-hour cycle and auto-stopped.`;
             notification.classList.remove('hidden');
-            setTimeout(() => notification.classList.add('hidden'), 8000);
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 8000);
         }
 
         function hideProfitNotification() {
@@ -664,19 +689,19 @@
             if (!confirm('Claim all pending profits? They will be added to your available balance.')) return;
 
             try {
-                const { data: allBotsData } = await mySupabase
+                const { data: allBots } = await mySupabase
                     .from('user_bots')
                     .select('earnings, id')
                     .eq('user_id', currentUser.id)
                     .in('status', ['active', 'paused', 'stopped']);
 
-                if (!allBotsData || allBotsData.length === 0) {
+                if (!allBots || allBots.length === 0) {
                     alert('No profits to claim.');
                     return;
                 }
 
                 let totalClaimable = 0;
-                for (const bot of allBotsData) {
+                for (const bot of allBots) {
                     totalClaimable += bot.earnings || 0;
                 }
 
@@ -688,7 +713,7 @@
                 const newBalance = userBalance + totalClaimable;
                 await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
 
-                for (const bot of allBotsData) {
+                for (const bot of allBots) {
                     await mySupabase.from('user_bots').update({ earnings: 0 }).eq('id', bot.id);
                 }
 
@@ -728,10 +753,10 @@
                     return;
                 }
                 
-                container.innerHTML = allBots.map((bot, index) => {
-                    // ✅ NEW: Each bot gets a different minimum deposit starting at $200 (200, 300, 400, 500, 600...)
-                    const minDeposit = getBotMinDeposit(index);
-                    const minDepositDisplay = `$${minDeposit.toFixed(2)}`;
+                container.innerHTML = allBots.map(bot => {
+                    // Scalper Pro has $100 minimum deposit
+                    const isScalperPro = bot.name && bot.name.toLowerCase().includes('scalper pro');
+                    const minDepositDisplay = isScalperPro ? '$100.00' : `$${(bot.min_deposit || 0).toFixed(2)}`;
                     
                     return `
                     <div class="bot-card glass-card rounded-xl p-5">
@@ -778,6 +803,7 @@
 
                 if (error) throw error;
 
+                // Store bots data for countdown timer
                 myBotsData = myBots || [];
 
                 if (!myBots || myBots.length === 0) {
@@ -805,8 +831,9 @@
                     
                     const bot = ub.trading_bots;
                     
+                    // ✅ FIX: Calculate time remaining based on ACTIVATION time (24 hours from activation)
                     const activatedAt = new Date(ub.activated_at);
-                    const endTime = new Date(activatedAt.getTime() + (24 * 60 * 60 * 1000));
+                    const endTime = new Date(activatedAt.getTime() + (24 * 60 * 60 * 1000)); // 24 hours after activation
                     const remainingMs = endTime - now;
                     
                     let timeDisplay = '';
@@ -823,9 +850,10 @@
                             
                             timeDisplay = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
                             
-                            if (remainingMs < 10 * 60 * 1000) {
+                            // Color coding
+                            if (remainingMs < 10 * 60 * 1000) { // Less than 10 minutes
                                 countdownClass = 'text-cyan-400 font-medium countdown-timer countdown-critical';
-                            } else if (remainingMs < 60 * 60 * 1000) {
+                            } else if (remainingMs < 60 * 60 * 1000) { // Less than 1 hour
                                 countdownClass = 'text-cyan-400 font-medium countdown-timer countdown-warning';
                             }
                         }
@@ -842,6 +870,7 @@
                     else if(ub.status === 'paused') statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-medium bg-amber-500/20 text-amber-400 flex items-center gap-1"><span class="w-2 h-2 bg-amber-500 rounded-full"></span>Paused</span>';
                     else statusBadge = '<span class="px-2 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-400 flex items-center gap-1"><span class="w-2 h-2 bg-red-500 rounded-full"></span>Stopped</span>';
                     
+                    // Check if MT5 is connected
                     const mt5Connected = ub.mt5_login && ub.mt5_server;
                     const mt5StatusHtml = mt5Connected ? 
                         `<div class="mt5-connected rounded-lg p-2 mb-3 flex items-center justify-between">
@@ -961,6 +990,7 @@
 
         async function resumeBot(userBotId) {
             try {
+                // FIXED: Reset activated_at so the 24-hour timer restarts properly
                 await mySupabase.from('user_bots').update({ 
                     status: 'active', 
                     last_profit_calculation: new Date().toISOString(),
@@ -976,6 +1006,7 @@
 
         async function startBot(userBotId) {
             try {
+                // FIXED: Reset activated_at so the 24-hour timer restarts properly
                 await mySupabase.from('user_bots').update({ 
                     status: 'active', 
                     last_profit_calculation: new Date().toISOString(),
@@ -1021,19 +1052,23 @@
         }
 
         function openModal(botId) {
-            const botIndex = allBots.findIndex(b => b.id === botId);
-            const bot = allBots[botIndex];
+            const bot = allBots.find(b => b.id === botId);
             if (!bot) return;
             
             selectedBotId = botId;
             document.getElementById('modalBotName').textContent = bot.name;
             document.getElementById('modalROI').textContent = `${bot.expected_roi}% / day`;
             
-            // ✅ NEW: Use the specific minimum deposit for this bot based on its index
-            const minRequired = getBotMinDeposit(botIndex);
+            // Check if this is Scalper Pro ($100 minimum deposit)
+            const isScalperPro = bot.name && bot.name.toLowerCase().includes('scalper pro');
             
-            document.getElementById('minDepositText').textContent = `Minimum deposit: $${minRequired.toFixed(2)} | Your balance: $${userBalance.toFixed(2)}`;
-            document.getElementById('investAmount').min = minRequired;
+            if (isScalperPro) {
+                document.getElementById('minDepositText').textContent = `Minimum deposit: $100.00 | Your balance: $${userBalance.toFixed(2)}`;
+                document.getElementById('investAmount').min = 100;
+            } else {
+                document.getElementById('minDepositText').textContent = `Minimum deposit: $${(bot.min_deposit || 0).toFixed(2)} | Your balance: $${userBalance.toFixed(2)}`;
+                document.getElementById('investAmount').min = bot.min_deposit || 0;
+            }
             
             const riskEl = document.getElementById('modalRisk');
             riskEl.textContent = bot.risk_level.charAt(0).toUpperCase() + bot.risk_level.slice(1);
@@ -1051,8 +1086,7 @@
 
         async function activateBot() {
             const amount = parseFloat(document.getElementById('investAmount').value);
-            const botIndex = allBots.findIndex(b => b.id === selectedBotId);
-            const bot = allBots[botIndex];
+            const bot = allBots.find(b => b.id === selectedBotId);
             const errorEl = document.getElementById('modalError');
             
             if (!amount || amount <= 0) {
@@ -1061,8 +1095,9 @@
                 return;
             }
             
-            // ✅ NEW: Check against the specific minimum deposit for this bot
-            const minRequired = getBotMinDeposit(botIndex);
+            // Check minimum deposit for Scalper Pro ($100) and other bots
+            const isScalperPro = bot.name && bot.name.toLowerCase().includes('scalper pro');
+            const minRequired = isScalperPro ? 100 : (bot.min_deposit || 0);
             
             if (amount < minRequired) {
                 errorEl.textContent = `Minimum deposit is $${minRequired.toFixed(2)}.`;
@@ -1109,6 +1144,7 @@
                     const { error: balanceError } = await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
                     if (balanceError) throw balanceError;
 
+                    // ✅ FIX: Reset activated_at so the 24-hour countdown timer starts fresh from 24:00:00
                     await mySupabase.from('user_bots').update({ 
                         status: 'active', 
                         invested_amount: amount, 
@@ -1129,6 +1165,7 @@
                     const { error: balanceError } = await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
                     if (balanceError) throw balanceError;
 
+                    // ✅ FIX: Set initial activated_at timestamp
                     await mySupabase.from('user_bots').insert({ 
                         user_id: currentUser.id, 
                         bot_id: selectedBotId, 
@@ -1157,6 +1194,7 @@
             }
         }
 
+        // MT5 Functions
         async function openMT5Modal(botId, isEdit = false) {
             selectedMT5BotId = botId;
             
@@ -1175,6 +1213,7 @@
             document.getElementById('mt5ModalError').classList.add('hidden');
             document.getElementById('mt5ModalSuccess').classList.add('hidden');
             
+            // Pre-fill if editing
             if (isEdit && userBot.mt5_login) {
                 document.getElementById('mt5Login').value = userBot.mt5_login;
                 document.getElementById('mt5Password').value = '';
