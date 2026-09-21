@@ -73,7 +73,7 @@
                 <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/40">ACTIVE</span>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div class="bg-slate-800/50 rounded-xl p-4">
                     <p class="text-slate-400 text-xs mb-1">Account Login</p>
                     <p class="text-white font-mono font-semibold" id="connLogin">—</p>
@@ -90,6 +90,11 @@
                     <p class="text-slate-400 text-xs mb-1">Connection Health</p>
                     <p class="text-green-400 font-semibold" id="connHealth">Stable • <span id="connLatency">--</span> ms</p>
                 </div>
+            </div>
+
+            <!-- Bridge verification note -->
+            <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 mb-4">
+                <p class="text-amber-300 text-xs leading-relaxed">Account type self-certified as <strong>LIVE</strong> by the account holder. Terminal bridge verification is pending — fills will route automatically once the MetaApi bridge is configured on this server.</p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -113,7 +118,7 @@
             </div>
 
             <p class="text-slate-300 text-sm leading-relaxed mb-6">
-                Live MT5 login only. <span class="text-amber-400 font-semibold">Demo servers are rejected.</span> Fills go through the MetaApi terminal session when a bridge is configured.
+                Live MT5 login only. <span class="text-amber-400 font-semibold">Demo, trial and practice servers are rejected.</span> Fills go through the MetaApi terminal session when a bridge is configured.
             </p>
 
             <!-- Trust badges -->
@@ -138,11 +143,12 @@
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">Account login</label>
                     <input type="text" id="mt5Login" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="e.g. 51234567">
+                    <p class="text-xs text-slate-500 mt-1">MT5 logins are numeric (4–12 digits).</p>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-slate-300 mb-2">Live server</label>
-                    <input type="text" id="mt5Server" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="YourBroker-Live">
+                    <input type="text" id="mt5Server" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="e.g. Exness-MT5Real0">
                     <div class="flex flex-wrap gap-2 mt-3" id="serverChips"></div>
                 </div>
 
@@ -161,6 +167,12 @@
                     <input type="text" id="mt5Token" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="MetaApi bridge token">
                 </div>
 
+                <!-- LIVE account confirmation -->
+                <label class="flex items-start gap-3 bg-slate-800/50 rounded-xl p-4 cursor-pointer border border-slate-700 hover:border-amber-500/50 transition-all">
+                    <input type="checkbox" id="liveConfirm" class="mt-0.5 w-4 h-4 accent-amber-500">
+                    <span class="text-slate-300 text-xs leading-relaxed">I confirm this is a <span class="text-amber-400 font-semibold">LIVE trading account</span>. Demo, trial, practice and simulated accounts are rejected and cannot be bridged.</span>
+                </label>
+
                 <button onclick="saveBroker()" id="saveBtn" class="w-full gold-gradient text-white font-semibold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg text-base flex items-center justify-center gap-2">
                     <span id="saveBtnText">Save & Connect MT5</span>
                     <svg id="saveSpinner" class="hidden spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
@@ -171,7 +183,7 @@
         <!-- MT5 BRAND SERVERS INFO -->
         <div class="mb-8">
             <h3 class="text-slate-300 font-semibold tracking-widest text-sm uppercase mb-2">MT5 Brand Servers</h3>
-            <p class="text-slate-400 text-sm leading-relaxed">Same live MT5 login flow, with the live server names those venues publish. Demo is not listed.</p>
+            <p class="text-slate-400 text-sm leading-relaxed">Same live MT5 login flow, with the live server names those venues publish. Demo is not listed. Example: Exness live servers use <span class="text-white font-mono">Exness-MT5Real0…Real9</span>, while <span class="text-red-400 font-mono">Exness-MT5Trial0</span> is a demo server and will be rejected.</p>
         </div>
 
         <!-- HOW IT WORKS -->
@@ -203,7 +215,10 @@
         let existingConnection = null;
         let editMode = false;
 
-        const popularServers = ['ICMarkets-Live', 'Pepperstone-Live', 'XMGlobal-Live', 'Exness-MT5Real', 'FBS-Real', 'HFM-Live'];
+        const popularServers = ['Exness-MT5Real0', 'ICMarkets-Live', 'Pepperstone-Live', 'XMGlobal-Live', 'FBS-Real', 'HFM-Live'];
+
+        // STRICT demo/trial/practice rejection pattern
+        const DEMO_PATTERN = /(demo|trial|practice|practise|paper|sandbox|simulated|simulation|dem0|test)/i;
 
         async function init() {
             const { data: { session } } = await mySupabase.auth.getSession();
@@ -284,6 +299,7 @@
                 document.getElementById('mt5Server').value = existingConnection.live_server;
                 document.getElementById('mt5Token').value = existingConnection.bridge_token || '';
             }
+            document.getElementById('liveConfirm').checked = false;
             showForm();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -309,9 +325,23 @@
             errEl.classList.add('hidden');
 
             if (!login || login.length < 4) { errEl.textContent = 'Please enter a valid MT5 account login.'; errEl.classList.remove('hidden'); return; }
+            if (!/^\d{4,12}$/.test(login)) { errEl.textContent = 'MT5 account login must be a numeric ID (4–12 digits).'; errEl.classList.remove('hidden'); return; }
             if (!server) { errEl.textContent = 'Please enter your live server name.'; errEl.classList.remove('hidden'); return; }
-            if (/demo/i.test(server)) { errEl.textContent = 'Demo servers are rejected. Please use a LIVE server name.'; errEl.classList.remove('hidden'); return; }
+
+            // STRICT REJECTION of demo / trial / practice servers (e.g. Exness-MT5Trial0)
+            if (DEMO_PATTERN.test(server)) {
+                errEl.textContent = '❌ REJECTED: "' + server + '" is a demo/trial/practice server. Only LIVE servers are accepted (e.g. Exness-MT5Real0).';
+                errEl.classList.remove('hidden');
+                return;
+            }
+
             if (!password || password.length < 6) { errEl.textContent = 'Master password must be at least 6 characters.'; errEl.classList.remove('hidden'); return; }
+
+            if (!document.getElementById('liveConfirm').checked) {
+                errEl.textContent = 'Please tick the confirmation box to certify this is a LIVE trading account.';
+                errEl.classList.remove('hidden');
+                return;
+            }
 
             const btn = document.getElementById('saveBtn');
             const btnText = document.getElementById('saveBtnText');
@@ -340,7 +370,7 @@
                 if (error) throw error;
 
                 editMode = false;
-                showSuccess('✅ MetaTrader 5 connected successfully! Your bots can now route fills to this terminal.');
+                showSuccess('✅ MetaTrader 5 LIVE account connected successfully! Your bots can now route fills to this terminal.');
                 await loadConnection();
             } catch (err) {
                 console.error('Save broker error:', err);
@@ -367,6 +397,7 @@
                 document.getElementById('mt5Server').value = '';
                 document.getElementById('mt5Password').value = '';
                 document.getElementById('mt5Token').value = '';
+                document.getElementById('liveConfirm').checked = false;
                 showSuccess('✅ Broker disconnected.');
                 showForm();
             } catch (err) {
