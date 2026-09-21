@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Wallet - KutinFX Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
+        .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; }
+        .input-dark:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); outline: none; }
+        .wallet-card { transition: all 0.3s ease; }
+        .wallet-card:hover { transform: translateY(-3px); border-color: rgba(245, 158, 11, 0.4); }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-slate-200">
+    <!-- Top Navigation -->
+    <nav class="border-b border-slate-700/50 bg-[#0f172a]/95 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <a href="dashboard.html" class="text-amber-500 hover:text-amber-400 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        <span class="font-semibold">Back to Dashboard</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-slate-400 text-sm hidden sm:block" id="userBalance">Balance: $0.00</span>
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold shadow-lg">
+                        <span id="userAvatar">U</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-white mb-3">Connect <span class="text-amber-500">Wallet</span></h1>
+            <p class="text-slate-400 text-lg">Save your personal wallet addresses for fast, secure withdrawals.</p>
+        </div>
+
+        <!-- Messages -->
+        <div id="successMsg" class="hidden mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-xl text-green-300 text-sm text-center"></div>
+        <div id="errorMsg" class="hidden mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+
+        <!-- Wallet Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="walletsContainer">
+            <div class="glass-card rounded-xl p-6 animate-pulse">
+                <div class="h-5 bg-slate-700 rounded w-1/2 mb-4"></div>
+                <div class="h-4 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-10 bg-slate-700 rounded mt-4"></div>
+            </div>
+            <div class="glass-card rounded-xl p-6 animate-pulse">
+                <div class="h-5 bg-slate-700 rounded w-1/2 mb-4"></div>
+                <div class="h-4 bg-slate-700 rounded w-3/4 mb-2"></div>
+                <div class="h-10 bg-slate-700 rounded mt-4"></div>
+            </div>
+        </div>
+
+        <!-- Info Note -->
+        <div class="glass-card rounded-xl p-5 mt-8 border-l-4 border-l-amber-500">
+            <div class="flex items-start gap-3">
+                <svg class="w-6 h-6 text-amber-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <div>
+                    <p class="text-amber-400 font-semibold mb-1">Why connect a wallet?</p>
+                    <p class="text-slate-300 text-sm">When you request a withdrawal, funds are sent directly to the wallet address saved here for that network. Double-check every address carefully — transactions cannot be reversed.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connect / Edit Wallet Modal -->
+    <div id="walletModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeWalletModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card rounded-2xl p-8 max-w-md w-full relative">
+                <button onclick="closeWalletModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                <h3 class="text-xl font-bold text-white mb-1" id="modalTitle">Connect Wallet</h3>
+                <p class="text-amber-500 font-semibold mb-4" id="modalNetworkName"></p>
+
+                <div id="modalError" class="hidden mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Wallet Address</label>
+                        <input type="text" id="walletAddress" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono text-sm" placeholder="Paste your wallet address">
+                        <p class="text-xs text-slate-500 mt-2" id="modalHint"></p>
+                    </div>
+                    <button onclick="saveWallet()" id="saveBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all shadow-lg">
+                        Save Wallet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let savedWallets = {};
+        let editingNetwork = null;
+
+        // Supported networks with validation rules
+        const networks = [
+            {
+                key: 'btc',
+                name: 'Bitcoin',
+                label: 'BTC Network',
+                icon: '₿',
+                gradient: 'from-orange-400 to-orange-600',
+                placeholder: 'bc1... or 1... or 3...',
+                hint: 'Bitcoin addresses start with "bc1", "1" or "3" (26-62 characters).',
+                validate: (a) => /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/.test(a)
+            },
+            {
+                key: 'eth',
+                name: 'Ethereum',
+                label: 'ERC-20 Network',
+                icon: 'Ξ',
+                gradient: 'from-blue-400 to-blue-600',
+                placeholder: '0x...',
+                hint: 'Ethereum addresses start with "0x" followed by 40 characters.',
+                validate: (a) => /^0x[a-fA-F0-9]{40}$/.test(a)
+            },
+            {
+                key: 'usdt-trc20',
+                name: 'Tether (USDT)',
+                label: 'TRC-20 Network',
+                icon: '$',
+                gradient: 'from-green-400 to-green-600',
+                placeholder: 'T...',
+                hint: 'TRC-20 addresses start with "T" followed by 33 characters.',
+                validate: (a) => /^T[a-zA-HJ-NP-Z0-9]{33}$/.test(a)
+            },
+            {
+                key: 'usdt-erc20',
+                name: 'Tether (USDT)',
+                label: 'ERC-20 Network',
+                icon: '$',
+                gradient: 'from-green-400 to-green-600',
+                placeholder: '0x...',
+                hint: 'ERC-20 addresses start with "0x" followed by 40 characters.',
+                validate: (a) => /^0x[a-fA-F0-9]{40}$/.test(a)
+            }
+        ];
+
+        async function init() {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'sign-in.html';
+                return;
+            }
+            currentUser = session.user;
+
+            const { data: profile } = await mySupabase.from('users').select('balance, first_name').eq('id', currentUser.id).single();
+            if (profile) {
+                document.getElementById('userBalance').textContent = `Balance: $${(profile.balance || 0).toFixed(2)}`;
+                document.getElementById('userAvatar').textContent = (profile.first_name || 'U')[0].toUpperCase();
+            }
+
+            await loadWallets();
+        }
+
+        async function loadWallets() {
+            try {
+                const { data, error } = await mySupabase
+                    .from('user_wallets')
+                    .select('*')
+                    .eq('user_id', currentUser.id);
+
+                if (error) throw error;
+
+                savedWallets = {};
+                (data || []).forEach(w => { savedWallets[w.network] = w; });
+
+                renderWallets();
+            } catch (err) {
+                console.error('Error loading wallets:', err);
+                document.getElementById('walletsContainer').innerHTML =
+                    '<p class="text-red-400 col-span-full text-center py-8">Failed to load wallets. Please make sure you ran the SQL code in Supabase.</p>';
+            }
+        }
+
+        function renderWallets() {
+            const container = document.getElementById('walletsContainer');
+            container.innerHTML = networks.map(net => {
+                const wallet = savedWallets[net.key];
+                const connected = !!wallet;
+
+                return `
+                <div class="wallet-card glass-card rounded-xl p-6 ${connected ? 'border-green-500/40' : ''}">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br ${net.gradient} flex items-center justify-center text-white font-bold text-xl">${net.icon}</div>
+                            <div>
+                                <h3 class="text-white font-semibold">${net.name}</h3>
+                                <p class="text-slate-400 text-sm">${net.label}</p>
+                            </div>
+                        </div>
+                        ${connected
+                            ? '<span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full"></span>Connected</span>'
+                            : '<span class="px-2 py-1 rounded-full text-xs font-medium bg-slate-600/30 text-slate-400">Not connected</span>'}
+                    </div>
+
+                    ${connected ? `
+                        <div class="bg-slate-800/50 rounded-lg p-3 mb-4">
+                            <p class="text-slate-400 text-xs mb-1">Saved Address</p>
+                            <p class="text-white font-mono text-xs break-all">${wallet.address}</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="copyAddress('${wallet.address}')" class="bg-slate-700/60 hover:bg-slate-600 text-white font-medium py-2 rounded-lg transition-all text-xs">Copy</button>
+                            <button onclick="openWalletModal('${net.key}')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-medium py-2 rounded-lg transition-all text-xs">Edit</button>
+                            <button onclick="deleteWallet('${net.key}')" class="bg-red-500/20 hover:bg-red-500/30 text-red-400 font-medium py-2 rounded-lg transition-all text-xs">Remove</button>
+                        </div>
+                    ` : `
+                        <p class="text-slate-500 text-sm mb-4">No wallet saved for this network yet.</p>
+                        <button onclick="openWalletModal('${net.key}')" class="w-full gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
+                            Connect Wallet
+                        </button>
+                    `}
+                </div>
+                `;
+            }).join('');
+        }
+
+        function openWalletModal(networkKey) {
+            editingNetwork = networkKey;
+            const net = networks.find(n => n.key === networkKey);
+            const existing = savedWallets[networkKey];
+
+            document.getElementById('modalTitle').textContent = existing ? 'Edit Wallet' : 'Connect Wallet';
+            document.getElementById('modalNetworkName').textContent = `${net.name} — ${net.label}`;
+            document.getElementById('modalHint').textContent = net.hint;
+            document.getElementById('walletAddress').value = existing ? existing.address : '';
+            document.getElementById('walletAddress').placeholder = net.placeholder;
+            document.getElementById('modalError').classList.add('hidden');
+            document.getElementById('walletModal').classList.remove('hidden');
+        }
+
+        function closeWalletModal() {
+            document.getElementById('walletModal').classList.add('hidden');
+            editingNetwork = null;
+        }
+
+        async function saveWallet() {
+            const net = networks.find(n => n.key === editingNetwork);
+            const address = document.getElementById('walletAddress').value.trim();
+            const errEl = document.getElementById('modalError');
+
+            if (!address) {
+                errEl.textContent = 'Please enter a wallet address.';
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            if (!net.validate(address)) {
+                errEl.textContent = `Invalid ${net.label} address. ${net.hint}`;
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                const { error } = await mySupabase
+                    .from('user_wallets')
+                    .upsert({
+                        user_id: currentUser.id,
+                        network: net.key,
+                        address: address,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'user_id,network' });
+
+                if (error) throw error;
+
+                closeWalletModal();
+                showSuccess(`✅ ${net.name} (${net.label}) wallet saved successfully!`);
+                await loadWallets();
+            } catch (err) {
+                console.error('Save wallet error:', err);
+                errEl.textContent = 'Failed to save wallet. Please make sure you ran the SQL code in Supabase.';
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Wallet';
+            }
+        }
+
+        async function deleteWallet(networkKey) {
+            const net = networks.find(n => n.key === networkKey);
+            if (!confirm(`Remove your ${net.name} (${net.label}) wallet?`)) return;
+
+            try {
+                const { error } = await mySupabase
+                    .from('user_wallets')
+                    .delete()
+                    .eq('user_id', currentUser.id)
+                    .eq('network', networkKey);
+
+                if (error) throw error;
+
+                showSuccess(`✅ ${net.name} (${net.label}) wallet removed.`);
+                await loadWallets();
+            } catch (err) {
+                console.error('Delete wallet error:', err);
+                showError('Failed to remove wallet. Please try again.');
+            }
+        }
+
+        function copyAddress(address) {
+            navigator.clipboard.writeText(address).then(() => {
+                showSuccess('✅ Address copied to clipboard!');
+            });
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMsg');
+            const errEl = document.getElementById('errorMsg');
+            errEl.classList.add('hidden');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            const okEl = document.getElementById('successMsg');
+            okEl.classList.add('hidden');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
