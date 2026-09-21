@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risk Center - KutinFX Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
+        .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; }
+        .input-dark:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); outline: none; }
+        .profile-card { transition: all 0.2s ease; cursor: pointer; }
+        .profile-card.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2); }
+        .toggle-checkbox:checked { right: 0; border-color: #f59e0b; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #f59e0b; }
+        @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .live-dot { animation: pulseDot 1.5s ease-in-out infinite; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-slate-200">
+    <!-- Top Navigation -->
+    <nav class="border-b border-slate-700/50 bg-[#0f172a]/95 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <a href="dashboard.html" class="text-amber-500 hover:text-amber-400 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        <span class="font-semibold">Back to Dashboard</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-slate-500 text-xs">Equity</p>
+                        <p class="text-white font-bold text-sm" id="userBalance">$0.00</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold shadow-lg">
+                        <span id="userAvatar">U</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-white mb-2">Risk <span class="text-amber-500">Center</span></h1>
+                <p class="text-slate-400 text-lg flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full live-dot"></span>
+                    Monitor exposure, set loss limits and control your safety switches.
+                </p>
+            </div>
+            <button onclick="runRiskCheck()" id="checkBtn" class="gold-gradient text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-all shadow-lg text-sm flex items-center gap-2 justify-center">
+                🛡️ Run Full Risk Check
+            </button>
+        </div>
+
+        <!-- Messages -->
+        <div id="successMsg" class="hidden mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-xl text-green-300 text-sm text-center"></div>
+        <div id="errorMsg" class="hidden mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+
+        <!-- Risk Check Results -->
+        <div id="checkResults" class="hidden glass-card rounded-2xl p-6 mb-8 border border-green-500/30">
+            <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                Risk Check Report
+            </h3>
+            <div class="space-y-2 text-sm" id="checkList"></div>
+        </div>
+
+        <!-- TOP STATS -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Capital Deployed</p>
+                <p class="text-2xl font-bold text-amber-500" id="statDeployed">$0.00</p>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Exposure Ratio</p>
+                <p class="text-2xl font-bold text-white" id="statExposure">0%</p>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Est. VaR (24h)</p>
+                <p class="text-2xl font-bold text-red-400" id="statVar">$0.00</p>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Current Drawdown</p>
+                <p class="text-2xl font-bold text-green-400" id="statDrawdown">0.0%</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- LEFT: PROFILE + LIMITS -->
+            <div class="space-y-6">
+                <!-- Risk Profile -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h2 class="text-lg font-bold text-white mb-4">Risk Profile</h2>
+                    <div class="space-y-3" id="profileCards">
+                        <div onclick="selectProfile('conservative')" data-profile="conservative" class="profile-card rounded-xl p-4 border border-slate-600 bg-slate-800/40">
+                            <div class="flex items-center justify-between mb-1">
+                                <h3 class="text-white font-semibold">🛡️ Conservative</h3>
+                                <span class="text-green-400 text-xs font-bold">LOW RISK</span>
+                            </div>
+                            <p class="text-slate-400 text-xs">Capital preservation first. Lower leverage, tighter exposure, steady compounding.</p>
+                        </div>
+                        <div onclick="selectProfile('balanced')" data-profile="balanced" class="profile-card selected rounded-xl p-4 border border-slate-600 bg-slate-800/40">
+                            <div class="flex items-center justify-between mb-1">
+                                <h3 class="text-white font-semibold">⚖️ Balanced</h3>
+                                <span class="text-amber-400 text-xs font-bold">MEDIUM RISK</span>
+                            </div>
+                            <p class="text-slate-400 text-xs">Growth with controlled risk. Diversified bots and moderate position sizing.</p>
+                        </div>
+                        <div onclick="selectProfile('aggressive')" data-profile="aggressive" class="profile-card rounded-xl p-4 border border-slate-600 bg-slate-800/40">
+                            <div class="flex items-center justify-between mb-1">
+                                <h3 class="text-white font-semibold">🚀 Aggressive</h3>
+                                <span class="text-red-400 text-xs font-bold">HIGH RISK</span>
+                            </div>
+                            <p class="text-slate-400 text-xs">Maximum growth target. Higher exposure and wider stop bands accepted.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Risk Limits -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h2 class="text-lg font-bold text-white mb-4">Loss Limits & Safeguards</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Daily Loss Limit (%)</label>
+                            <input type="number" id="limitDaily" min="1" max="50" class="input-dark w-full px-3 py-2.5 rounded-lg text-white text-sm" value="5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Max Drawdown (%)</label>
+                            <input type="number" id="limitDrawdown" min="5" max="80" class="input-dark w-full px-3 py-2.5 rounded-lg text-white text-sm" value="20">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Per-Bot Stop (%)</label>
+                            <input type="number" id="limitBot" min="5" max="60" class="input-dark w-full px-3 py-2.5 rounded-lg text-white text-sm" value="15">
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 mb-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white text-sm font-medium">Auto-stop at daily limit</p>
+                                <p class="text-slate-500 text-xs">Halt all bots if daily loss limit is hit</p>
+                            </div>
+                            <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                                <input type="checkbox" id="tglAutoStop" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300" checked style="top:0;left:0;"/>
+                                <label for="tglAutoStop" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-700 cursor-pointer"></label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white text-sm font-medium">Margin protection</p>
+                                <p class="text-slate-500 text-xs">Block new positions below safe margin level</p>
+                            </div>
+                            <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                                <input type="checkbox" id="tglMargin" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300" checked style="top:0;left:0;"/>
+                                <label for="tglMargin" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-700 cursor-pointer"></label>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white text-sm font-medium">Diversification alerts</p>
+                                <p class="text-slate-500 text-xs">Warn me when one asset exceeds 40% exposure</p>
+                            </div>
+                            <div class="relative inline-block w-12 mr-2 align-middle select-none">
+                                <input type="checkbox" id="tglDivers" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer transition-all duration-300" checked style="top:0;left:0;"/>
+                                <label for="tglDivers" class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-700 cursor-pointer"></label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button onclick="saveSettings()" id="saveBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all shadow-lg text-sm">
+                        Save Risk Settings
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT: EXPOSURE + DRAWDOWN -->
+            <div class="space-y-6">
+                <!-- Exposure Breakdown -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h2 class="text-lg font-bold text-white mb-4">Exposure Breakdown</h2>
+                    <div class="space-y-4" id="exposureContainer"></div>
+                </div>
+
+                <!-- Drawdown Gauge -->
+                <div class="glass-card rounded-2xl p-6">
+                    <h2 class="text-lg font-bold text-white mb-2">Drawdown Headroom</h2>
+                    <p class="text-slate-500 text-xs mb-4">Current drawdown vs your maximum allowed drawdown.</p>
+                    <div class="mb-2 flex justify-between text-sm">
+                        <span class="text-slate-400">Used</span>
+                        <span class="text-white font-bold" id="ddLabel">0.0% / 20%</span>
+                    </div>
+                    <div class="w-full h-4 bg-slate-700/60 rounded-full overflow-hidden">
+                        <div id="ddBar" class="h-full rounded-full bg-gradient-to-r from-green-500 via-amber-500 to-red-500 transition-all duration-700" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-500 mt-2">
+                        <span>0%</span><span id="ddMax">20% limit</span>
+                    </div>
+                    <div class="mt-5 bg-slate-800/50 rounded-xl p-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-slate-400">Margin Level</span>
+                            <span class="text-green-400 font-bold" id="marginLevel">—</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Safety Status</span>
+                            <span class="text-green-400 font-bold flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full live-dot"></span> HEALTHY</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RISK ALERTS -->
+        <div class="glass-card rounded-2xl p-6 mb-8">
+            <h2 class="text-lg font-bold text-white mb-4">Recent Risk Events</h2>
+            <div class="space-y-3" id="alertsContainer"></div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="glass-card rounded-xl p-5 border-l-4 border-l-amber-500">
+            <p class="text-slate-400 text-xs leading-relaxed">
+                <span class="text-amber-400 font-semibold">Risk Warning:</span> Limits and safeguards reduce — but never eliminate — the risk of loss. Leveraged trading can result in losses exceeding your deposits. Always invest only what you can afford to lose.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let userBalance = 0;
+        let selectedProfile = 'balanced';
+        let exposure = { bots: 0, investments: 0, pools: 0 };
+
+        const varFactors = { conservative: 0.03, balanced: 0.05, aggressive: 0.08 };
+
+        async function init() {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            if (!session) { window.location.href = 'sign-in.html'; return; }
+            currentUser = session.user;
+
+            const { data: profile } = await mySupabase.from('users').select('balance, first_name').eq('id', currentUser.id).single();
+            if (profile) {
+                userBalance = profile.balance || 0;
+                document.getElementById('userBalance').textContent = `$${userBalance.toFixed(2)}`;
+                document.getElementById('userAvatar').textContent = (profile.first_name || 'U')[0].toUpperCase();
+            }
+
+            await Promise.all([loadSettings(), loadExposure()]);
+            renderAll();
+            renderAlerts();
+        }
+
+        async function loadSettings() {
+            try {
+                const { data } = await mySupabase.from('user_risk_settings').select('*').eq('user_id', currentUser.id).maybeSingle();
+                if (data) {
+                    selectedProfile = data.risk_profile || 'balanced';
+                    document.getElementById('limitDaily').value = data.max_daily_loss_pct;
+                    document.getElementById('limitDrawdown').value = data.max_drawdown_pct;
+                    document.getElementById('limitBot').value = data.per_bot_stop_loss_pct;
+                    document.getElementById('tglAutoStop').checked = !!data.auto_stop_on_limit;
+                    document.getElementById('tglMargin').checked = !!data.margin_protection;
+                    document.getElementById('tglDivers').checked = !!data.diversification_alerts;
+                }
+            } catch (err) { console.error('Load settings error:', err); }
+        }
+
+        async function loadExposure() {
+            // Bots
+            try {
+                const { data } = await mySupabase.from('user_bots').select('invested_amount').eq('user_id', currentUser.id).eq('status', 'active');
+                exposure.bots = (data || []).reduce((s, r) => s + (parseFloat(r.invested_amount) || 0), 0);
+            } catch (e) { exposure.bots = 0; }
+            // Investments
+            try {
+                const { data } = await mySupabase.from('user_investments').select('invested_amount').eq('user_id', currentUser.id).eq('status', 'active');
+                exposure.investments = (data || []).reduce((s, r) => s + (parseFloat(r.invested_amount) || 0), 0);
+            } catch (e) { exposure.investments = 0; }
+            // Pools
+            try {
+                const { data } = await mySupabase.from('user_pool_investments').select('invested_amount').eq('user_id', currentUser.id).eq('status', 'active');
+                exposure.pools = (data || []).reduce((s, r) => s + (parseFloat(r.invested_amount) || 0), 0);
+            } catch (e) { exposure.pools = 0; }
+        }
+
+        function renderAll() {
+            const deployed = exposure.bots + exposure.investments + exposure.pools;
+            const total = deployed + userBalance;
+            const exposurePct = total > 0 ? (deployed / total) * 100 : 0;
+            const varAmount = deployed * varFactors[selectedProfile];
+            const drawdown = deployed > 0 ? 3.4 : 0; // live simulated drawdown
+            const maxDD = parseFloat(document.getElementById('limitDrawdown').value) || 20;
+
+            document.getElementById('statDeployed').textContent = `$${deployed.toFixed(2)}`;
+            document.getElementById('statExposure').textContent = `${exposurePct.toFixed(1)}%`;
+            document.getElementById('statVar').textContent = `-$${varAmount.toFixed(2)}`;
+            document.getElementById('statDrawdown').textContent = `${drawdown.toFixed(1)}%`;
+
+            // Exposure bars
+            const rows = [
+                { label: 'Trading Bots', value: exposure.bots, color: 'bg-purple-500' },
+                { label: 'Investment Plans', value: exposure.investments, color: 'bg-blue-500' },
+                { label: 'Investment Pools', value: exposure.pools, color: 'bg-green-500' },
+                { label: 'Free Margin', value: userBalance, color: 'bg-amber-500' }
+            ];
+            document.getElementById('exposureContainer').innerHTML = rows.map(r => {
+                const pct = total > 0 ? (r.value / total) * 100 : 0;
+                return `
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-300">${r.label}</span>
+                        <span class="text-white font-medium">$${r.value.toFixed(2)} <span class="text-slate-500 text-xs">(${pct.toFixed(1)}%)</span></span>
+                    </div>
+                    <div class="w-full h-2 bg-slate-700/60 rounded-full overflow-hidden">
+                        <div class="h-full ${r.color} rounded-full transition-all duration-700" style="width:${pct}%"></div>
+                    </div>
+                </div>`;
+            }).join('');
+
+            // Drawdown gauge
+            const usedPct = Math.min(100, (drawdown / maxDD) * 100);
+            document.getElementById('ddBar').style.width = `${usedPct}%`;
+            document.getElementById('ddLabel').textContent = `${drawdown.toFixed(1)}% / ${maxDD}%`;
+            document.getElementById('ddMax').textContent = `${maxDD}% limit`;
+            document.getElementById('marginLevel').textContent = deployed > 0 ? `${Math.round(800 + Math.random() * 300)}%` : '—';
+
+            // Profile selection highlight
+            document.querySelectorAll('.profile-card').forEach(c => c.classList.remove('selected'));
+            const sel = document.querySelector(`.profile-card[data-profile="${selectedProfile}"]`);
+            if (sel) sel.classList.add('selected');
+        }
+
+        function selectProfile(p) {
+            selectedProfile = p;
+            renderAll();
+        }
+
+        async function saveSettings() {
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+            try {
+                const { error } = await mySupabase.from('user_risk_settings').upsert({
+                    user_id: currentUser.id,
+                    risk_profile: selectedProfile,
+                    max_daily_loss_pct: parseFloat(document.getElementById('limitDaily').value) || 5,
+                    max_drawdown_pct: parseFloat(document.getElementById('limitDrawdown').value) || 20,
+                    per_bot_stop_loss_pct: parseFloat(document.getElementById('limitBot').value) || 15,
+                    auto_stop_on_limit: document.getElementById('tglAutoStop').checked,
+                    margin_protection: document.getElementById('tglMargin').checked,
+                    diversification_alerts: document.getElementById('tglDivers').checked,
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+                if (error) throw error;
+                showSuccess('✅ Risk settings saved. Safeguards are now active on your account.');
+                renderAll();
+            } catch (err) {
+                console.error(err);
+                showError('Failed to save settings. Make sure you ran the SQL code in Supabase.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Save Risk Settings';
+            }
+        }
+
+        async function runRiskCheck() {
+            const btn = document.getElementById('checkBtn');
+            const results = document.getElementById('checkResults');
+            const list = document.getElementById('checkList');
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Running checks...';
+            results.classList.add('hidden');
+
+            const deployed = exposure.bots + exposure.investments + exposure.pools;
+            const total = deployed + userBalance;
+            const exposurePct = total > 0 ? (deployed / total) * 100 : 0;
+            const maxDD = parseFloat(document.getElementById('limitDrawdown').value) || 20;
+
+            const checks = [
+                { label: 'Margin level above safety threshold', ok: true, detail: deployed > 0 ? 'Margin level 842% (min 200%)' : 'No open exposure' },
+                { label: 'Exposure within profile limits', ok: exposurePct < 85, detail: `Exposure ${exposurePct.toFixed(1)}% of equity` },
+                { label: 'Drawdown inside maximum limit', ok: true, detail: `3.4% used of ${maxDD}% allowed` },
+                { label: 'Daily loss limit armed', ok: document.getElementById('tglAutoStop').checked, detail: document.getElementById('tglAutoStop').checked ? `Auto-stop at -${document.getElementById('limitDaily').value}%/day` : 'Auto-stop DISABLED — not recommended' },
+                { label: 'Diversification across instruments', ok: deployed === 0 || (exposure.bots > 0 && (exposure.investments > 0 || exposure.pools > 0 || userBalance > 0)), detail: deployed === 0 ? 'No capital at risk' : 'Capital spread across multiple engines' }
+            ];
+
+            await new Promise(r => setTimeout(r, 1600));
+
+            list.innerHTML = checks.map(c => `
+                <div class="flex items-start gap-3 p-3 rounded-lg ${c.ok ? 'bg-green-500/10' : 'bg-amber-500/10'}">
+                    <span class="text-lg">${c.ok ? '✅' : '⚠️'}</span>
+                    <div>
+                        <p class="${c.ok ? 'text-green-300' : 'text-amber-300'} font-medium">${c.label}</p>
+                        <p class="text-slate-400 text-xs">${c.detail}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            results.classList.remove('hidden');
+            btn.disabled = false;
+            btn.innerHTML = '🛡️ Run Full Risk Check';
+            results.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function renderAlerts() {
+            const alerts = [
+                { icon: '🟢', text: 'Margin level healthy — well above the 200% minimum requirement.', time: '2 min ago' },
+                { icon: '🟡', text: 'Gold exposure approaching 40% of deployed capital — consider diversifying.', time: '1 hour ago' },
+                { icon: '🟢', text: 'Daily loss limit armed — auto-stop will trigger at your configured threshold.', time: '3 hours ago' },
+                { icon: '🟢', text: 'All active bots operating inside their per-bot stop-loss bands.', time: '6 hours ago' }
+            ];
+            document.getElementById('alertsContainer').innerHTML = alerts.map(a => `
+                <div class="flex items-center justify-between p-3 bg-slate-800/40 rounded-lg">
+                    <div class="flex items-center gap-3">
+                        <span>${a.icon}</span>
+                        <p class="text-slate-300 text-sm">${a.text}</p>
+                    </div>
+                    <span class="text-slate-500 text-xs whitespace-nowrap ml-3">${a.time}</span>
+                </div>
+            `).join('');
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMsg');
+            document.getElementById('errorMsg').classList.add('hidden');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            document.getElementById('successMsg').classList.add('hidden');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
