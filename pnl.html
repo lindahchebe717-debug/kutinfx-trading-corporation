@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P&L Statement - KutinFX Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
+        .tab-btn { transition: all 0.2s ease; }
+        .tab-btn.active { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border-color: #f59e0b; }
+        .ledger-row { transition: all 0.2s ease; }
+        .ledger-row:hover { background: rgba(245, 158, 11, 0.05); }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-slate-200">
+    <!-- Top Navigation -->
+    <nav class="border-b border-slate-700/50 bg-[#0f172a]/95 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <a href="dashboard.html" class="text-amber-500 hover:text-amber-400 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        <span class="font-semibold">Back to Dashboard</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-slate-500 text-xs">Equity</p>
+                        <p class="text-white font-bold text-sm" id="userBalance">$0.00</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold shadow-lg">
+                        <span id="userAvatar">U</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-white mb-2">P&L <span class="text-amber-500">Statement</span></h1>
+                <p class="text-slate-400 text-lg">Your complete profit & loss performance report.</p>
+            </div>
+            <button onclick="exportCSV()" class="bg-slate-700/60 hover:bg-slate-600 text-white font-semibold px-5 py-3 rounded-xl transition-all text-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Export CSV
+            </button>
+        </div>
+
+        <!-- Period Tabs -->
+        <div class="flex gap-2 mb-6">
+            <button onclick="setPeriod(7, this)" class="tab-btn px-4 py-2 rounded-full text-sm font-medium border border-slate-600 text-slate-300">7 Days</button>
+            <button onclick="setPeriod(30, this)" class="tab-btn active px-4 py-2 rounded-full text-sm font-medium border border-slate-600 text-slate-300">30 Days</button>
+            <button onclick="setPeriod(9999, this)" class="tab-btn px-4 py-2 rounded-full text-sm font-medium border border-slate-600 text-slate-300">All Time</button>
+        </div>
+
+        <!-- SUMMARY STATS -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="glass-card rounded-xl p-5 border border-green-500/30">
+                <p class="text-slate-400 text-sm mb-1">Net P&L</p>
+                <p class="text-2xl font-bold text-green-400" id="statNet">$0.00</p>
+                <p class="text-xs mt-1" id="statNetRoi">—</p>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Realized Profit</p>
+                <p class="text-2xl font-bold text-white" id="statRealized">$0.00</p>
+                <p class="text-slate-500 text-xs mt-1">Claimed to balance</p>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Unrealized (Open)</p>
+                <p class="text-2xl font-bold text-amber-400" id="statUnrealized">$0.00</p>
+                <p class="text-slate-500 text-xs mt-1">Accruing right now</p>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Green Days</p>
+                <p class="text-2xl font-bold text-white" id="statGreenDays">0 / 0</p>
+                <p class="text-slate-500 text-xs mt-1">Profitable days in period</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- DAILY P&L CHART -->
+            <div class="lg:col-span-2 glass-card rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-white">Daily Profit Curve</h2>
+                    <span class="text-xs text-slate-400" id="chartRange">Last 30 days</span>
+                </div>
+                <div id="chartContainer"></div>
+                <div class="flex justify-between text-xs text-slate-500 mt-2" id="chartLabels"></div>
+            </div>
+
+            <!-- BREAKDOWN BY SOURCE -->
+            <div class="glass-card rounded-2xl p-6">
+                <h2 class="text-lg font-bold text-white mb-4">Profit by Source</h2>
+                <div class="space-y-4" id="breakdownContainer"></div>
+            </div>
+        </div>
+
+        <!-- LEDGER -->
+        <div class="glass-card rounded-2xl overflow-hidden mb-8">
+            <div class="p-6 border-b border-slate-700/50 flex items-center justify-between">
+                <h2 class="text-lg font-bold text-white">P&L Ledger</h2>
+                <span class="text-xs text-slate-400" id="ledgerCount">0 entries</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-slate-400 text-xs border-b border-slate-700/50 bg-slate-900/30">
+                            <th class="text-left py-3 px-4">Date</th>
+                            <th class="text-left py-3 px-4">Source</th>
+                            <th class="text-left py-3 px-4">Type</th>
+                            <th class="text-right py-3 px-4">Amount</th>
+                            <th class="text-right py-3 px-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledgerBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- MONTHLY SUMMARY -->
+        <div class="glass-card rounded-2xl overflow-hidden mb-8">
+            <div class="p-6 border-b border-slate-700/50">
+                <h2 class="text-lg font-bold text-white">Monthly Performance</h2>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="text-slate-400 text-xs border-b border-slate-700/50 bg-slate-900/30">
+                            <th class="text-left py-3 px-4">Month</th>
+                            <th class="text-right py-3 px-4">Realized Profit</th>
+                            <th class="text-right py-3 px-4">Profit Events</th>
+                            <th class="text-right py-3 px-4">Result</th>
+                        </tr>
+                    </thead>
+                    <tbody id="monthlyBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="glass-card rounded-xl p-5 border-l-4 border-l-amber-500">
+            <p class="text-slate-400 text-xs leading-relaxed">
+                <span class="text-amber-400 font-semibold">Note:</span> Realized profit reflects amounts already claimed to your balance. Unrealized profit is currently accruing on open bots, pools and plans and will appear as realized once claimed.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let periodDays = 30;
+        let transactions = [];
+        let botProfits = [];
+        let unrealized = 0;
+        let deployed = 0;
+
+        const profitTypes = ['bot_profit', 'pool_profit', 'investment_return'];
+        const sourceLabels = {
+            bot_profit: 'Trading Bots',
+            pool_profit: 'Investment Pools',
+            investment_return: 'Investment Plans',
+            deposit: 'Deposit',
+            withdrawal: 'Withdrawal',
+            bot_activation: 'Bot Capital',
+            pool_investment: 'Pool Capital',
+            investment: 'Plan Capital',
+            bot_withdrawal: 'Bot Settlement'
+        };
+
+        async function init() {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            if (!session) { window.location.href = 'sign-in.html'; return; }
+            currentUser = session.user;
+
+            const { data: profile } = await mySupabase.from('users').select('balance, first_name').eq('id', currentUser.id).single();
+            if (profile) {
+                document.getElementById('userBalance').textContent = `$${(profile.balance || 0).toFixed(2)}`;
+                document.getElementById('userAvatar').textContent = (profile.first_name || 'U')[0].toUpperCase();
+            }
+
+            await loadData();
+            renderAll();
+        }
+
+        async function loadData() {
+            // Transactions
+            try {
+                const { data } = await mySupabase.from('transactions').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+                transactions = data || [];
+            } catch (e) { transactions = []; }
+
+            // Bot profits (for daily curve)
+            try {
+                const { data } = await mySupabase.from('bot_profits').select('profit_amount, created_at').eq('user_id', currentUser.id);
+                botProfits = data || [];
+            } catch (e) { botProfits = []; }
+
+            // Unrealized from open bots
+            try {
+                const { data } = await mySupabase.from('user_bots').select('invested_amount, earnings, status').eq('user_id', currentUser.id).in('status', ['active', 'paused']);
+                (data || []).forEach(b => {
+                    unrealized += parseFloat(b.earnings) || 0;
+                    deployed += parseFloat(b.invested_amount) || 0;
+                });
+            } catch (e) {}
+
+            // Unrealized from open pools
+            try {
+                const { data } = await mySupabase.from('user_pool_investments').select('invested_amount, expected_return, claimed_earnings, joined_at, end_time, status').eq('user_id', currentUser.id).eq('status', 'active');
+                (data || []).forEach(p => {
+                    const end = new Date(p.end_time), start = new Date(p.joined_at), now = new Date();
+                    const prog = Math.min(1, Math.max(0, (now - start) / (end - start)));
+                    unrealized += Math.max(0, prog * parseFloat(p.expected_return) - (parseFloat(p.claimed_earnings) || 0));
+                    deployed += parseFloat(p.invested_amount) || 0;
+                });
+            } catch (e) {}
+
+            // Deployed in investment plans
+            try {
+                const { data } = await mySupabase.from('user_investments').select('invested_amount').eq('user_id', currentUser.id).eq('status', 'active');
+                (data || []).forEach(i => { deployed += parseFloat(i.invested_amount) || 0; });
+            } catch (e) {}
+        }
+
+        function inPeriod(dateStr) {
+            if (periodDays >= 9999) return true;
+            const d = new Date(dateStr);
+            return (Date.now() - d.getTime()) <= periodDays * 86400000;
+        }
+
+        function renderAll() {
+            renderStats();
+            renderChart();
+            renderBreakdown();
+            renderLedger();
+            renderMonthly();
+        }
+
+        function renderStats() {
+            const realizedRows = transactions.filter(t => profitTypes.includes(t.type) && t.status === 'approved' && inPeriod(t.created_at));
+            const realized = realizedRows.reduce((s, t) => s + parseFloat(t.amount), 0);
+            const net = realized + (periodDays >= 9999 ? unrealized : 0);
+            const roi = deployed > 0 ? (net / deployed) * 100 : 0;
+
+            document.getElementById('statNet').textContent = `${net >= 0 ? '+' : '-'}$${Math.abs(net).toFixed(2)}`;
+            document.getElementById('statNet').className = `text-2xl font-bold ${net >= 0 ? 'text-green-400' : 'text-red-400'}`;
+            document.getElementById('statNetRoi').innerHTML = deployed > 0 ? `<span class="${roi >= 0 ? 'text-green-500' : 'text-red-500'}">${roi >= 0 ? '▲' : '▼'} ${Math.abs(roi).toFixed(2)}% return on deployed capital</span>` : '—';
+            document.getElementById('statRealized').textContent = `+$${realized.toFixed(2)}`;
+            document.getElementById('statUnrealized').textContent = `+$${unrealized.toFixed(2)}`;
+
+            // Green days from daily buckets
+            const buckets = dailyBuckets(periodDays >= 9999 ? 30 : periodDays);
+            const active = buckets.filter(b => b.value > 0 || b.hasActivity);
+            const green = buckets.filter(b => b.value > 0);
+            document.getElementById('statGreenDays').textContent = `${green.length} / ${active.length || 0}`;
+        }
+
+        function dailyBuckets(days) {
+            const buckets = [];
+            for (let i = days - 1; i >= 0; i--) {
+                const d = new Date(Date.now() - i * 86400000);
+                const key = d.toISOString().slice(0, 10);
+                buckets.push({ key, label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), value: 0, hasActivity: false });
+            }
+            const map = {};
+            buckets.forEach(b => map[b.key] = b);
+
+            botProfits.forEach(p => {
+                const key = new Date(p.created_at).toISOString().slice(0, 10);
+                if (map[key]) { map[key].value += parseFloat(p.profit_amount) || 0; map[key].hasActivity = true; }
+            });
+            transactions.forEach(t => {
+                if (profitTypes.includes(t.type) && t.status === 'approved') {
+                    const key = new Date(t.created_at).toISOString().slice(0, 10);
+                    if (map[key]) { map[key].hasActivity = true; }
+                }
+            });
+            return buckets;
+        }
+
+        function renderChart() {
+            const days = periodDays >= 9999 ? 90 : periodDays;
+            const buckets = dailyBuckets(days);
+            document.getElementById('chartRange').textContent = periodDays >= 9999 ? 'Last 90 days' : `Last ${days} days`;
+
+            const w = 600, h = 180, pad = 12;
+            const max = Math.max(...buckets.map(b => b.value), 1);
+            const pts = buckets.map((b, i) => {
+                const x = pad + (i / Math.max(1, buckets.length - 1)) * (w - pad * 2);
+                const y = h - pad - (b.value / max) * (h - pad * 2);
+                return [x, y];
+            });
+            const line = pts.map(p => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+            const area = `${pad},${h - pad} ${line} ${w - pad},${h - pad}`;
+
+            document.getElementById('chartContainer').innerHTML = `
+                <svg viewBox="0 0 ${w} ${h}" class="w-full h-44" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/>
+                            <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+                        </linearGradient>
+                    </defs>
+                    <line x1="${pad}" y1="${h - pad}" x2="${w - pad}" y2="${h - pad}" stroke="#334155" stroke-width="1"/>
+                    <line x1="${pad}" y1="${h / 2}" x2="${w - pad}" y2="${h / 2}" stroke="#1e293b" stroke-width="1" stroke-dasharray="4 4"/>
+                    <polygon points="${area}" fill="url(#areaGrad)"/>
+                    <polyline points="${line}" fill="none" stroke="#22c55e" stroke-width="2.5" vector-effect="non-scaling-stroke"/>
+                </svg>`;
+
+            document.getElementById('chartLabels').innerHTML = `
+                <span>${buckets[0]?.label || ''}</span>
+                <span>${buckets[Math.floor(buckets.length / 2)]?.label || ''}</span>
+                <span>${buckets[buckets.length - 1]?.label || ''}</span>`;
+        }
+
+        function renderBreakdown() {
+            const rows = [
+                { key: 'bot_profit', label: 'Trading Bots', color: 'bg-purple-500' },
+                { key: 'pool_profit', label: 'Investment Pools', color: 'bg-green-500' },
+                { key: 'investment_return', label: 'Investment Plans', color: 'bg-blue-500' }
+            ].map(r => {
+                const sum = transactions
+                    .filter(t => t.type === r.key && t.status === 'approved' && inPeriod(t.created_at))
+                    .reduce((s, t) => s + parseFloat(t.amount), 0);
+                return { ...r, sum };
+            });
+            const total = rows.reduce((s, r) => s + r.sum, 0);
+
+            document.getElementById('breakdownContainer').innerHTML = total === 0
+                ? '<p class="text-slate-500 text-sm text-center py-8">No realized profit in this period yet.<br>Activate a bot or join a pool to start earning.</p>'
+                : rows.map(r => {
+                    const pct = total > 0 ? (r.sum / total) * 100 : 0;
+                    return `
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-slate-300">${r.label}</span>
+                            <span class="text-green-400 font-semibold">+$${r.sum.toFixed(2)} <span class="text-slate-500 text-xs">(${pct.toFixed(0)}%)</span></span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-700/60 rounded-full overflow-hidden">
+                            <div class="h-full ${r.color} rounded-full" style="width:${pct}%"></div>
+                        </div>
+                    </div>`;
+                }).join('');
+        }
+
+        function renderLedger() {
+            const rows = transactions.filter(t => inPeriod(t.created_at)).slice(0, 50);
+            document.getElementById('ledgerCount').textContent = `${rows.length} entries`;
+
+            document.getElementById('ledgerBody').innerHTML = rows.length === 0
+                ? '<tr><td colspan="5" class="py-10 text-center text-slate-500">No activity in this period yet.</td></tr>'
+                : rows.map(t => {
+                    const isProfit = profitTypes.includes(t.type);
+                    const isCapitalIn = t.type === 'deposit';
+                    const amtClass = isProfit ? 'text-green-400' : isCapitalIn ? 'text-white' : 'text-slate-300';
+                    const sign = isProfit ? '+' : isCapitalIn ? '+' : '-';
+                    const statusColor = t.status === 'approved' ? 'text-green-400' : t.status === 'rejected' ? 'text-red-400' : 'text-amber-400';
+                    return `
+                    <tr class="ledger-row border-b border-slate-700/30">
+                        <td class="py-3 px-4 text-slate-400 whitespace-nowrap">${new Date(t.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
+                        <td class="py-3 px-4 text-white">${sourceLabels[t.type] || t.type}</td>
+                        <td class="py-3 px-4 text-slate-400 capitalize">${(t.type || '').replace(/_/g, ' ')}</td>
+                        <td class="py-3 px-4 text-right font-semibold ${amtClass}">${sign}$${parseFloat(t.amount).toFixed(2)}</td>
+                        <td class="py-3 px-4 text-right capitalize ${statusColor}">${t.status}</td>
+                    </tr>`;
+                }).join('');
+        }
+
+        function renderMonthly() {
+            const map = {};
+            transactions.forEach(t => {
+                if (!profitTypes.includes(t.type) || t.status !== 'approved') return;
+                const d = new Date(t.created_at);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                if (!map[key]) map[key] = { sum: 0, count: 0 };
+                map[key].sum += parseFloat(t.amount);
+                map[key].count++;
+            });
+            const months = Object.keys(map).sort().reverse().slice(0, 6);
+
+            document.getElementById('monthlyBody').innerHTML = months.length === 0
+                ? '<tr><td colspan="4" class="py-10 text-center text-slate-500">No monthly performance recorded yet.</td></tr>'
+                : months.map(k => {
+                    const d = new Date(k + '-01');
+                    const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+                    const pos = map[k].sum >= 0;
+                    return `
+                    <tr class="ledger-row border-b border-slate-700/30">
+                        <td class="py-3 px-4 text-white font-medium">${label}</td>
+                        <td class="py-3 px-4 text-right font-semibold ${pos ? 'text-green-400' : 'text-red-400'}">${pos ? '+' : '-'}$${Math.abs(map[k].sum).toFixed(2)}</td>
+                        <td class="py-3 px-4 text-right text-slate-400">${map[k].count}</td>
+                        <td class="py-3 px-4 text-right"><span class="px-2 py-1 rounded-full text-xs font-bold ${pos ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">${pos ? 'PROFIT' : 'LOSS'}</span></td>
+                    </tr>`;
+                }).join('');
+        }
+
+        function setPeriod(days, btn) {
+            periodDays = days;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderAll();
+        }
+
+        function exportCSV() {
+            const rows = transactions.filter(t => inPeriod(t.created_at));
+            if (rows.length === 0) { alert('No data to export in this period.'); return; }
+            let csv = 'Date,Source,Type,Amount,Status\n';
+            rows.forEach(t => {
+                csv += `"${new Date(t.created_at).toISOString()}",${sourceLabels[t.type] || t.type},${t.type},${parseFloat(t.amount).toFixed(2)},${t.status}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `kutinfX_pnl_statement_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+        }
+
+        init();
+    </script>
+</body>
+</html>
