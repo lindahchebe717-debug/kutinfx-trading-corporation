@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research - KutinFX Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
+        .market-card { transition: all 0.3s ease; }
+        .market-card:hover { transform: translateY(-3px); border-color: rgba(245, 158, 11, 0.4); }
+        .tab-btn { transition: all 0.2s ease; }
+        .tab-btn.active { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border-color: #f59e0b; }
+        .ticker-scroll { overflow-x: auto; scrollbar-width: none; }
+        .ticker-scroll::-webkit-scrollbar { display: none; }
+        @keyframes flashGreen { 0% { color: #4ade80; } 100% { color: inherit; } }
+        @keyframes flashRed { 0% { color: #f87171; } 100% { color: inherit; } }
+        .flash-up { animation: flashGreen 0.8s ease; }
+        .flash-down { animation: flashRed 0.8s ease; }
+        .confidence-bar { height: 6px; border-radius: 3px; background: linear-gradient(90deg, #f59e0b 0%, #22c55e 100%); }
+        @keyframes pulseDot { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .live-dot { animation: pulseDot 1.5s ease-in-out infinite; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-slate-200">
+    <!-- Top Navigation -->
+    <nav class="border-b border-slate-700/50 bg-[#0f172a]/95 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <a href="dashboard.html" class="text-amber-500 hover:text-amber-400 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        <span class="font-semibold">Back to Dashboard</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-slate-500 text-xs">Equity</p>
+                        <p class="text-white font-bold text-sm" id="userBalance">$0.00</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold shadow-lg">
+                        <span id="userAvatar">U</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- LIVE TICKER STRIP -->
+    <div class="bg-[#0b1120]/90 border-b border-slate-700/50 py-2">
+        <div class="ticker-scroll max-w-7xl mx-auto px-4">
+            <div class="flex gap-8 items-center whitespace-nowrap" id="tickerStrip"></div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-4xl font-bold text-white mb-2">Market <span class="text-amber-500">Research</span></h1>
+                <p class="text-slate-400 text-lg flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full live-dot"></span>
+                    Institutional-grade analysis, signals & live market intelligence.
+                </p>
+            </div>
+            <div class="flex gap-3 text-center">
+                <div class="glass-card rounded-xl px-4 py-3">
+                    <p class="text-slate-400 text-xs">Active Signals</p>
+                    <p class="text-xl font-bold text-amber-500" id="statSignals">6</p>
+                </div>
+                <div class="glass-card rounded-xl px-4 py-3">
+                    <p class="text-slate-400 text-xs">Win Rate (30d)</p>
+                    <p class="text-xl font-bold text-green-400">87%</p>
+                </div>
+                <div class="glass-card rounded-xl px-4 py-3">
+                    <p class="text-slate-400 text-xs">Analysts</p>
+                    <p class="text-xl font-bold text-white">12</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- FILTER TABS -->
+        <div class="flex flex-wrap gap-2 mb-8" id="filterTabs">
+            <button onclick="setFilter('all', this)" class="tab-btn active px-4 py-2 rounded-full text-sm font-medium border border-slate-600 text-slate-300">All Markets</button>
+            <button onclick="setFilter('gold', this)" class="tab-btn px-4 py-2 rounded-full text-sm font-medium border border-slate-600 text-slate-300">🥇 Gold</button>
+            <button onclick="setFilter('forex', this)" class="tab-btn px-4 py-2 rounded-full text-sm font-medium border border-slate-600 text-slate-300">💱 Forex</button>
+            <button onclick="setFilter('crypto', this)" class="tab-btn px-4 py-2 rounded-full text-sm font-medium border border-slate-600 text-slate-300">₿ Crypto</button>
+            <button onclick="setFilter('indices', this)" class="tab-btn px-4 py-2 rounded-full text-sm font-medium border border-slate-600 text-slate-300">📊 Indices</button>
+        </div>
+
+        <!-- MARKET CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-12" id="marketsContainer"></div>
+
+        <!-- TRADING SIGNALS -->
+        <div class="mb-12">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                    <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                    Today's Trading Signals
+                </h2>
+                <span class="text-xs text-slate-400">Updated hourly by our desks</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="signalsContainer"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+            <!-- RESEARCH NOTES -->
+            <div class="lg:col-span-2">
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                    Analyst Notes & Briefings
+                </h2>
+                <div class="space-y-4" id="notesContainer"></div>
+            </div>
+
+            <!-- ECONOMIC CALENDAR -->
+            <div>
+                <h2 class="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <svg class="w-6 h-6 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    Economic Calendar
+                </h2>
+                <div class="space-y-3" id="calendarContainer"></div>
+            </div>
+        </div>
+
+        <!-- Disclaimer -->
+        <div class="glass-card rounded-xl p-5 border-l-4 border-l-amber-500">
+            <p class="text-slate-400 text-xs leading-relaxed">
+                <span class="text-amber-400 font-semibold">Research Disclaimer:</span> All signals, notes and forecasts are produced by the KutinFX research desk for informational purposes only and do not constitute financial advice. Trading leveraged products carries significant risk of loss. Past performance is not indicative of future results.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentFilter = 'all';
+
+        // ============ MARKET DATA ============
+        const markets = [
+            { symbol: 'XAU/USD', name: 'Gold Spot', cat: 'gold', price: 2651.40, dec: 2, change: 0.84, bullish: 78 },
+            { symbol: 'EUR/USD', name: 'Euro / US Dollar', cat: 'forex', price: 1.0852, dec: 4, change: -0.22, bullish: 41 },
+            { symbol: 'GBP/USD', name: 'British Pound', cat: 'forex', price: 1.2704, dec: 4, change: 0.35, bullish: 62 },
+            { symbol: 'BTC/USD', name: 'Bitcoin', cat: 'crypto', price: 97240, dec: 0, change: 2.41, bullish: 83 },
+            { symbol: 'ETH/USD', name: 'Ethereum', cat: 'crypto', price: 3418, dec: 0, change: -1.12, bullish: 47 },
+            { symbol: 'US500', name: 'S&P 500 Index', cat: 'indices', price: 6012, dec: 0, change: 0.46, bullish: 71 }
+        ];
+
+        // Generate sparkline history (random walk)
+        markets.forEach(m => {
+            m.history = [];
+            let p = m.price * (1 - m.change / 100);
+            for (let i = 0; i < 30; i++) {
+                p = p * (1 + (Math.random() - 0.48) * 0.004);
+                m.history.push(p);
+            }
+            m.history.push(m.price);
+        });
+
+        // ============ SIGNALS ============
+        const signals = [
+            { symbol: 'XAU/USD', cat: 'gold', dir: 'BUY', entry: '2,648.50', tp: '2,685.00', sl: '2,630.00', conf: 92, horizon: '24h', desk: 'Gold Desk' },
+            { symbol: 'BTC/USD', cat: 'crypto', dir: 'BUY', entry: '96,800', tp: '102,500', sl: '94,200', conf: 88, horizon: '3 days', desk: 'Crypto Desk' },
+            { symbol: 'EUR/USD', cat: 'forex', dir: 'SELL', entry: '1.0855', tp: '1.0780', sl: '1.0900', conf: 84, horizon: '24h', desk: 'FX Desk' },
+            { symbol: 'US500', cat: 'indices', dir: 'BUY', entry: '5,980', tp: '6,120', sl: '5,920', conf: 81, horizon: '3 days', desk: 'Indices Desk' },
+            { symbol: 'GBP/USD', cat: 'forex', dir: 'BUY', entry: '1.2695', tp: '1.2810', sl: '1.2640', conf: 79, horizon: '24h', desk: 'FX Desk' },
+            { symbol: 'ETH/USD', cat: 'crypto', dir: 'SELL', entry: '3,420', tp: '3,250', sl: '3,520', conf: 74, horizon: '24h', desk: 'Crypto Desk' }
+        ];
+
+        // ============ ANALYST NOTES ============
+        const notes = [
+            { title: "Gold's Bull Run: Why XAU Targets $2,700 Next", desk: 'Macro & Commodities Desk', author: 'A. Rahman, CFA', time: '6 min read', tag: 'GOLD', tagColor: 'amber', text: 'Central-bank accumulation and falling real yields keep the structural bid intact. We see dips toward $2,640 as accumulation zones, with a measured move targeting $2,700 into month-end.' },
+            { title: 'Fed Rate Path: What It Means for EUR/USD', desk: 'FX Strategy Desk', author: 'L. Fischer', time: '4 min read', tag: 'FOREX', tagColor: 'blue', text: 'A softer dot plot would pressure the dollar basket. We fade rallies above 1.0880 and favor shorts toward 1.0780 while price holds below the 50-day average.' },
+            { title: 'Bitcoin Cycle Positioning: Liquidity Is the Signal', desk: 'Digital Assets Desk', author: 'K. Tanaka', time: '8 min read', tag: 'CRYPTO', tagColor: 'purple', text: 'Global M2 expansion historically leads BTC by 8–12 weeks. With exchange reserves at multi-year lows, supply shock risk remains skewed to the upside above $94k support.' }
+        ];
+
+        // ============ ECONOMIC CALENDAR (offsets in hours from now) ============
+        const events = [
+            { name: 'US CPI (YoY)', country: '🇺🇸', impact: 'high', forecast: '2.7%', previous: '2.6%', offsetH: 3.4 },
+            { name: 'FOMC Meeting Minutes', country: '🇺🇸', impact: 'high', forecast: '—', previous: '—', offsetH: 27 },
+            { name: 'ECB Rate Decision', country: '🇪', impact: 'high', forecast: '3.15%', previous: '3.40%', offsetH: 51 },
+            { name: 'UK GDP (MoM)', country: '🇬🇧', impact: 'medium', forecast: '0.2%', previous: '0.1%', offsetH: 74 },
+            { name: 'US Non-Farm Payrolls', country: '🇺🇸', impact: 'high', forecast: '185K', previous: '227K', offsetH: 98 }
+        ];
+
+        // ============ INIT ============
+        async function init() {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            if (session) {
+                const { data: profile } = await mySupabase.from('users').select('balance, first_name').eq('id', session.user.id).single();
+                if (profile) {
+                    document.getElementById('userBalance').textContent = `$${(profile.balance || 0).toFixed(2)}`;
+                    document.getElementById('userAvatar').textContent = (profile.first_name || 'U')[0].toUpperCase();
+                }
+            }
+
+            renderTicker();
+            renderMarkets();
+            renderSignals();
+            renderNotes();
+            renderCalendar();
+
+            setInterval(tickPrices, 2500);
+            setInterval(updateCountdowns, 1000);
+        }
+
+        // ============ RENDERERS ============
+        function fmt(price, dec) {
+            return price.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+        }
+
+        function sparklineSVG(history, up) {
+            const min = Math.min(...history), max = Math.max(...history);
+            const range = (max - min) || 1;
+            const pts = history.map((v, i) => {
+                const x = (i / (history.length - 1)) * 100;
+                const y = 34 - ((v - min) / range) * 30 + 2;
+                return `${x.toFixed(1)},${y.toFixed(1)}`;
+            }).join(' ');
+            const color = up ? '#22c55e' : '#ef4444';
+            return `<svg viewBox="0 0 100 38" class="w-full h-10" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`;
+        }
+
+        function renderTicker() {
+            document.getElementById('tickerStrip').innerHTML = markets.map((m, i) => `
+                <div class="flex items-center gap-2 text-sm">
+                    <span class="text-slate-400 font-medium">${m.symbol}</span>
+                    <span class="text-white font-semibold" id="tick-${i}">${fmt(m.price, m.dec)}</span>
+                    <span class="${m.change >= 0 ? 'text-green-400' : 'text-red-400'} text-xs font-medium" id="tickc-${i}">${m.change >= 0 ? '▲' : '▼'} ${Math.abs(m.change).toFixed(2)}%</span>
+                </div>
+            `).join('');
+        }
+
+        function renderMarkets() {
+            const list = markets.map((m, i) => ({ ...m, idx: i })).filter(m => currentFilter === 'all' || m.cat === currentFilter);
+            document.getElementById('marketsContainer').innerHTML = list.map(m => `
+                <div class="market-card glass-card rounded-xl p-5" data-cat="${m.cat}">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-white font-bold">${m.symbol}</h3>
+                            <p class="text-slate-400 text-xs">${m.name}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-bold ${m.change >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}" id="chg-${m.idx}">${m.change >= 0 ? '+' : ''}${m.change.toFixed(2)}%</span>
+                    </div>
+                    <p class="text-2xl font-bold text-white mb-2 font-mono" id="price-${m.idx}">${fmt(m.price, m.dec)}</p>
+                    <div id="spark-${m.idx}">${sparklineSVG(m.history, m.change >= 0)}</div>
+                    <div class="mt-3">
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-green-400">Bullish ${m.bullish}%</span>
+                            <span class="text-red-400">Bearish ${100 - m.bullish}%</span>
+                        </div>
+                        <div class="w-full h-1.5 bg-red-500/40 rounded-full overflow-hidden">
+                            <div class="h-full bg-green-500 rounded-full" style="width:${m.bullish}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSignals() {
+            const list = signals.filter(s => currentFilter === 'all' || s.cat === currentFilter);
+            document.getElementById('statSignals').textContent = list.length;
+            document.getElementById('signalsContainer').innerHTML = list.length === 0
+                ? '<p class="text-slate-400 col-span-full text-center py-8">No signals for this market right now.</p>'
+                : list.map(s => `
+                <div class="glass-card rounded-xl p-5 border ${s.dir === 'BUY' ? 'border-green-500/30' : 'border-red-500/30'}">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="text-white font-bold text-lg">${s.symbol}</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${s.dir === 'BUY' ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">${s.dir === 'BUY' ? '▲ BUY' : '▼ SELL'}</span>
+                        </div>
+                        <span class="text-xs text-slate-400">${s.horizon}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                        <div class="bg-slate-800/50 rounded-lg p-2">
+                            <p class="text-slate-500 text-[10px] mb-0.5">ENTRY</p>
+                            <p class="text-white text-xs font-semibold font-mono">${s.entry}</p>
+                        </div>
+                        <div class="bg-green-500/10 rounded-lg p-2">
+                            <p class="text-green-500 text-[10px] mb-0.5">TAKE PROFIT</p>
+                            <p class="text-green-400 text-xs font-semibold font-mono">${s.tp}</p>
+                        </div>
+                        <div class="bg-red-500/10 rounded-lg p-2">
+                            <p class="text-red-500 text-[10px] mb-0.5">STOP LOSS</p>
+                            <p class="text-red-400 text-xs font-semibold font-mono">${s.sl}</p>
+                        </div>
+                    </div>
+                    <div class="mb-1 flex justify-between text-xs">
+                        <span class="text-slate-400">Confidence</span>
+                        <span class="text-amber-400 font-bold">${s.conf}%</span>
+                    </div>
+                    <div class="w-full bg-slate-700/50 rounded-full h-1.5 mb-4 overflow-hidden">
+                        <div class="confidence-bar" style="width:${s.conf}%"></div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500 text-xs">${s.desk}</span>
+                        <a href="trading-bots.html" class="text-amber-500 hover:text-amber-400 text-xs font-semibold">Automate with bot →</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderNotes() {
+            const colors = { amber: 'bg-amber-500/20 text-amber-400', blue: 'bg-blue-500/20 text-blue-400', purple: 'bg-purple-500/20 text-purple-400' };
+            document.getElementById('notesContainer').innerHTML = notes.map(n => `
+                <div class="glass-card rounded-xl p-5 market-card">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${colors[n.tagColor]}">${n.tag}</span>
+                        <span class="text-slate-500 text-xs">${n.desk}</span>
+                    </div>
+                    <h3 class="text-white font-semibold text-base mb-2">${n.title}</h3>
+                    <p class="text-slate-400 text-sm leading-relaxed mb-3">${n.text}</p>
+                    <div class="flex items-center justify-between">
+                        <span class="text-slate-500 text-xs">${n.author} • ${n.time}</span>
+                        <span class="text-amber-500 text-xs font-semibold cursor-pointer hover:text-amber-400">Read full note →</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCalendar() {
+            const impactStyle = { high: 'bg-red-500/20 text-red-400', medium: 'bg-amber-500/20 text-amber-400', low: 'bg-green-500/20 text-green-400' };
+            document.getElementById('calendarContainer').innerHTML = events.map((e, i) => {
+                const when = new Date(Date.now() + e.offsetH * 3600000);
+                return `
+                <div class="glass-card rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-lg">${e.country}</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${impactStyle[e.impact]}">${e.impact} impact</span>
+                    </div>
+                    <h4 class="text-white font-semibold text-sm mb-1">${e.name}</h4>
+                    <div class="flex justify-between text-xs text-slate-400 mb-2">
+                        <span>Forecast: <span class="text-white">${e.forecast}</span></span>
+                        <span>Prev: <span class="text-white">${e.previous}</span></span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span class="text-slate-400">${when.toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' })} UTC</span>
+                        <span class="text-amber-400 font-semibold ml-auto" id="count-${i}">—</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // ============ LIVE UPDATES ============
+        function tickPrices() {
+            markets.forEach((m, i) => {
+                const drift = (Math.random() - 0.5) * 0.0012;
+                const old = m.price;
+                m.price = m.price * (1 + drift);
+                m.change += drift * 100;
+                m.history.push(m.price);
+                if (m.history.length > 31) m.history.shift();
+
+                const tickEl = document.getElementById(`tick-${i}`);
+                const tickcEl = document.getElementById(`tickc-${i}`);
+                const priceEl = document.getElementById(`price-${i}`);
+                const chgEl = document.getElementById(`chg-${i}`);
+                const sparkEl = document.getElementById(`spark-${i}`);
+
+                if (tickEl) {
+                    tickEl.textContent = fmt(m.price, m.dec);
+                    tickEl.classList.remove('flash-up', 'flash-down');
+                    void tickEl.offsetWidth;
+                    tickEl.classList.add(m.price >= old ? 'flash-up' : 'flash-down');
+                }
+                if (tickcEl) { tickcEl.textContent = `${m.change >= 0 ? '▲' : '▼'} ${Math.abs(m.change).toFixed(2)}%`; tickcEl.className = `${m.change >= 0 ? 'text-green-400' : 'text-red-400'} text-xs font-medium`; }
+                if (priceEl) priceEl.textContent = fmt(m.price, m.dec);
+                if (chgEl) { chgEl.textContent = `${m.change >= 0 ? '+' : ''}${m.change.toFixed(2)}%`; chgEl.className = `px-2 py-1 rounded-full text-xs font-bold ${m.change >= 0 ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`; }
+                if (sparkEl) sparkEl.innerHTML = sparklineSVG(m.history, m.change >= 0);
+            });
+        }
+
+        function updateCountdowns() {
+            events.forEach((e, i) => {
+                const el = document.getElementById(`count-${i}`);
+                if (!el) return;
+                const target = new Date(Date.now() + e.offsetH * 3600000);
+                const ms = target - new Date();
+                const h = Math.floor(ms / 3600000);
+                const m = Math.floor((ms % 3600000) / 60000);
+                const s = Math.floor((ms % 60000) / 1000);
+                el.textContent = h >= 24 ? `in ${Math.floor(h / 24)}d ${h % 24}h` : `in ${h}h ${m}m ${s}s`;
+            });
+        }
+
+        function setFilter(cat, btn) {
+            currentFilter = cat;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderMarkets();
+            renderSignals();
+        }
+
+        init();
+    </script>
+</body>
+</html>
