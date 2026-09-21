@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bot Desk - KutinFX Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
+        .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; }
+        
+        @keyframes profitPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+        .profit-updating { animation: profitPulse 2s ease-in-out infinite; }
+        
+        .bot-card { transition: all 0.3s ease; }
+        .bot-card:hover { transform: translateY(-3px); border-color: rgba(245, 158, 11, 0.4); }
+        
+        .progress-bar {
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #10b981 0%, #22c55e 100%);
+            transition: width 1s linear;
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-slate-200">
+    <!-- Top Navigation -->
+    <nav class="border-b border-slate-700/50 bg-[#0f172a]/95 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center gap-2">
+                    <a href="dashboard.html" class="text-amber-500 hover:text-amber-400 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        <span class="font-semibold">Back to Dashboard</span>
+                    </a>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-slate-400 text-sm hidden sm:block" id="userBalance">Balance: $0.00</span>
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold shadow-lg">
+                        <span id="userAvatar">U</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">Bot <span class="text-amber-500">Desk</span></h1>
+            <p class="text-slate-400 text-lg">Command center for your active trading algorithms.</p>
+        </div>
+
+        <!-- Stats Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div class="glass-card rounded-xl p-5 text-center">
+                <p class="text-slate-400 text-sm mb-1">Active Algorithms</p>
+                <p class="text-3xl font-bold text-white" id="statActiveBots">0</p>
+            </div>
+            <div class="glass-card rounded-xl p-5 text-center border border-green-500/30">
+                <p class="text-slate-400 text-sm mb-1">Live Accumulating Profit</p>
+                <p class="text-3xl font-bold text-green-400 profit-updating" id="statTotalProfit">+$0.00</p>
+            </div>
+            <div class="glass-card rounded-xl p-5 text-center">
+                <p class="text-slate-400 text-sm mb-1">Total Capital Deployed</p>
+                <p class="text-3xl font-bold text-amber-500" id="statTotalInvested">$0.00</p>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="successMsg" class="hidden mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-xl text-green-300 text-sm text-center"></div>
+        <div id="errorMsg" class="hidden mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+
+        <!-- Bots Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="botsContainer">
+            <div class="glass-card rounded-xl p-6 animate-pulse col-span-full text-center text-slate-400">Loading your active bots...</div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let userBalance = 0;
+        let myBotsData = [];
+        let tickInterval = null;
+
+        // Bot Metadata (to show names and icons without complex joins)
+        const botMeta = {
+            1: { name: "Gold Master", icon: "🥇", color: "amber" },
+            2: { name: "Swing Trader", icon: "📈", color: "blue" },
+            3: { name: "Scalper Pro", icon: "⚡", color: "purple" },
+            4: { name: "Day Trader Elite", icon: "💼", color: "green" },
+            5: { name: "Trend Follower", icon: "🌊", color: "cyan" },
+            6: { name: "Momentum Hunter", icon: "🚀", color: "red" }
+        };
+
+        async function init() {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            if (!session) { window.location.href = 'sign-in.html'; return; }
+            currentUser = session.user;
+
+            const { data: profile } = await mySupabase.from('users').select('balance, first_name').eq('id', currentUser.id).single();
+            if (profile) {
+                userBalance = profile.balance || 0;
+                document.getElementById('userBalance').textContent = `Balance: $${userBalance.toFixed(2)}`;
+                document.getElementById('userAvatar').textContent = (profile.first_name || 'U')[0].toUpperCase();
+            }
+
+            await loadBotDesk();
+            startTickers();
+        }
+
+        async function loadBotDesk() {
+            try {
+                const { data, error } = await mySupabase
+                    .from('user_bots')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .in('status', ['active', 'paused'])
+                    .order('started_at', { ascending: false });
+
+                if (error) throw error;
+                myBotsData = data || [];
+                renderBots();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('botsContainer').innerHTML = '<p class="text-red-400 col-span-full text-center py-8">Failed to load bots. Ensure the SQL update was run.</p>';
+            }
+        }
+
+        function renderBots() {
+            const container = document.getElementById('botsContainer');
+            if (myBotsData.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-card rounded-xl p-10 text-center col-span-full">
+                        <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                        <p class="text-slate-400 text-lg mb-4">You have no active bots running.</p>
+                        <a href="trading-bots.html" class="inline-block gold-gradient text-white font-semibold px-6 py-3 rounded-xl hover:opacity-90 transition-all">Activate a Bot</a>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = myBotsData.map(bot => {
+                const meta = botMeta[bot.bot_id] || { name: "Trading Bot", icon: "🤖", color: "amber" };
+                const isPaused = bot.status === 'paused';
+                
+                return `
+                <div class="bot-card glass-card rounded-xl p-6 ${isPaused ? 'border-slate-600/50 opacity-80' : 'border-green-500/30'}">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="text-3xl">${meta.icon}</div>
+                            <div>
+                                <h3 class="text-white font-bold text-lg">${meta.name}</h3>
+                                <p class="text-slate-400 text-xs">${isPaused ? 'Paused' : 'Running 24/7'}</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${isPaused ? 'bg-slate-600/30 text-slate-300' : 'bg-green-500/20 text-green-400 flex items-center gap-1'}">
+                            ${isPaused ? '' : '<span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>'}
+                            ${isPaused ? 'Paused' : 'Active'}
+                        </span>
+                    </div>
+
+                    <div class="space-y-3 mb-4">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Capital Deployed:</span>
+                            <span class="text-white font-medium">$${parseFloat(bot.invested_amount).toLocaleString()}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Accumulated Profit:</span>
+                            <span id="profit-${bot.id}" class="text-green-400 font-bold profit-updating">+$0.00</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Time Remaining:</span>
+                            <span id="timer-${bot.id}" class="text-amber-500 font-mono font-bold">--:--:--</span>
+                        </div>
+                    </div>
+
+                    <div class="w-full bg-slate-700/50 rounded-full h-1.5 mb-5 overflow-hidden">
+                        <div id="progress-${bot.id}" class="progress-bar" style="width: 0%"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="togglePause(${bot.id}, ${!isPaused})" class="${isPaused ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-slate-700/60 text-slate-300 hover:bg-slate-600'} font-medium py-2 rounded-lg transition-all text-sm">
+                            ${isPaused ? '▶ Resume' : '⏸ Pause'}
+                        </button>
+                        <button onclick="stopBot(${bot.id})" class="bg-red-500/20 text-red-400 hover:bg-red-500/30 font-medium py-2 rounded-lg transition-all text-sm">
+                            ⏹ Stop & Claim
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function startTickers() {
+            if (tickInterval) clearInterval(tickInterval);
+            
+            tickInterval = setInterval(() => {
+                const now = new Date();
+                let totalProfit = 0;
+                let totalInvested = 0;
+
+                myBotsData.forEach(bot => {
+                    if (bot.status === 'paused') {
+                        // If paused, profit doesn't tick up, but we still show what was accumulated before pausing
+                        const profitEl = document.getElementById(`profit-${bot.id}`);
+                        if (profitEl) profitEl.textContent = `+$${parseFloat(bot.claimed_earnings || 0).toFixed(2)}`;
+                        totalInvested += parseFloat(bot.invested_amount) || 0;
+                        totalProfit += parseFloat(bot.claimed_earnings) || 0;
+                        return;
+                    }
+
+                    const endTime = bot.end_time ? new Date(bot.end_time) : new Date(new Date(bot.started_at).getTime() + 24 * 60 * 60 * 1000); // Default 24h if missing
+                    const startedAt = new Date(bot.started_at);
+                    const totalDurationMs = endTime - startedAt;
+                    const elapsedMs = now - startedAt;
+                    const remainingMs = endTime - now;
+
+                    let grossProfit = 0;
+                    let progressPercent = 0;
+
+                    if (remainingMs <= 0) {
+                        grossProfit = parseFloat(bot.expected_return);
+                        progressPercent = 100;
+                    } else {
+                        grossProfit = parseFloat(bot.expected_return) * (elapsedMs / totalDurationMs);
+                        progressPercent = (elapsedMs / totalDurationMs) * 100;
+                    }
+
+                    const currentProfit = Math.max(0, grossProfit - (parseFloat(bot.claimed_earnings) || 0));
+                    
+                    totalInvested += parseFloat(bot.invested_amount) || 0;
+                    totalProfit += currentProfit;
+
+                    // Update DOM
+                    const profitEl = document.getElementById(`profit-${bot.id}`);
+                    const timerEl = document.getElementById(`timer-${bot.id}`);
+                    const progressEl = document.getElementById(`progress-${bot.id}`);
+
+                    if (profitEl) profitEl.textContent = `+$${currentProfit.toFixed(2)}`;
+                    if (progressEl) progressEl.style.width = `${Math.min(100, progressPercent)}%`;
+                    
+                    if (timerEl) {
+                        if (remainingMs <= 0) {
+                            timerEl.textContent = '00:00:00';
+                        } else {
+                            const hours = Math.floor(remainingMs / 3600000);
+                            const minutes = Math.floor((remainingMs % 3600000) / 60000);
+                            const seconds = Math.floor((remainingMs % 60000) / 1000);
+                            timerEl.textContent = `${String(hours).padStart(2,'0')}:${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+                        }
+                    }
+                });
+
+                document.getElementById('statActiveBots').textContent = myBotsData.filter(b => b.status === 'active').length;
+                document.getElementById('statTotalInvested').textContent = `$${totalInvested.toFixed(2)}`;
+                document.getElementById('statTotalProfit').textContent = `+$${totalProfit.toFixed(2)}`;
+
+            }, 1000);
+        }
+
+        async function togglePause(botId, shouldPause) {
+            const newStatus = shouldPause ? 'paused' : 'active';
+            try {
+                const { error } = await mySupabase.from('user_bots').update({ status: newStatus }).eq('id', botId);
+                if (error) throw error;
+                await loadBotDesk();
+                showSuccess(`✅ Bot ${shouldPause ? 'paused' : 'resumed'} successfully.`);
+            } catch (err) {
+                showError('Failed to update bot status.');
+            }
+        }
+
+        async function stopBot(botId) {
+            const bot = myBotsData.find(b => b.id === botId);
+            if (!bot) return;
+
+            // Calculate current profit
+            const endTime = bot.end_time ? new Date(bot.end_time) : new Date(new Date(bot.started_at).getTime() + 24 * 60 * 60 * 1000);
+            const startedAt = new Date(bot.started_at);
+            const totalDurationMs = endTime - startedAt;
+            const elapsedMs = new Date() - startedAt;
+            
+            let grossProfit = (new Date() >= endTime) ? parseFloat(bot.expected_return) : parseFloat(bot.expected_return) * (elapsedMs / totalDurationMs);
+            let currentProfit = Math.max(0, grossProfit - (parseFloat(bot.claimed_earnings) || 0));
+            
+            const returnAmount = parseFloat(bot.invested_amount) + currentProfit;
+
+            if (!confirm(`Stop this bot and claim your $${parseFloat(bot.invested_amount).toFixed(2)} capital + $${currentProfit.toFixed(2)} profit?`)) return;
+
+            try {
+                // 1. Add to user balance
+                const newBalance = userBalance + returnAmount;
+                await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+
+                // 2. Mark bot as completed
+                await mySupabase.from('user_bots').update({ 
+                    status: 'completed', 
+                    claimed_earnings: parseFloat(bot.expected_return) 
+                }).eq('id', botId);
+
+                // 3. Log transaction
+                await mySupabase.from('transactions').insert({
+                    user_id: currentUser.id,
+                    type: 'bot_withdrawal',
+                    amount: returnAmount,
+                    status: 'approved',
+                    description: `Stopped bot and claimed profits`
+                });
+
+                userBalance = newBalance;
+                document.getElementById('userBalance').textContent = `Balance: $${userBalance.toFixed(2)}`;
+                
+                showSuccess(`✅ Bot stopped! $${returnAmount.toFixed(2)} added to your balance.`);
+                await loadBotDesk();
+            } catch (err) {
+                console.error(err);
+                showError('Failed to stop bot. Please try again.');
+            }
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMsg');
+            document.getElementById('errorMsg').classList.add('hidden');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            document.getElementById('successMsg').classList.add('hidden');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 4000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
