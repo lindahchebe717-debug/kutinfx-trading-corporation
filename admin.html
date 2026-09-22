@@ -118,6 +118,12 @@ Dashboard
 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
 Users
 </button>
+<!-- NEW: Broker Logins Nav Button -->
+<button onclick="switchTab('brokers')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
+<svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+Broker Logins
+<span id="brokersBadge" class="ml-auto px-2 py-0.5 bg-cyan-500 text-white text-xs rounded-full hidden">0</span>
+</button>
 <button onclick="switchTab('transactions')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
 Transactions
@@ -190,11 +196,17 @@ Logout
 </div>
 <!-- DASHBOARD TAB -->
 <div id="dashboard" class="tab-content active space-y-6">
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
 <div class="dashboard-stat-card glass-card rounded-xl p-5" onclick="switchTab('users')">
 <p class="text-slate-400 text-sm">Total Users</p>
 <p class="text-2xl font-bold text-white mt-1" id="stat-users">0</p>
 <p class="text-xs text-slate-500 mt-1">Click to manage →</p>
+</div>
+<!-- NEW: Connected Brokers stat -->
+<div class="dashboard-stat-card glass-card rounded-xl p-5 border-l-4 border-cyan-500" onclick="switchTab('brokers')">
+<p class="text-slate-400 text-sm">Connected Brokers</p>
+<p class="text-2xl font-bold text-cyan-400 mt-1" id="stat-brokers">0</p>
+<p class="text-xs text-cyan-500/70 mt-1">Click to view →</p>
 </div>
 <div class="dashboard-stat-card glass-card rounded-xl p-5 border-l-4 border-amber-500" onclick="switchTab('transactions')">
 <p class="text-slate-400 text-sm">Pending Deposits</p>
@@ -236,6 +248,57 @@ Logout
 </tr>
 </thead>
 <tbody id="usersTableBody" class="divide-y divide-slate-700/50"></tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- NEW: BROKER LOGINS TAB -->
+<div id="brokers" class="tab-content">
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+<div class="glass-card rounded-xl p-5 border-l-4 border-cyan-500">
+<p class="text-slate-400 text-sm">Total Connected</p>
+<p class="text-2xl font-bold text-cyan-400 mt-1" id="brokers-total">0</p>
+<p class="text-xs text-slate-500 mt-1">All linked MT5 accounts</p>
+</div>
+<div class="glass-card rounded-xl p-5 border-l-4 border-green-500">
+<p class="text-slate-400 text-sm">Active Connections</p>
+<p class="text-2xl font-bold text-green-400 mt-1" id="brokers-active">0</p>
+<p class="text-xs text-slate-500 mt-1">Currently online</p>
+</div>
+<div class="glass-card rounded-xl p-5 border-l-4 border-amber-500">
+<p class="text-slate-400 text-sm">Platforms</p>
+<p class="text-2xl font-bold text-amber-400 mt-1" id="brokers-platforms">MT5</p>
+<p class="text-xs text-slate-500 mt-1">MetaTrader 5</p>
+</div>
+</div>
+<div class="glass-card rounded-xl overflow-hidden">
+<div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
+<div>
+<h3 class="text-lg font-semibold text-white">Linked Broker Credentials</h3>
+<p class="text-slate-500 text-xs mt-1">Secure view of all connected MT5 accounts. Handle with care.</p>
+</div>
+<button onclick="loadBrokerLogins()" class="text-amber-500 text-sm hover:text-amber-400 flex items-center gap-1">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+Refresh
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm">
+<thead class="bg-slate-800/50 text-slate-400">
+<tr>
+<th class="p-4">User</th>
+<th class="p-4">MT5 Login</th>
+<th class="p-4">Live Server</th>
+<th class="p-4">Master Password</th>
+<th class="p-4">Bridge Token</th>
+<th class="p-4">Connected</th>
+<th class="p-4">Status</th>
+<th class="p-4">Actions</th>
+</tr>
+</thead>
+<tbody id="brokersTableBody" class="divide-y divide-slate-700/50">
+<tr><td colspan="8" class="p-8 text-center text-slate-500">Loading...</td></tr>
+</tbody>
 </table>
 </div>
 </div>
@@ -816,6 +879,7 @@ Send
 </div>
 </div>
 </div>
+</div>
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 <div class="glass-card rounded-xl p-6">
 <h3 class="text-lg font-semibold text-white mb-4">🤖 Trading Bot Settings</h3>
@@ -861,6 +925,7 @@ Send
 </div>
 </div>
 <button class="w-full gold-gradient text-white font-semibold py-2.5 rounded-xl hover:opacity-90 transition-all">Save Referral Settings</button>
+</div>
 </div>
 </div>
 </div>
@@ -919,6 +984,7 @@ loadFinance();
 loadInvestments();
 loadAgents();
 loadReports();
+loadBrokerLogins();
 }
 function switchTab(tabId) {
 document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -934,6 +1000,7 @@ btn.classList.remove('text-slate-400');
 const titles = {
 'dashboard': 'Admin Dashboard',
 'users': 'User Management',
+'brokers': 'Broker Logins',
 'finance': 'Finance Management',
 'investments': 'Investments Management',
 'agents': 'Agents & Referrals',
@@ -951,6 +1018,8 @@ if (tabId === 'transactions') {
 loadTransactions();
 } else if (tabId === 'finance') {
 loadFinance();
+} else if (tabId === 'brokers') {
+loadBrokerLogins();
 }
 }
 async function loadDashboardStats() {
@@ -959,11 +1028,13 @@ const { count: depCount } = await mySupabase.from('transactions').select('*', { 
 const { count: withCount } = await mySupabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'withdrawal').eq('status', 'pending');
 const { count: kycCount } = await mySupabase.from('users').select('*', { count: 'exact', head: true }).eq('kyc_status', 'pending');
 const { count: ticketCount } = await mySupabase.from('support_tickets').select('*', { count: 'exact', head: true }).eq('status', 'open');
+const { count: brokerCount } = await mySupabase.from('user_broker_connections').select('*', { count: 'exact', head: true });
 document.getElementById('stat-users').textContent = userCount || 0;
 document.getElementById('stat-deposits').textContent = depCount || 0;
 document.getElementById('stat-withdrawals').textContent = withCount || 0;
 document.getElementById('stat-kyc').textContent = kycCount || 0;
 document.getElementById('stat-tickets').textContent = ticketCount || 0;
+document.getElementById('stat-brokers').textContent = brokerCount || 0;
 const totalPending = (depCount || 0) + (withCount || 0);
 const transBadge = document.getElementById('transactionsBadge');
 if (totalPending > 0) {
@@ -985,6 +1056,13 @@ badge.textContent = ticketCount;
 badge.classList.remove('hidden');
 } else {
 badge.classList.add('hidden');
+}
+const brokersBadge = document.getElementById('brokersBadge');
+if (brokerCount > 0) {
+brokersBadge.textContent = brokerCount;
+brokersBadge.classList.remove('hidden');
+} else {
+brokersBadge.classList.add('hidden');
 }
 }
 async function loadUsers() {
@@ -1171,76 +1249,55 @@ statusSelect.value = 'all';
 currentFinanceFilter = filterType;
 loadFinance();
 }
-// ============================================
-// FIXED: FINANCE FUNCTIONS - Now with proper error handling and fallback
-// ============================================
 async function loadFinance() {
 const typeFilter = document.getElementById('financeFilterType')?.value || 'all';
 const statusFilter = document.getElementById('financeFilterStatus')?.value || 'all';
 const tbody = document.getElementById('financeTableBody');
-
 console.log('Loading finance data...', { typeFilter, statusFilter });
-
 try {
-// First try with user relation
 let query = mySupabase.from('transactions').select('*, users(email, first_name, last_name)').order('created_at', { ascending: false });
 if (typeFilter !== 'all') query = query.eq('type', typeFilter);
 if (statusFilter !== 'all') query = query.eq('status', statusFilter);
-
 let { data: txs, error } = await query.limit(100);
-
-// If error (e.g., RLS or missing relation), try without relation
 if (error) {
 console.log('First query failed, trying fallback:', error);
 let fallbackQuery = mySupabase.from('transactions').select('*').order('created_at', { ascending: false });
 if (typeFilter !== 'all') fallbackQuery = fallbackQuery.eq('type', typeFilter);
 if (statusFilter !== 'all') fallbackQuery = fallbackQuery.eq('status', statusFilter);
-
 const fallback = await fallbackQuery.limit(100);
 txs = fallback.data;
 error = fallback.error;
 }
-
 if (error) {
 console.error('Finance load error:', error);
 tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-400">Error loading transactions: ${error.message}</td></tr>`;
 return;
 }
-
 console.log('Loaded transactions:', txs);
-
 if (!txs || txs.length === 0) {
 tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-slate-500">No transactions found</td></tr>';
 } else {
-// Fetch user emails separately if the relation didn't work
 const userIds = [...new Set(txs.map(tx => tx.user_id).filter(id => id))];
 let userMap = {};
-
 if (userIds.length > 0) {
 const { data: usersData } = await mySupabase
 .from('users')
 .select('id, email, first_name, last_name')
 .in('id', userIds);
-
 if (usersData) {
 usersData.forEach(user => {
 userMap[user.id] = user;
 });
 }
 }
-
 tbody.innerHTML = txs.map(tx => {
-// Get user info from relation OR from our map
 const user = tx.users || userMap[tx.user_id] || {};
 const userName = user.first_name && user.last_name ? 
     `${user.first_name} ${user.last_name}`.trim() : 
     user.email || 'Unknown';
-    
 const statusColor = tx.status === 'approved' ? 'bg-green-500/20 text-green-400' : tx.status === 'rejected' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400';
 const typeColor = tx.type === 'deposit' ? 'text-green-400' : 'text-red-400';
 const date = new Date(tx.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-// Add approve/reject buttons for pending transactions
 let actionsHtml = '<span class="text-slate-500 text-xs">-</span>';
 if (tx.status === 'pending') {
 actionsHtml = `
@@ -1250,7 +1307,6 @@ actionsHtml = `
 </div>
 `;
 }
-
 return `
 <tr class="hover:bg-slate-800/30">
 <td class="p-4 text-slate-300 text-xs">${date}</td>
@@ -1263,28 +1319,22 @@ return `
 `;
 }).join('');
 }
-
-// Calculate stats - fetch ALL transactions for accurate stats
 const { data: allTxs, error: statsError } = await mySupabase.from('transactions').select('type, amount, status');
-
 if (statsError) {
 console.error('Stats calculation error:', statsError);
 } else if (allTxs) {
 const approvedDeposits = allTxs.filter(t => t.type === 'deposit' && t.status === 'approved');
 const approvedWithdrawals = allTxs.filter(t => t.type === 'withdrawal' && t.status === 'approved');
 const pending = allTxs.filter(t => t.status === 'pending');
-
 const totalDep = approvedDeposits.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
 const totalWith = approvedWithdrawals.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
 const pendingVol = pending.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0);
-
 document.getElementById('finance-totalDeposits').textContent = `$${totalDep.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
 document.getElementById('finance-depositCount').textContent = `${approvedDeposits.length} transactions`;
 document.getElementById('finance-totalWithdrawals').textContent = `$${totalWith.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
 document.getElementById('finance-withdrawalCount').textContent = `${approvedWithdrawals.length} transactions`;
 document.getElementById('finance-pendingVolume').textContent = `$${pendingVol.toLocaleString('en-US', {maximumFractionDigits: 2})}`;
 document.getElementById('finance-netFlow').textContent = `$${(totalDep - totalWith).toLocaleString('en-US', {maximumFractionDigits: 2})}`;
-
 console.log('Finance stats updated:', { totalDep, totalWith, pendingVol });
 }
 } catch (err) {
@@ -1456,7 +1506,6 @@ let { data: txs, error } = await mySupabase
 .select('*, users(email)')
 .eq('status', 'pending')
 .order('created_at', { ascending: false });
-
 if (error) {
 console.log('First query failed, trying fallback:', error);
 const fallback = await mySupabase
@@ -1467,45 +1516,36 @@ const fallback = await mySupabase
 txs = fallback.data;
 error = fallback.error;
 }
-
 if (error) {
 console.error('Transaction load error:', error);
 document.getElementById('depositsTableBody').innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-400">Error loading transactions: ${error.message}</td></tr>`;
 document.getElementById('withdrawalsTableBody').innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-400">Error loading transactions: ${error.message}</td></tr>`;
 return;
 }
-
 console.log('Loaded transactions:', txs);
-
 if (!txs || txs.length === 0) {
 document.getElementById('depositsTableBody').innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-500">No pending deposits</td></tr>';
 document.getElementById('withdrawalsTableBody').innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending withdrawals</td></tr>';
 return;
 }
-
 const userIds = [...new Set(txs.map(tx => tx.user_id).filter(id => id))];
 let userMap = {};
-
 if (userIds.length > 0) {
 const { data: usersData } = await mySupabase
 .from('users')
 .select('id, email')
 .in('id', userIds);
-
 if (usersData) {
 usersData.forEach(user => {
 userMap[user.id] = user.email;
 });
 }
 }
-
 let depHtml = '';
 let withHtml = '';
-
 for (const tx of txs) {
 const method = tx.payment_method ? tx.payment_method.replace('_', ' ').toUpperCase() : 'N/A';
 const userEmail = tx.users?.email || userMap[tx.user_id] || 'Unknown User';
-
 if (tx.type === 'deposit') {
 let proofHtml = '<span class="text-slate-500 text-xs">No proof</span>';
 if (tx.payment_proof_url) {
@@ -1514,7 +1554,6 @@ if (signedUrlData) {
 proofHtml = `<a href="${signedUrlData.signedUrl}" target="_blank" class="text-amber-500 hover:text-amber-400 text-xs underline">View Proof Image</a>`;
 }
 }
-
 depHtml += `
 <tr class="hover:bg-slate-800/30">
 <td class="p-4 text-white text-xs">${userEmail}</td>
@@ -1547,10 +1586,8 @@ withHtml += `
 `;
 }
 }
-
 document.getElementById('depositsTableBody').innerHTML = depHtml || '<tr><td colspan="5" class="p-4 text-center text-slate-500">No pending deposits</td></tr>';
 document.getElementById('withdrawalsTableBody').innerHTML = withHtml || '<tr><td colspan="4" class="p-4 text-center text-slate-500">No pending withdrawals</td></tr>';
-
 } catch (err) {
 console.error('Load transactions error:', err);
 document.getElementById('depositsTableBody').innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-400">Error: ${err.message}</td></tr>`;
@@ -1937,6 +1974,95 @@ alert('Failed to send message.');
 } finally {
 sendBtn.disabled = false;
 sendBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Send';
+}
+}
+// ============================================
+// NEW: BROKER LOGINS FUNCTIONS
+// ============================================
+async function loadBrokerLogins() {
+const tbody = document.getElementById('brokersTableBody');
+try {
+const { data: connections, error } = await mySupabase
+.from('user_broker_connections')
+.select('*, users(email, first_name, last_name)')
+.order('connected_at', { ascending: false });
+if (error) throw error;
+document.getElementById('brokers-total').textContent = (connections || []).length;
+document.getElementById('brokers-active').textContent = (connections || []).filter(c => c.status === 'connected').length;
+if (!connections || connections.length === 0) {
+tbody.innerHTML = '<tr><td colspan="8" class="p-8 text-center text-slate-500">No connected brokers yet.</td></tr>';
+return;
+}
+tbody.innerHTML = connections.map(conn => {
+const userName = conn.users ?
+`${conn.users.first_name || ''} ${conn.users.last_name || ''}`.trim() || conn.users.email :
+'Unknown User';
+const userEmail = conn.users?.email || 'Unknown';
+const connDate = new Date(conn.connected_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const statusColor = conn.status === 'connected' ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400';
+const maskedPwd = '•'.repeat(Math.min(conn.master_password.length, 10));
+return `
+<tr class="hover:bg-slate-800/30">
+<td class="p-4">
+<p class="text-white text-xs font-medium">${userName}</p>
+<p class="text-slate-500 text-[10px]">${userEmail}</p>
+</td>
+<td class="p-4">
+<div class="flex items-center gap-1">
+<span class="text-white font-mono text-xs">${conn.account_login}</span>
+<button onclick="copyText('${conn.account_login}', this)" class="text-slate-500 hover:text-amber-400" title="Copy">
+<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+</button>
+</div>
+</td>
+<td class="p-4 text-slate-300 font-mono text-xs break-all">${conn.live_server}</td>
+<td class="p-4">
+<div class="flex items-center gap-1">
+<span class="text-white font-mono text-xs broker-pwd" data-pwd="${conn.master_password}">${maskedPwd}</span>
+<button onclick="toggleBrokerPassword(this)" class="text-slate-500 hover:text-amber-400" title="Show/Hide">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+</button>
+<button onclick="copyText(this.previousElementSibling.dataset.pwd, this)" class="text-slate-500 hover:text-amber-400" title="Copy">
+<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+</button>
+</div>
+</td>
+<td class="p-4 text-slate-400 font-mono text-xs">${conn.bridge_token ? conn.bridge_token.substring(0, 8) + '...' : '—'}</td>
+<td class="p-4 text-slate-400 text-xs">${connDate}</td>
+<td class="p-4"><span class="px-2 py-1 rounded text-xs ${statusColor} capitalize">${conn.status || 'connected'}</span></td>
+<td class="p-4">
+<button onclick="disconnectBrokerAdmin('${conn.id}')" class="px-2 py-1 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30 text-xs">Disconnect</button>
+</td>
+</tr>
+`;
+}).join('');
+} catch (err) {
+console.error('Broker logins error:', err);
+tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-red-400">Error loading broker logins. Make sure you ran the SQL policies.</td></tr>`;
+}
+}
+function toggleBrokerPassword(btn) {
+const span = btn.parentElement.querySelector('.broker-pwd');
+const masked = '•'.repeat(Math.min(span.dataset.pwd.length, 10));
+span.textContent = span.textContent === masked ? span.dataset.pwd : masked;
+}
+function copyText(text, btn) {
+navigator.clipboard.writeText(text).then(() => {
+const original = btn.innerHTML;
+btn.innerHTML = '<span class="text-green-400 text-xs">✓</span>';
+setTimeout(() => { btn.innerHTML = original; }, 1200);
+});
+}
+async function disconnectBrokerAdmin(connId) {
+if (!confirm('Disconnect this user\'s broker account? Their bots will no longer be able to route fills.')) return;
+try {
+await mySupabase.from('user_broker_connections').delete().eq('id', connId);
+alert('✅ Broker disconnected.');
+loadBrokerLogins();
+loadDashboardStats();
+} catch (err) {
+console.error('Disconnect error:', err);
+alert('Failed to disconnect. Please try again.');
 }
 }
 async function logout() {
