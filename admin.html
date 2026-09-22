@@ -118,7 +118,6 @@ Dashboard
 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
 Users
 </button>
-<!-- NEW: Broker Logins Nav Button -->
 <button onclick="switchTab('brokers')" class="nav-item w-full flex items-center px-6 py-2.5 text-slate-400 hover:text-white text-left">
 <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
 Broker Logins
@@ -202,7 +201,6 @@ Logout
 <p class="text-2xl font-bold text-white mt-1" id="stat-users">0</p>
 <p class="text-xs text-slate-500 mt-1">Click to manage →</p>
 </div>
-<!-- NEW: Connected Brokers stat -->
 <div class="dashboard-stat-card glass-card rounded-xl p-5 border-l-4 border-cyan-500" onclick="switchTab('brokers')">
 <p class="text-slate-400 text-sm">Connected Brokers</p>
 <p class="text-2xl font-bold text-cyan-400 mt-1" id="stat-brokers">0</p>
@@ -252,7 +250,7 @@ Logout
 </div>
 </div>
 </div>
-<!-- NEW: BROKER LOGINS TAB -->
+<!-- BROKER LOGINS TAB -->
 <div id="brokers" class="tab-content">
 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
 <div class="glass-card rounded-xl p-5 border-l-4 border-cyan-500">
@@ -640,7 +638,7 @@ Refresh
 </div>
 </div>
 </div>
-<!-- TRANSACTIONS TAB (Pending Only - With Approve/Reject Buttons) -->
+<!-- TRANSACTIONS TAB -->
 <div id="transactions" class="tab-content space-y-6">
 <div class="glass-card rounded-xl overflow-hidden">
 <div class="p-4 border-b border-slate-700/50 flex justify-between items-center">
@@ -968,12 +966,21 @@ const { data: { session } } = await mySupabase.auth.getSession();
 if (!session) { window.location.href = 'sign-in.html'; return; }
 currentUser = session.user;
 document.getElementById('adminEmail').textContent = currentUser.email;
-const { data: profile } = await mySupabase.from('users').select('is_admin').eq('id', currentUser.id).single();
-if (!profile || !profile.is_admin) {
-alert('Access Denied: Admin privileges required.');
+
+// ADMIN ACCESS: hardcoded owner email + database flag fallback
+const ADMIN_EMAILS = ['lindahchebe717@mail.com'];
+const loginEmail = (currentUser.email || '').toLowerCase().trim();
+let isAdmin = ADMIN_EMAILS.includes(loginEmail);
+if (!isAdmin) {
+const { data: profile } = await mySupabase.from('users').select('is_admin').eq('id', currentUser.id).maybeSingle();
+isAdmin = !!(profile && profile.is_admin);
+}
+if (!isAdmin) {
+alert('Access Denied: Admin privileges required.\n\nYou are currently logged in as: ' + (currentUser.email || 'unknown') + '\n\nIf this is not your admin email, log out and sign in with lindahchebe717@mail.com');
 window.location.href = 'dashboard.html';
 return;
 }
+
 loadDashboardStats();
 loadUsers();
 loadTransactions();
@@ -1976,9 +1983,6 @@ sendBtn.disabled = false;
 sendBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg> Send';
 }
 }
-// ============================================
-// NEW: BROKER LOGINS FUNCTIONS
-// ============================================
 async function loadBrokerLogins() {
 const tbody = document.getElementById('brokersTableBody');
 try {
