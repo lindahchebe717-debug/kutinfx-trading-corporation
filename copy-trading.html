@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copy Trading - KutinFX Trading</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .gold-gradient { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .glass-card { background: rgba(30, 41, 59, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(245, 158, 11, 0.15); }
+        .input-dark { background: rgba(15, 23, 42, 0.8); border: 1px solid rgba(245, 158, 11, 0.3); transition: all 0.3s ease; }
+        .input-dark:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1); outline: none; }
+        .trader-card { transition: all 0.3s ease; }
+        .trader-card:hover { transform: translateY(-4px); border-color: rgba(245, 158, 11, 0.5); }
+        @keyframes profitPulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: 0.8; transform: scale(1.05);} }
+        .profit-updating { animation: profitPulse 2s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { animation: spin 0.8s linear infinite; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-slate-200">
+    <!-- Top Navigation -->
+    <nav class="border-b border-slate-700/50 bg-[#0f172a]/95 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <a href="dashboard.html" class="text-amber-500 hover:text-amber-400 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                    <span class="font-semibold">Back to Dashboard</span>
+                </a>
+                <div class="flex items-center gap-4">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-slate-500 text-xs">Balance</p>
+                        <p class="text-white font-bold text-sm" id="userBalance">$0.00</p>
+                    </div>
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold shadow-lg">
+                        <span id="userAvatar">U</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-2">Copy <span class="text-amber-500">Trading</span></h1>
+            <p class="text-slate-400 text-lg">Automatically mirror the trades of our top-performing Master Traders.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Total Allocated</p>
+                <p class="text-2xl font-bold text-amber-500" id="statAllocated">$0.00</p>
+            </div>
+            <div class="glass-card rounded-xl p-5 border border-green-500/30">
+                <p class="text-slate-400 text-sm mb-1">Live Copy Profit</p>
+                <p class="text-2xl font-bold text-green-400 profit-updating" id="statProfit">+$0.00</p>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Active Copies</p>
+                <p class="text-2xl font-bold text-white" id="statCopies">0</p>
+            </div>
+            <div class="glass-card rounded-xl p-5">
+                <p class="text-slate-400 text-sm mb-1">Master Traders</p>
+                <p class="text-2xl font-bold text-cyan-400" id="statTraders">0</p>
+            </div>
+        </div>
+
+        <!-- Messages -->
+        <div id="successMsg" class="hidden mb-6 p-4 bg-green-500/20 border border-green-500/50 rounded-xl text-green-300 text-sm text-center"></div>
+        <div id="errorMsg" class="hidden mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+
+        <!-- ACTIVE COPIES -->
+        <div class="mb-10">
+            <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                Your Active Copies
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="copiesContainer">
+                <p class="text-slate-500 col-span-full text-center py-6 glass-card rounded-xl">You are not copying anyone yet. Pick a Master Trader below! 👇</p>
+            </div>
+        </div>
+
+        <!-- MASTER TRADERS LEADERBOARD -->
+        <div>
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    <svg class="w-6 h-6 text-amber-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Master Traders Leaderboard
+                </h2>
+                <span class="text-xs text-slate-400">Ranked by total profit</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="tradersContainer">
+                <div class="glass-card rounded-xl p-6 animate-pulse col-span-full text-center text-slate-400">Loading Master Traders...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COPY MODAL -->
+    <div id="copyModal" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeCopyModal()"></div>
+        <div class="absolute inset-0 flex items-center justify-center p-4">
+            <div class="glass-card rounded-2xl p-8 max-w-md w-full relative">
+                <button onclick="closeCopyModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+                <h3 class="text-xl font-bold text-white mb-1">Start Copying</h3>
+                <p class="text-amber-500 font-semibold mb-4" id="modalTraderName"></p>
+
+                <div class="bg-slate-800/50 rounded-xl p-4 space-y-2 text-sm mb-4">
+                    <div class="flex justify-between"><span class="text-slate-400">Strategy:</span><span class="text-white font-medium" id="modalStrategy"></span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Win Rate:</span><span class="text-green-400 font-bold" id="modalWinRate"></span></div>
+                    <div class="flex justify-between"><span class="text-slate-400">Avg Daily ROI:</span><span class="text-amber-400 font-bold" id="modalRoi"></span></div>
+                </div>
+
+                <div id="modalError" class="hidden mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
+
+                <label class="block text-sm font-medium text-slate-300 mb-2">Amount to Allocate ($)</label>
+                <div class="grid grid-cols-3 gap-2 mb-3">
+                    <button type="button" onclick="setCopyAmount(100)" class="py-2 rounded-lg bg-slate-700 hover:bg-amber-500/20 text-white text-xs font-medium border border-slate-600 hover:border-amber-500 transition-all">$100</button>
+                    <button type="button" onclick="setCopyAmount(500)" class="py-2 rounded-lg bg-slate-700 hover:bg-amber-500/20 text-white text-xs font-medium border border-slate-600 hover:border-amber-500 transition-all">$500</button>
+                    <button type="button" onclick="setCopyAmount(1000)" class="py-2 rounded-lg bg-slate-700 hover:bg-amber-500/20 text-white text-xs font-medium border border-slate-600 hover:border-amber-500 transition-all">$1,000</button>
+                </div>
+                <input type="number" id="copyAmount" min="50" step="0.01" oninput="updateExpected()" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 mb-3" placeholder="Minimum $50">
+                <p class="text-xs text-slate-500 mb-4">Your balance: <span id="modalBalance" class="text-amber-500 font-semibold">$0.00</span></p>
+
+                <div class="bg-green-500/10 border border-green-500/30 rounded-xl p-3 space-y-1 text-sm mb-4">
+                    <div class="flex justify-between"><span class="text-slate-300">Est. profit / day:</span><span class="text-green-400 font-bold" id="modalDaily">+$0.00</span></div>
+                    <div class="flex justify-between"><span class="text-slate-300">Est. profit / month:</span><span class="text-green-400 font-bold" id="modalMonthly">+$0.00</span></div>
+                </div>
+
+                <button onclick="confirmCopy()" id="confirmBtn" class="w-full gold-gradient text-white font-semibold py-3 rounded-xl hover:opacity-90 transition-all shadow-lg flex items-center justify-center gap-2">
+                    <span id="confirmBtnText">Confirm & Start Copying</span>
+                    <svg id="confirmSpinner" class="hidden spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gicamioeiitrfwhtvqxv.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpY2FtaW9laWl0cmZ3aHR2cXh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4NDc3NzEsImV4cCI6MjA5NjQyMzc3MX0.YD0A85STez01eTGi5szOlKmY2DwdZev_-3KVxUuoz8U';
+        const mySupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let userBalance = 0;
+        let traders = [];
+        let copies = [];
+        let copyTraderId = null;
+        let tickInterval = null;
+
+        async function init() {
+            const { data: { session } } = await mySupabase.auth.getSession();
+            if (!session) { window.location.href = 'sign-in.html'; return; }
+            currentUser = session.user;
+
+            const { data: profile } = await mySupabase.from('users').select('balance, first_name').eq('id', currentUser.id).single();
+            if (profile) {
+                userBalance = profile.balance || 0;
+                document.getElementById('userBalance').textContent = `$${userBalance.toFixed(2)}`;
+                document.getElementById('userAvatar').textContent = (profile.first_name || 'U')[0].toUpperCase();
+            }
+
+            await Promise.all([loadTraders(), loadCopies()]);
+            startTicker();
+        }
+
+        async function loadTraders() {
+            try {
+                const { data, error } = await mySupabase.from('master_traders').select('*').eq('is_active', true).order('total_profit', { ascending: false });
+                if (error) throw error;
+                traders = data || [];
+                document.getElementById('statTraders').textContent = traders.length;
+                renderTraders();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('tradersContainer').innerHTML = '<p class="text-red-400 col-span-full text-center py-6">Failed to load Master Traders. Please run the SQL code in Supabase first.</p>';
+            }
+        }
+
+        async function loadCopies() {
+            try {
+                const { data, error } = await mySupabase.from('user_copy_trades').select('*').eq('user_id', currentUser.id).eq('status', 'active').order('started_at', { ascending: false });
+                if (error) throw error;
+                copies = data || [];
+                renderCopies();
+            } catch (err) {
+                console.error(err);
+                copies = [];
+            }
+        }
+
+        function traderById(id) { return traders.find(t => t.id === id); }
+
+        function copyProfit(copy) {
+            const trader = traderById(copy.trader_id);
+            if (!trader) return 0;
+            const elapsed = Date.now() - new Date(copy.started_at).getTime();
+            const daily = parseFloat(copy.allocated_amount) * (parseFloat(trader.daily_roi) || 0) / 100;
+            return daily * (elapsed / 86400000);
+        }
+
+        function renderTraders() {
+            const medals = ['🥇', '', ''];
+            document.getElementById('tradersContainer').innerHTML = traders.map((t, i) => {
+                const riskColor = t.risk_level === 'low' ? 'bg-green-500/20 text-green-400' : t.risk_level === 'medium' ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400';
+                return `
+                <div class="trader-card glass-card rounded-xl p-6 relative">
+                    ${i < 3 ? `<div class="absolute -top-3 left-6 text-2xl">${medals[i]}</div>` : ''}
+                    <div class="flex items-center gap-3 mb-4 mt-1">
+                        <div class="w-12 h-12 rounded-full gold-gradient flex items-center justify-center text-white font-bold text-lg">${t.name.charAt(0)}</div>
+                        <div class="flex-1">
+                            <h3 class="text-white font-bold">${t.name} <span class="text-base">${t.country || ''}</span></h3>
+                            <p class="text-slate-400 text-xs">${t.strategy}</p>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium ${riskColor}">${t.risk_level.toUpperCase()}</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                        <div class="bg-slate-800/50 rounded-lg p-2">
+                            <p class="text-slate-500 text-[10px]">Win Rate</p>
+                            <p class="text-green-400 font-bold text-sm">${t.win_rate}%</p>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-lg p-2">
+                            <p class="text-slate-500 text-[10px]">Daily ROI</p>
+                            <p class="text-amber-400 font-bold text-sm">${t.daily_roi}%</p>
+                        </div>
+                        <div class="bg-slate-800/50 rounded-lg p-2">
+                            <p class="text-slate-500 text-[10px]">Copiers</p>
+                            <p class="text-cyan-400 font-bold text-sm">${(t.copiers_count || 0).toLocaleString()}</p>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mb-4 text-sm">
+                        <span class="text-slate-400">Total Profit:</span>
+                        <span class="text-green-400 font-bold">$${parseFloat(t.total_profit).toLocaleString()}</span>
+                    </div>
+                    <button onclick="openCopyModal(${t.id})" class="w-full gold-gradient text-white font-medium py-2.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-lg">
+                        ⧉ Copy This Trader
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        function renderCopies() {
+            const container = document.getElementById('copiesContainer');
+            if (copies.length === 0) {
+                container.innerHTML = '<p class="text-slate-500 col-span-full text-center py-6 glass-card rounded-xl">You are not copying anyone yet. Pick a Master Trader below! 👇</p>';
+                return;
+            }
+            container.innerHTML = copies.map(c => {
+                const t = traderById(c.trader_id) || { name: 'Master Trader', strategy: '', daily_roi: 0 };
+                return `
+                <div class="glass-card rounded-xl p-5 border border-green-500/30">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold">${t.name.charAt(0)}</div>
+                            <div>
+                                <h3 class="text-white font-semibold text-sm">${t.name}</h3>
+                                <p class="text-slate-500 text-xs">${t.strategy}</p>
+                            </div>
+                        </div>
+                        <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 flex items-center gap-1"><span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>Copying</span>
+                    </div>
+                    <div class="space-y-2 text-sm mb-4">
+                        <div class="flex justify-between"><span class="text-slate-400">Allocated:</span><span class="text-white font-medium">$${parseFloat(c.allocated_amount).toFixed(2)}</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Live Profit:</span><span id="copyprofit-${c.id}" class="text-green-400 font-bold profit-updating">+$0.00</span></div>
+                        <div class="flex justify-between"><span class="text-slate-400">Est. Daily:</span><span class="text-amber-400 font-medium">+$${(parseFloat(c.allocated_amount) * parseFloat(t.daily_roi) / 100).toFixed(2)}</span></div>
+                    </div>
+                    <button onclick="stopCopy(${c.id})" class="w-full bg-red-500/20 text-red-400 font-medium py-2 rounded-lg hover:bg-red-500/30 transition-all text-sm">
+                        ⏹ Stop & Claim
+                    </button>
+                </div>`;
+            }).join('');
+        }
+
+        function startTicker() {
+            if (tickInterval) clearInterval(tickInterval);
+            tickInterval = setInterval(() => {
+                let totalAllocated = 0, totalProfit = 0;
+                copies.forEach(c => {
+                    const p = copyProfit(c);
+                    totalAllocated += parseFloat(c.allocated_amount);
+                    totalProfit += p;
+                    const el = document.getElementById(`copyprofit-${c.id}`);
+                    if (el) el.textContent = `+$${p.toFixed(2)}`;
+                });
+                document.getElementById('statAllocated').textContent = `$${totalAllocated.toFixed(2)}`;
+                document.getElementById('statProfit').textContent = `+$${totalProfit.toFixed(2)}`;
+                document.getElementById('statCopies').textContent = copies.length;
+            }, 1000);
+        }
+
+        function openCopyModal(traderId) {
+            copyTraderId = traderId;
+            const t = traderById(traderId);
+            if (!t) return;
+            document.getElementById('modalTraderName').textContent = `${t.name} ${t.country || ''}`;
+            document.getElementById('modalStrategy').textContent = t.strategy;
+            document.getElementById('modalWinRate').textContent = `${t.win_rate}%`;
+            document.getElementById('modalRoi').textContent = `${t.daily_roi}% / day`;
+            document.getElementById('modalBalance').textContent = `$${userBalance.toFixed(2)}`;
+            document.getElementById('copyAmount').value = '';
+            document.getElementById('modalError').classList.add('hidden');
+            updateExpected();
+            document.getElementById('copyModal').classList.remove('hidden');
+        }
+
+        function closeCopyModal() {
+            document.getElementById('copyModal').classList.add('hidden');
+            copyTraderId = null;
+        }
+
+        function setCopyAmount(v) {
+            document.getElementById('copyAmount').value = v;
+            updateExpected();
+        }
+
+        function updateExpected() {
+            const t = traderById(copyTraderId);
+            const amount = parseFloat(document.getElementById('copyAmount').value) || 0;
+            if (!t) return;
+            const daily = amount * parseFloat(t.daily_roi) / 100;
+            document.getElementById('modalDaily').textContent = `+$${daily.toFixed(2)}`;
+            document.getElementById('modalMonthly').textContent = `+$${(daily * 30).toFixed(2)}`;
+        }
+
+        async function confirmCopy() {
+            const t = traderById(copyTraderId);
+            const amount = parseFloat(document.getElementById('copyAmount').value);
+            const errEl = document.getElementById('modalError');
+            errEl.classList.add('hidden');
+
+            if (!amount || amount < 50) { errEl.textContent = 'Minimum allocation is $50.'; errEl.classList.remove('hidden'); return; }
+            if (amount > userBalance) { errEl.textContent = 'Insufficient balance. Please make a deposit first.'; errEl.classList.remove('hidden'); return; }
+
+            const btn = document.getElementById('confirmBtn');
+            const btnText = document.getElementById('confirmBtnText');
+            const spinner = document.getElementById('confirmSpinner');
+            btn.disabled = true; btnText.textContent = 'Linking to trader...'; spinner.classList.remove('hidden');
+
+            try {
+                const newBalance = userBalance - amount;
+                const { error: balErr } = await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+                if (balErr) throw balErr;
+
+                const { error: insErr } = await mySupabase.from('user_copy_trades').insert({
+                    user_id: currentUser.id,
+                    trader_id: copyTraderId,
+                    allocated_amount: amount,
+                    status: 'active'
+                });
+                if (insErr) throw insErr;
+
+                await mySupabase.from('transactions').insert({
+                    user_id: currentUser.id,
+                    type: 'copy_trading',
+                    amount: amount,
+                    status: 'approved',
+                    description: `Started copying ${t.name}`
+                });
+
+                userBalance = newBalance;
+                document.getElementById('userBalance').textContent = `$${userBalance.toFixed(2)}`;
+                closeCopyModal();
+                showSuccess(`✅ You are now copying ${t.name}! Profits accrue live every second.`);
+                await loadCopies();
+            } catch (err) {
+                console.error(err);
+                errEl.textContent = 'Failed to start copying. Please make sure you ran the SQL code in Supabase.';
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false; btnText.textContent = 'Confirm & Start Copying'; spinner.classList.add('hidden');
+            }
+        }
+
+        async function stopCopy(copyId) {
+            const copy = copies.find(c => c.id === copyId);
+            if (!copy) return;
+            const t = traderById(copy.trader_id) || { name: 'Master Trader' };
+            const profit = copyProfit(copy);
+            const returnAmount = parseFloat(copy.allocated_amount) + profit;
+
+            if (!confirm(`Stop copying ${t.name} and claim $${returnAmount.toFixed(2)} (allocation + profit)?`)) return;
+
+            try {
+                const newBalance = userBalance + returnAmount;
+                await mySupabase.from('users').update({ balance: newBalance }).eq('id', currentUser.id);
+                await mySupabase.from('user_copy_trades').update({ status: 'stopped', stopped_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', copyId);
+                await mySupabase.from('transactions').insert({
+                    user_id: currentUser.id,
+                    type: 'copy_trading_settlement',
+                    amount: returnAmount,
+                    status: 'approved',
+                    description: `Stopped copying ${t.name} (profit $${profit.toFixed(2)})`
+                });
+
+                userBalance = newBalance;
+                document.getElementById('userBalance').textContent = `$${userBalance.toFixed(2)}`;
+                showSuccess(`✅ Copy stopped! $${returnAmount.toFixed(2)} returned to your balance.`);
+                await loadCopies();
+            } catch (err) {
+                console.error(err);
+                showError('Failed to stop copy. Please try again.');
+            }
+        }
+
+        function showSuccess(msg) {
+            const el = document.getElementById('successMsg');
+            document.getElementById('errorMsg').classList.add('hidden');
+            el.textContent = msg; el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('errorMsg');
+            document.getElementById('successMsg').classList.add('hidden');
+            el.textContent = msg; el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
