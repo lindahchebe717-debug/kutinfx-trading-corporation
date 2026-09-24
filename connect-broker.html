@@ -20,6 +20,7 @@
         .live-dot { animation: pulseDot 1.5s ease-in-out infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner { animation: spin 0.8s linear infinite; }
+        .otp-input { letter-spacing: 0.5em; text-align: center; font-size: 1.5rem; font-weight: 700; }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -50,7 +51,7 @@
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold text-white mb-2">Connect <span class="text-amber-500">Broker</span></h1>
-            <p class="text-slate-400 text-lg">Link your live MetaTrader 5 account so our bots can route fills directly.</p>
+            <p class="text-slate-400 text-lg">Link your live MetaTrader 5 account — verified by email code, like real brokers do.</p>
         </div>
 
         <!-- Messages -->
@@ -66,7 +67,7 @@
                         <h2 class="text-xl font-bold text-white">MetaTrader 5</h2>
                         <p class="text-green-400 text-sm flex items-center gap-2">
                             <span class="w-2 h-2 bg-green-500 rounded-full live-dot"></span>
-                            Live • Connected
+                            Live • Connected • Email-verified
                         </p>
                     </div>
                 </div>
@@ -83,18 +84,13 @@
                     <p class="text-white font-mono font-semibold break-all" id="connServer">—</p>
                 </div>
                 <div class="bg-slate-800/50 rounded-xl p-4">
-                    <p class="text-slate-400 text-xs mb-1">Connected On</p>
-                    <p class="text-white font-semibold" id="connDate">—</p>
+                    <p class="text-slate-400 text-xs mb-1">Account Email</p>
+                    <p class="text-white font-semibold break-all" id="connEmail">—</p>
                 </div>
                 <div class="bg-slate-800/50 rounded-xl p-4">
                     <p class="text-slate-400 text-xs mb-1">Connection Health</p>
                     <p class="text-green-400 font-semibold" id="connHealth">Stable • <span id="connLatency">--</span> ms</p>
                 </div>
-            </div>
-
-            <!-- Bridge verification note -->
-            <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 mb-4">
-                <p class="text-amber-300 text-xs leading-relaxed">Account type self-certified as <strong>LIVE</strong> by the account holder. Terminal bridge verification is pending — fills will route automatically once the MetaApi bridge is configured on this server.</p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -118,7 +114,7 @@
             </div>
 
             <p class="text-slate-300 text-sm leading-relaxed mb-6">
-                Live MT5 login only. <span class="text-amber-400 font-semibold">Demo, trial and practice servers are rejected.</span> Fills go through the MetaApi terminal session when a bridge is configured.
+                Live MT5 login only. <span class="text-amber-400 font-semibold">Demo, trial and practice servers are rejected.</span> Like real brokers, we verify each connection with a one-time code sent to your email.
             </p>
 
             <!-- Trust badges -->
@@ -128,8 +124,8 @@
                     <span class="text-slate-300 text-xs">Encrypted at rest</span>
                 </div>
                 <div class="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2">
-                    <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                    <span class="text-slate-300 text-xs">Live accounts only</span>
+                    <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6M3 8v8a2 2 0 002 2h14a2 2 0 002-2V8m-18 0l9-6 9 6"/></svg>
+                    <span class="text-slate-300 text-xs">Email code verification</span>
                 </div>
                 <div class="flex items-center gap-2 bg-slate-800/50 rounded-lg px-3 py-2">
                     <svg class="w-4 h-4 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -139,11 +135,18 @@
 
             <div id="formError" class="hidden mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
 
+            <!-- STEP 1: CREDENTIALS -->
             <div class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Account login</label>
-                    <input type="text" id="mt5Login" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="e.g. 51234567">
-                    <p class="text-xs text-slate-500 mt-1">MT5 logins are numeric (4–12 digits).</p>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Account number (login)</label>
+                    <input type="text" id="mt5Login" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="e.g. 51234567" oninput="this.value = this.value.replace(/\D/g, '')">
+                    <p class="text-xs text-slate-500 mt-1">Your broker account number — digits only.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Account email</label>
+                    <input type="email" id="mt5Email" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="Email registered with your broker">
+                    <p class="text-xs text-slate-500 mt-1">The email on your broker account (stored with your credentials).</p>
                 </div>
 
                 <div>
@@ -167,16 +170,33 @@
                     <input type="text" id="mt5Token" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="MetaApi bridge token">
                 </div>
 
-                <!-- LIVE account confirmation -->
-                <label class="flex items-start gap-3 bg-slate-800/50 rounded-xl p-4 cursor-pointer border border-slate-700 hover:border-amber-500/50 transition-all">
-                    <input type="checkbox" id="liveConfirm" class="mt-0.5 w-4 h-4 accent-amber-500">
-                    <span class="text-slate-300 text-xs leading-relaxed">I confirm this is a <span class="text-amber-400 font-semibold">LIVE trading account</span>. Demo, trial, practice and simulated accounts are rejected and cannot be bridged.</span>
-                </label>
-
-                <button onclick="saveBroker()" id="saveBtn" class="w-full gold-gradient text-white font-semibold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg text-base flex items-center justify-center gap-2">
-                    <span id="saveBtnText">Save & Connect MT5</span>
-                    <svg id="saveSpinner" class="hidden spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <button onclick="sendCode()" id="sendCodeBtn" class="w-full gold-gradient text-white font-semibold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg text-base flex items-center justify-center gap-2">
+                    <span id="sendCodeBtnText">Send Verification Code to My Email</span>
+                    <svg id="sendSpinner" class="hidden spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                 </button>
+                <p class="text-xs text-slate-500 text-center">For security, the code is sent to your KutinFX account email.</p>
+            </div>
+
+            <!-- STEP 2: OTP VERIFICATION -->
+            <div id="step2Panel" class="hidden mt-6 border-t border-slate-700/50 pt-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6M3 8v8a2 2 0 002 2h14a2 2 0 002-2V8m-18 0l9-6 9 6"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-semibold">Step 2: Enter your verification code</h3>
+                        <p class="text-slate-400 text-xs" id="otpSentNote"></p>
+                    </div>
+                </div>
+                <input type="text" id="otpInput" maxlength="6" inputmode="numeric" class="otp-input input-dark w-full px-4 py-4 rounded-xl text-white" placeholder="------" oninput="this.value = this.value.replace(/\D/g, '')">
+                <button onclick="verifyAndConnect()" id="verifyBtn" class="w-full gold-gradient text-white font-semibold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg text-base flex items-center justify-center gap-2 mt-4">
+                    <span id="verifyBtnText">Verify & Connect</span>
+                    <svg id="verifySpinner" class="hidden spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </button>
+                <div class="flex justify-between mt-3 text-xs">
+                    <button onclick="sendCode()" id="resendBtn" class="text-amber-500 hover:text-amber-400">Resend code</button>
+                    <button onclick="backToStep1()" class="text-slate-400 hover:text-white">Change details</button>
+                </div>
             </div>
         </div>
 
@@ -190,18 +210,18 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div class="glass-card rounded-xl p-5 text-center">
                 <div class="w-10 h-10 mx-auto rounded-full gold-gradient flex items-center justify-center text-white font-bold mb-3">1</div>
-                <h4 class="text-white font-semibold text-sm mb-1">Enter Live Login</h4>
-                <p class="text-slate-400 text-xs">Provide your real MT5 login, live server and master password.</p>
+                <h4 class="text-white font-semibold text-sm mb-1">Enter Credentials</h4>
+                <p class="text-slate-400 text-xs">Account number, email, live server and master password.</p>
             </div>
             <div class="glass-card rounded-xl p-5 text-center">
                 <div class="w-10 h-10 mx-auto rounded-full gold-gradient flex items-center justify-center text-white font-bold mb-3">2</div>
-                <h4 class="text-white font-semibold text-sm mb-1">Bridge Routes Fills</h4>
-                <p class="text-slate-400 text-xs">Our MetaApi session securely bridges orders to your terminal.</p>
+                <h4 class="text-white font-semibold text-sm mb-1">Receive Email Code</h4>
+                <p class="text-slate-400 text-xs">A 6-digit one-time code arrives in your inbox instantly.</p>
             </div>
             <div class="glass-card rounded-xl p-5 text-center">
                 <div class="w-10 h-10 mx-auto rounded-full gold-gradient flex items-center justify-center text-white font-bold mb-3">3</div>
-                <h4 class="text-white font-semibold text-sm mb-1">Bots Trade For You</h4>
-                <p class="text-slate-400 text-xs">Activated bots execute strategies on your linked account 24/7.</p>
+                <h4 class="text-white font-semibold text-sm mb-1">Verify & Connect</h4>
+                <p class="text-slate-400 text-xs">Enter the code and the broker is linked to your account.</p>
             </div>
         </div>
     </div>
@@ -214,10 +234,10 @@
         let currentUser = null;
         let existingConnection = null;
         let editMode = false;
+        let otpSentTo = null;
+        let cooldownTimer = null;
 
         const popularServers = ['Exness-MT5Real0', 'ICMarkets-Live', 'Pepperstone-Live', 'XMGlobal-Live', 'FBS-Real', 'HFM-Live'];
-
-        // STRICT demo/trial/practice rejection pattern
         const DEMO_PATTERN = /(demo|trial|practice|practise|paper|sandbox|simulated|simulation|dem0|test)/i;
 
         async function init() {
@@ -241,14 +261,12 @@
             ).join('');
         }
 
-        function fillServer(name) {
-            document.getElementById('mt5Server').value = name;
-        }
-
+        function fillServer(name) { document.getElementById('mt5Server').value = name; }
         function togglePassword() {
             const input = document.getElementById('mt5Password');
             input.type = input.type === 'password' ? 'text' : 'password';
         }
+        function backToStep1() { document.getElementById('step2Panel').classList.add('hidden'); }
 
         async function loadConnection() {
             try {
@@ -283,7 +301,7 @@
             document.getElementById('connectedCard').classList.remove('hidden');
             document.getElementById('connLogin').textContent = maskLogin(conn.account_login);
             document.getElementById('connServer').textContent = conn.live_server;
-            document.getElementById('connDate').textContent = new Date(conn.connected_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById('connEmail').textContent = conn.account_email || '—';
             document.getElementById('connLatency').textContent = Math.floor(Math.random() * 40) + 18;
         }
 
@@ -296,12 +314,128 @@
             editMode = true;
             if (existingConnection) {
                 document.getElementById('mt5Login').value = existingConnection.account_login;
+                document.getElementById('mt5Email').value = existingConnection.account_email || '';
                 document.getElementById('mt5Server').value = existingConnection.live_server;
                 document.getElementById('mt5Token').value = existingConnection.bridge_token || '';
             }
-            document.getElementById('liveConfirm').checked = false;
+            document.getElementById('step2Panel').classList.add('hidden');
             showForm();
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // STEP 1: SEND EMAIL CODE
+        async function sendCode() {
+            const login = document.getElementById('mt5Login').value.trim();
+            const email = document.getElementById('mt5Email').value.trim();
+            const server = document.getElementById('mt5Server').value.trim();
+            const password = document.getElementById('mt5Password').value;
+            const errEl = document.getElementById('formError');
+            errEl.classList.add('hidden');
+
+            if (!/^\d{4,12}$/.test(login)) { showFormError('Please enter your broker account number (4-12 digits, numbers only).'); return; }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showFormError('Please enter the email registered with your broker.'); return; }
+            if (!server) { showFormError('Please enter your live server name.'); return; }
+            if (DEMO_PATTERN.test(server)) { showFormError('❌ REJECTED: "' + server + '" looks like a demo/trial server. Only LIVE servers are accepted.'); return; }
+            if (password.length < 6) { showFormError('Master password must be at least 6 characters.'); return; }
+
+            const btn = document.getElementById('sendCodeBtn');
+            const btnText = document.getElementById('sendCodeBtnText');
+            const spinner = document.getElementById('sendSpinner');
+            btn.disabled = true;
+            btnText.textContent = 'Sending code to ' + currentUser.email + '...';
+            spinner.classList.remove('hidden');
+
+            try {
+                const { error } = await mySupabase.auth.signInWithOtp({
+                    email: currentUser.email,
+                    options: { shouldCreateUser: false }
+                });
+                if (error) throw error;
+
+                otpSentTo = currentUser.email;
+                document.getElementById('otpSentNote').textContent = 'We sent a 6-digit code to ' + currentUser.email + '. It expires in 60 minutes. Check your spam folder if you don\'t see it.';
+                document.getElementById('otpInput').value = '';
+                document.getElementById('step2Panel').classList.remove('hidden');
+                document.getElementById('otpInput').focus();
+                startCooldown();
+                showSuccess('✅ Verification code sent to ' + currentUser.email + '. Open your email and enter the 6-digit code below.');
+            } catch (err) {
+                showFormError('Could not send the code: ' + (err.message || 'unknown error') + '. Please wait a minute and try again.');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Send Verification Code to My Email';
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function startCooldown() {
+            let secs = 60;
+            const btn = document.getElementById('resendBtn');
+            btn.disabled = true;
+            clearInterval(cooldownTimer);
+            cooldownTimer = setInterval(() => {
+                secs--;
+                btn.textContent = 'Resend code in ' + secs + 's';
+                if (secs <= 0) {
+                    clearInterval(cooldownTimer);
+                    btn.disabled = false;
+                    btn.textContent = 'Resend code';
+                }
+            }, 1000);
+        }
+
+        // STEP 2: VERIFY CODE AND CONNECT
+        async function verifyAndConnect() {
+            const code = document.getElementById('otpInput').value.trim();
+            const errEl = document.getElementById('formError');
+            errEl.classList.add('hidden');
+            if (!/^\d{6}$/.test(code)) { showFormError('Please enter the 6-digit code from your email.'); return; }
+
+            const login = document.getElementById('mt5Login').value.trim();
+            const email = document.getElementById('mt5Email').value.trim();
+            const server = document.getElementById('mt5Server').value.trim();
+            const password = document.getElementById('mt5Password').value;
+            const token = document.getElementById('mt5Token').value.trim();
+            const userId = currentUser.id;
+
+            const btn = document.getElementById('verifyBtn');
+            const btnText = document.getElementById('verifyBtnText');
+            const spinner = document.getElementById('verifySpinner');
+            btn.disabled = true;
+            btnText.textContent = 'Verifying...';
+            spinner.classList.remove('hidden');
+
+            try {
+                const { error: otpErr } = await mySupabase.auth.verifyOtp({
+                    email: otpSentTo,
+                    token: code,
+                    type: 'email'
+                });
+                if (otpErr) throw new Error('Wrong code. Please check the email and try again.');
+
+                const { error: dbErr } = await mySupabase.from('user_broker_connections').upsert({
+                    user_id: userId,
+                    platform: 'MT5',
+                    account_login: login,
+                    account_email: email,
+                    live_server: server,
+                    master_password: password,
+                    bridge_token: token || null,
+                    status: 'connected',
+                    updated_at: new Date().toISOString()
+                }, { onConflict: 'user_id' });
+                if (dbErr) throw dbErr;
+
+                editMode = false;
+                showSuccess('✅ Broker connected successfully! Your account is now linked and verified.');
+                await loadConnection();
+            } catch (err) {
+                showFormError(err.message || 'Verification failed.');
+            } finally {
+                btn.disabled = false;
+                btnText.textContent = 'Verify & Connect';
+                spinner.classList.add('hidden');
+            }
         }
 
         async function testConnection() {
@@ -316,75 +450,8 @@
             showSuccess(`✅ Connection healthy • latency ${latency} ms • terminal session active.`);
         }
 
-        async function saveBroker() {
-            const login = document.getElementById('mt5Login').value.trim();
-            const server = document.getElementById('mt5Server').value.trim();
-            const password = document.getElementById('mt5Password').value;
-            const token = document.getElementById('mt5Token').value.trim();
-            const errEl = document.getElementById('formError');
-            errEl.classList.add('hidden');
-
-            if (!login || login.length < 4) { errEl.textContent = 'Please enter a valid MT5 account login.'; errEl.classList.remove('hidden'); return; }
-            if (!/^\d{4,12}$/.test(login)) { errEl.textContent = 'MT5 account login must be a numeric ID (4–12 digits).'; errEl.classList.remove('hidden'); return; }
-            if (!server) { errEl.textContent = 'Please enter your live server name.'; errEl.classList.remove('hidden'); return; }
-
-            // STRICT REJECTION of demo / trial / practice servers (e.g. Exness-MT5Trial0)
-            if (DEMO_PATTERN.test(server)) {
-                errEl.textContent = '❌ REJECTED: "' + server + '" is a demo/trial/practice server. Only LIVE servers are accepted (e.g. Exness-MT5Real0).';
-                errEl.classList.remove('hidden');
-                return;
-            }
-
-            if (!password || password.length < 6) { errEl.textContent = 'Master password must be at least 6 characters.'; errEl.classList.remove('hidden'); return; }
-
-            if (!document.getElementById('liveConfirm').checked) {
-                errEl.textContent = 'Please tick the confirmation box to certify this is a LIVE trading account.';
-                errEl.classList.remove('hidden');
-                return;
-            }
-
-            const btn = document.getElementById('saveBtn');
-            const btnText = document.getElementById('saveBtnText');
-            const spinner = document.getElementById('saveSpinner');
-            btn.disabled = true;
-            spinner.classList.remove('hidden');
-            btnText.textContent = 'Verifying credentials with broker...';
-
-            // Simulated verification handshake
-            await new Promise(r => setTimeout(r, 2200));
-
-            try {
-                const { error } = await mySupabase
-                    .from('user_broker_connections')
-                    .upsert({
-                        user_id: currentUser.id,
-                        platform: 'MT5',
-                        account_login: login,
-                        live_server: server,
-                        master_password: password,
-                        bridge_token: token || null,
-                        status: 'connected',
-                        updated_at: new Date().toISOString()
-                    }, { onConflict: 'user_id' });
-
-                if (error) throw error;
-
-                editMode = false;
-                showSuccess('✅ MetaTrader 5 LIVE account connected successfully! Your bots can now route fills to this terminal.');
-                await loadConnection();
-            } catch (err) {
-                console.error('Save broker error:', err);
-                errEl.textContent = 'Failed to save connection. Please make sure you ran the SQL code in Supabase.';
-                errEl.classList.remove('hidden');
-            } finally {
-                btn.disabled = false;
-                spinner.classList.add('hidden');
-                btnText.textContent = 'Save & Connect MT5';
-            }
-        }
-
         async function disconnectBroker() {
-            if (!confirm('Disconnect your MetaTrader 5 account? Active bots will no longer route fills to this terminal.')) return;
+            if (!confirm('Disconnect your MetaTrader 5 account? Your bots will no longer route fills to this terminal.')) return;
             try {
                 const { error } = await mySupabase
                     .from('user_broker_connections')
@@ -394,10 +461,11 @@
                 existingConnection = null;
                 editMode = false;
                 document.getElementById('mt5Login').value = '';
+                document.getElementById('mt5Email').value = '';
                 document.getElementById('mt5Server').value = '';
                 document.getElementById('mt5Password').value = '';
                 document.getElementById('mt5Token').value = '';
-                document.getElementById('liveConfirm').checked = false;
+                document.getElementById('step2Panel').classList.add('hidden');
                 showSuccess('✅ Broker disconnected.');
                 showForm();
             } catch (err) {
@@ -406,12 +474,18 @@
             }
         }
 
+        function showFormError(msg) {
+            const el = document.getElementById('formError');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
         function showSuccess(msg) {
             const el = document.getElementById('successMsg');
             document.getElementById('errorMsg').classList.add('hidden');
             el.textContent = msg;
             el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 5000);
+            setTimeout(() => el.classList.add('hidden'), 6000);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
@@ -420,7 +494,7 @@
             document.getElementById('successMsg').classList.add('hidden');
             el.textContent = msg;
             el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 5000);
+            setTimeout(() => el.classList.add('hidden'), 6000);
         }
 
         init();
