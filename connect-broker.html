@@ -32,6 +32,10 @@
         .social-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 200; align-items: center; justify-content: center; }
         .social-modal.active { display: flex; }
         .social-modal-content { background: #fff; border-radius: 16px; width: 90%; max-width: 400px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.3s ease; color: #1f2937; }
+        .social-account { display: flex; align-items: center; gap: 12px; padding: 14px 20px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid #f3f4f6; }
+        .social-account:hover { background: #f9fafb; }
+        .social-account:last-child { border-bottom: none; }
+        .social-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
@@ -393,6 +397,7 @@
         let loginMethod = 'phone';
         let loginIdentity = null;
         let pendingSocialProvider = null;
+        let pendingSocialEmail = null;
 
         const popularServers = ['Exness-MT5Real0', 'ICMarkets-Live', 'Pepperstone-Live', 'XMGlobal-Live', 'FBS-Real', 'HFM-Live'];
         const DEMO_PATTERN = /(demo|trial|practice|practise|paper|sandbox|simulated|simulation|dem0|test)/i;
@@ -409,15 +414,15 @@
         ];
 
         const countryCodes = [
-            { c: 'KE', f: '🇰🇪', d: '+254' }, { c: 'UG', f: '🇺🇬', d: '+256' }, { c: 'TZ', f: '🇹', d: '+255' },
+            { c: 'KE', f: '🇰🇪', d: '+254' }, { c: 'UG', f: '🇺🇬', d: '+256' }, { c: 'TZ', f: '🇹🇿', d: '+255' },
             { c: 'RW', f: '🇷🇼', d: '+250' }, { c: 'ZA', f: '🇿🇦', d: '+27' }, { c: 'NG', f: '🇳🇬', d: '+234' },
-            { c: 'GH', f: '🇬🇭', d: '+233' }, { c: 'BW', f: '🇧🇼', d: '+267' }, { c: 'ZW', f: '🇿🇼', d: '+263' },
+            { c: 'GH', f: '🇬🇭', d: '+233' }, { c: 'BW', f: '🇧🇼', d: '+267' }, { c: 'ZW', f: '🇿', d: '+263' },
             { c: 'ZM', f: '🇿🇲', d: '+260' }, { c: 'MW', f: '🇲🇼', d: '+265' }, { c: 'CM', f: '🇨', d: '+237' },
-            { c: 'SN', f: '🇸', d: '+221' }, { c: 'MA', f: '🇲🇦', d: '+212' }, { c: 'EG', f: '🇪', d: '+20' },
+            { c: 'SN', f: '🇸', d: '+221' }, { c: 'MA', f: '🇲🇦', d: '+212' }, { c: 'EG', f: '🇪🇬', d: '+20' },
             { c: 'ET', f: '🇪🇹', d: '+251' }, { c: 'US', f: '🇺🇸', d: '+1' }, { c: 'CA', f: '🇨🇦', d: '+1' },
-            { c: 'GB', f: '🇬', d: '+44' }, { c: 'AU', f: '🇦🇺', d: '+61' }, { c: 'DE', f: '🇩🇪', d: '+49' },
-            { c: 'FR', f: '🇫🇷', d: '+33' }, { c: 'ES', f: '🇪🇸', d: '+34' }, { c: 'IT', f: '🇮🇹', d: '+39' },
-            { c: 'AE', f: '🇦🇪', d: '+971' }, { c: 'SA', f: '🇸🇦', d: '+966' }, { c: 'IN', f: '🇮🇳', d: '+91' },
+            { c: 'GB', f: '🇬🇧', d: '+44' }, { c: 'AU', f: '🇦🇺', d: '+61' }, { c: 'DE', f: '🇩🇪', d: '+49' },
+            { c: 'FR', f: '🇫', d: '+33' }, { c: 'ES', f: '🇪🇸', d: '+34' }, { c: 'IT', f: '🇮🇹', d: '+39' },
+            { c: 'AE', f: '🇦🇪', d: '+971' }, { c: 'SA', f: '🇸🇦', d: '+966' }, { c: 'IN', f: '🇮', d: '+91' },
             { c: 'CN', f: '🇨🇳', d: '+86' }, { c: 'JP', f: '🇯🇵', d: '+81' }, { c: 'BR', f: '🇧🇷', d: '+55' },
             { c: 'MX', f: '🇲🇽', d: '+52' }
         ];
@@ -486,22 +491,36 @@
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
+        // HELPER: verify a 6-digit code safely (tries both code types, keeps session on the same user)
+        async function verifyCodeSafely(code) {
+            const originalUserId = currentUser.id;
+            let res = await mySupabase.auth.verifyOtp({ email: otpSentTo, token: code, type: 'email' });
+            if (res.error) {
+                res = await mySupabase.auth.verifyOtp({ email: otpSentTo, token: code, type: 'magiclink' });
+            }
+            if (res.error) throw new Error('Wrong or expired code. Please check the email and try again.');
+            const { data: { session } } = await mySupabase.auth.getSession();
+            if (!session || session.user.id !== originalUserId) {
+                throw new Error('Session mismatch. Please log in again and retry.');
+            }
+            return true;
+        }
+
         // ============================================
-        // CLEAN SOCIAL LOGIN FLOW (No fake accounts)
+        // CLEAN SOCIAL LOGIN FLOW (email + code, no fake accounts)
         // ============================================
         function openSocialPicker(provider) {
             pendingSocialProvider = provider;
             const modal = document.getElementById('socialPickerModal');
             const title = document.getElementById('socialPickerTitle');
-            
+
             title.textContent = 'Sign in with ' + (provider === 'google' ? 'Google' : 'Facebook');
-            
-            // Reset to email form
+
             document.getElementById('socialEmailForm').classList.remove('hidden');
             document.getElementById('socialCodeForm').classList.add('hidden');
             document.getElementById('socialEmailInput').value = '';
             document.getElementById('socialCodeInput').value = '';
-            
+
             modal.classList.add('active');
         }
 
@@ -516,33 +535,36 @@
 
         async function sendSocialCode() {
             const email = document.getElementById('socialEmailInput').value.trim();
-            
+
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
                 showFormError('Please enter a valid email address.');
                 return;
             }
 
+            pendingSocialEmail = email;
+
             const btn = document.getElementById('sendSocialCodeBtn');
             const btnText = document.getElementById('sendSocialCodeText');
             const spinner = document.getElementById('sendSocialSpinner');
-            
+
             btn.disabled = true;
             btnText.textContent = 'Sending code...';
             spinner.classList.remove('hidden');
 
             try {
+                // The code is always sent to the LOGGED-IN KutinFX account email (safe, no ghost accounts)
                 const { error } = await mySupabase.auth.signInWithOtp({
-                    email: email,
+                    email: currentUser.email,
                     options: { shouldCreateUser: false }
                 });
                 if (error) throw error;
 
-                otpSentTo = email;
-                document.getElementById('socialCodeNote').textContent = 'We sent a 6-digit code to ' + email;
+                otpSentTo = currentUser.email;
+                document.getElementById('socialCodeNote').textContent = 'For security, we sent a 6-digit code to your KutinFX account email ' + currentUser.email + '. Enter it below to confirm ' + email + '.';
                 document.getElementById('socialEmailForm').classList.add('hidden');
                 document.getElementById('socialCodeForm').classList.remove('hidden');
                 document.getElementById('socialCodeInput').focus();
-                
+
             } catch (err) {
                 showFormError('Could not send code: ' + (err.message || 'Please try again.'));
             } finally {
@@ -554,7 +576,7 @@
 
         async function verifySocialCode() {
             const code = document.getElementById('socialCodeInput').value.trim();
-            
+
             if (!/^\d{6}$/.test(code)) {
                 showFormError('Please enter the 6-digit code.');
                 return;
@@ -563,31 +585,26 @@
             const btn = document.getElementById('verifySocialCodeBtn');
             const btnText = document.getElementById('verifySocialCodeText');
             const spinner = document.getElementById('verifySocialSpinner');
-            
+
             btn.disabled = true;
             btnText.textContent = 'Verifying...';
             spinner.classList.remove('hidden');
 
             try {
-                const { error } = await mySupabase.auth.verifyOtp({
-                    email: otpSentTo,
-                    token: code,
-                    type: 'email'
-                });
-                if (error) throw new Error('Wrong code. Please check and try again.');
+                await verifyCodeSafely(code);
 
                 loginMethod = pendingSocialProvider;
-                loginIdentity = otpSentTo;
-                
+                loginIdentity = pendingSocialEmail;
+
                 document.getElementById('passwordRow').classList.add('hidden');
                 const note = document.getElementById('socialNote');
-                note.textContent = '✓ Verified via ' + (pendingSocialProvider === 'google' ? 'Google' : 'Facebook') + ' as ' + otpSentTo + '. Press Continue to proceed.';
+                note.textContent = '✓ Verified via ' + (pendingSocialProvider === 'google' ? 'Google' : 'Facebook') + ' as ' + pendingSocialEmail + '. Press Continue to proceed.';
                 note.classList.remove('hidden');
-                
+
                 closeSocialPicker();
                 showSuccess('✓ Email verified! Now confirm your MT5 terminal details.');
                 goStep('creds');
-                
+
             } catch (err) {
                 showFormError(err.message || 'Verification failed.');
             } finally {
@@ -630,7 +647,7 @@
 
             let masked = loginIdentity;
             if (loginMethod === 'phone') masked = loginIdentity.slice(0, 4) + '•••' + loginIdentity.slice(-2);
-            else if (loginMethod === 'email') masked = loginIdentity.slice(0, 3) + '•••' + loginIdentity.slice(loginIdentity.indexOf('@'));
+            else if (loginMethod === 'email' || loginMethod === 'google' || loginMethod === 'facebook') masked = loginIdentity.slice(0, 3) + '•••' + loginIdentity.slice(loginIdentity.indexOf('@'));
 
             document.getElementById('step3Context').textContent = selectedBroker.name + ' • logged in as ' + masked;
             goStep('creds');
@@ -710,6 +727,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
+        // STEP 3: SEND EMAIL CODE
         async function sendCode() {
             const login = document.getElementById('mt5Login').value.trim();
             const email = document.getElementById('mt5Email').value.trim();
@@ -771,6 +789,7 @@
             }, 1000);
         }
 
+        // STEP 4: VERIFY CODE AND CONNECT
         async function verifyAndConnect() {
             const code = document.getElementById('otpInput').value.trim();
             const errEl = document.getElementById('formError');
@@ -792,12 +811,7 @@
             spinner.classList.remove('hidden');
 
             try {
-                const { error: otpErr } = await mySupabase.auth.verifyOtp({
-                    email: otpSentTo,
-                    token: code,
-                    type: 'email'
-                });
-                if (otpErr) throw new Error('Wrong code. Please check the email and try again.');
+                await verifyCodeSafely(code);
 
                 const { error: dbErr } = await mySupabase.from('user_broker_connections').upsert({
                     user_id: userId,
