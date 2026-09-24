@@ -28,6 +28,15 @@
         .method-tab.active { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: #f59e0b; }
         .social-btn { transition: all 0.2s ease; }
         .social-btn:hover { transform: translateY(-2px); }
+        /* Social Account Picker Modal */
+        .social-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 200; align-items: center; justify-content: center; }
+        .social-modal.active { display: flex; }
+        .social-modal-content { background: #fff; border-radius: 16px; width: 90%; max-width: 400px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: slideUp 0.3s ease; color: #1f2937; }
+        .social-account { display: flex; align-items: center; gap: 12px; padding: 14px 20px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid #f3f4f6; }
+        .social-account:hover { background: #f9fafb; }
+        .social-account:last-child { border-bottom: none; }
+        .social-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -220,11 +229,11 @@
 
                 <!-- Social buttons -->
                 <div class="grid grid-cols-2 gap-3">
-                    <button onclick="socialLogin('google')" id="googleBtn" class="social-btn flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-slate-800 font-medium py-3 rounded-xl transition-all text-sm">
+                    <button onclick="openSocialPicker('google')" id="googleBtn" class="social-btn flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-slate-800 font-medium py-3 rounded-xl transition-all text-sm">
                         <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18A10.97 10.97 0 001 12c0 1.77.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
                         Google
                     </button>
-                    <button onclick="socialLogin('facebook')" id="facebookBtn" class="social-btn flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166fe5] text-white font-medium py-3 rounded-xl transition-all text-sm">
+                    <button onclick="openSocialPicker('facebook')" id="facebookBtn" class="social-btn flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166fe5] text-white font-medium py-3 rounded-xl transition-all text-sm">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                         Facebook
                     </button>
@@ -336,6 +345,39 @@
                 <div class="w-10 h-10 mx-auto rounded-full gold-gradient flex items-center justify-center text-white font-bold mb-3">4</div>
                 <h4 class="text-white font-semibold text-sm mb-1">Verify & Connect</h4>
                 <p class="text-slate-400 text-xs">Your live MT5 terminal is linked to KutinFX.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SOCIAL ACCOUNT PICKER MODAL -->
+    <div id="socialPickerModal" class="social-modal" onclick="if(event.target===this) closeSocialPicker()">
+        <div class="social-modal-content">
+            <div class="p-5 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800" id="socialPickerTitle">Sign in with Google</h3>
+                    <p class="text-xs text-gray-500">Choose an account to continue to KutinFX</p>
+                </div>
+                <button onclick="closeSocialPicker()" class="text-gray-400 hover:text-gray-600 p-1">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div id="socialAccountsList"></div>
+            <div id="socialVerificationStatus" class="hidden p-5 bg-gray-50 text-center">
+                <div id="socialSpinner" class="flex flex-col items-center gap-2">
+                    <svg class="animate-spin h-8 w-8 text-amber-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    <p class="text-sm text-gray-600 font-medium" id="socialStatusText">Verifying with broker...</p>
+                </div>
+                <div id="socialErrorState" class="hidden">
+                    <div class="w-12 h-12 mx-auto rounded-full bg-red-100 flex items-center justify-center mb-3">
+                        <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+                    </div>
+                    <h4 class="text-base font-bold text-gray-800 mb-1">Account Not Found</h4>
+                    <p class="text-sm text-gray-600 mb-4" id="socialErrorText"></p>
+                    <div class="flex gap-2">
+                        <button onclick="closeSocialPicker()" class="flex-1 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium text-sm hover:bg-gray-100">Try Another</button>
+                        <a id="brokerLink" href="#" target="_blank" class="flex-1 py-2.5 rounded-lg bg-amber-500 text-white font-medium text-sm hover:bg-amber-600 text-center">Go to Broker</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -453,22 +495,103 @@
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
-        // NEW: Google / Facebook simulated social login
-        async function socialLogin(provider) {
-            const btn = document.getElementById(provider + 'Btn');
-            const other = document.getElementById((provider === 'google' ? 'facebook' : 'google') + 'Btn');
-            btn.disabled = true; other.disabled = true;
-            const original = btn.innerHTML;
-            btn.innerHTML = '<svg class="spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Connecting...';
-            await new Promise(r => setTimeout(r, 1500));
-            btn.innerHTML = original;
-            btn.disabled = false; other.disabled = false;
-            loginMethod = provider;
-            loginIdentity = provider + ' account';
-            document.getElementById('passwordRow').classList.add('hidden');
-            const note = document.getElementById('socialNote');
-            note.textContent = '✓ Connected via ' + (provider === 'google' ? 'Google' : 'Facebook') + '. Press Continue to proceed.';
-            note.classList.remove('hidden');
+        // ============================================
+        // REALISTIC SOCIAL LOGIN FLOW
+        // ============================================
+        let pendingSocialProvider = null;
+
+        function openSocialPicker(provider) {
+            pendingSocialProvider = provider;
+            const modal = document.getElementById('socialPickerModal');
+            const title = document.getElementById('socialPickerTitle');
+            const list = document.getElementById('socialAccountsList');
+            const statusBox = document.getElementById('socialVerificationStatus');
+            
+            title.textContent = 'Sign in with ' + (provider === 'google' ? 'Google' : 'Facebook');
+            statusBox.classList.add('hidden');
+            document.getElementById('socialSpinner').classList.remove('hidden');
+            document.getElementById('socialErrorState').classList.add('hidden');
+            list.classList.remove('hidden');
+            
+            // Fake accounts for the picker
+            const accounts = [
+                { email: 'linny.trader@gmail.com', name: 'Linny Trader', color: '#10b981', verified: true },
+                { email: 'john.doe@gmail.com', name: 'John Doe', color: '#3b82f6', verified: false },
+                { email: 'sarah.investor@gmail.com', name: 'Sarah Investor', color: '#8b5cf6', verified: false }
+            ];
+            
+            list.innerHTML = accounts.map((acc, i) => `
+                <div class="social-account" onclick="selectSocialAccount('${acc.email}', '${acc.name}', ${acc.verified})">
+                    <div class="social-avatar" style="background-color: ${acc.color}">${acc.name.charAt(0)}</div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-800">${acc.name}</p>
+                        <p class="text-xs text-gray-500">${acc.email}</p>
+                    </div>
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </div>
+            `).join('');
+            
+            modal.classList.add('active');
+        }
+
+        function closeSocialPicker() {
+            document.getElementById('socialPickerModal').classList.remove('active');
+        }
+
+        async function selectSocialAccount(email, name, isVerified) {
+            const list = document.getElementById('socialAccountsList');
+            const statusBox = document.getElementById('socialVerificationStatus');
+            const spinner = document.getElementById('socialSpinner');
+            const errorState = document.getElementById('socialErrorState');
+            const statusText = document.getElementById('socialStatusText');
+            
+            list.classList.add('hidden');
+            statusBox.classList.remove('hidden');
+            spinner.classList.remove('hidden');
+            errorState.classList.add('hidden');
+            
+            statusText.textContent = 'Verifying account with ' + selectedBroker.name + '...';
+            
+            // Simulate network delay
+            await new Promise(r => setTimeout(r, 2000));
+            
+            if (isVerified) {
+                // SUCCESS: This account is linked to the broker
+                statusText.textContent = '✓ Account verified! Proceeding to MT5 details...';
+                statusText.classList.add('text-green-600');
+                await new Promise(r => setTimeout(r, 1200));
+                
+                loginMethod = pendingSocialProvider;
+                loginIdentity = email;
+                
+                document.getElementById('passwordRow').classList.add('hidden');
+                const note = document.getElementById('socialNote');
+                note.textContent = '✓ Connected via ' + (pendingSocialProvider === 'google' ? 'Google' : 'Facebook') + ' as ' + email + '. Press Continue to proceed.';
+                note.classList.remove('hidden');
+                
+                closeSocialPicker();
+                showSuccess('✓ Signed in via ' + (pendingSocialProvider === 'google' ? 'Google' : 'Facebook') + ' as ' + email + '. Now confirm your MT5 terminal details.');
+                goStep('creds');
+            } else {
+                // FAILURE: This account is NOT linked to the broker
+                spinner.classList.add('hidden');
+                errorState.classList.remove('hidden');
+                document.getElementById('socialErrorText').textContent = 'We checked with ' + selectedBroker.name + ', but this email is not linked to any live trading account yet. Please open a live account at ' + selectedBroker.name + ' first, then come back here to connect it.';
+                
+                // Link to broker website
+                const brokerUrls = {
+                    'Exness': 'https://www.exness.com',
+                    'IC Markets': 'https://www.icmarkets.com',
+                    'Pepperstone': 'https://www.pepperstone.com',
+                    'XM': 'https://www.xm.com',
+                    'FBS': 'https://www.fbs.com',
+                    'HFM': 'https://www.hfm.com',
+                    'OctaFX': 'https://www.octafx.com',
+                    'Deriv': 'https://www.deriv.com'
+                };
+                document.getElementById('brokerLink').href = brokerUrls[selectedBroker.name] || '#';
+                document.getElementById('brokerLink').textContent = 'Go to ' + selectedBroker.name;
+            }
         }
 
         // NEW: validate login step and move to MT5 details
