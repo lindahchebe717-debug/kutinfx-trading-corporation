@@ -21,6 +21,13 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner { animation: spin 0.8s linear infinite; }
         .otp-input { letter-spacing: 0.5em; text-align: center; font-size: 1.5rem; font-weight: 700; }
+        .broker-card { transition: all 0.2s ease; cursor: pointer; }
+        .broker-card:hover { transform: translateY(-3px); border-color: rgba(245, 158, 11, 0.5); }
+        .broker-card.selected { border-color: #f59e0b; background: rgba(245, 158, 11, 0.08); }
+        .method-tab { transition: all 0.2s ease; }
+        .method-tab.active { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: #f59e0b; }
+        .social-btn { transition: all 0.2s ease; }
+        .social-btn:hover { transform: translateY(-2px); }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -51,7 +58,7 @@
         <!-- Header -->
         <div class="text-center mb-8">
             <h1 class="text-4xl font-bold text-white mb-2">Connect <span class="text-amber-500">Broker</span></h1>
-            <p class="text-slate-400 text-lg">Link your live MetaTrader 5 account — verified by email code, like real brokers do.</p>
+            <p class="text-slate-400 text-lg">Choose your broker, log in securely, and link your live MetaTrader 5 account.</p>
         </div>
 
         <!-- Messages -->
@@ -76,6 +83,10 @@
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div class="bg-slate-800/50 rounded-xl p-4">
+                    <p class="text-slate-400 text-xs mb-1">Broker</p>
+                    <p class="text-white font-semibold" id="connBroker">—</p>
+                </div>
+                <div class="bg-slate-800/50 rounded-xl p-4">
                     <p class="text-slate-400 text-xs mb-1">Account Login</p>
                     <p class="text-white font-mono font-semibold" id="connLogin">—</p>
                 </div>
@@ -84,7 +95,7 @@
                     <p class="text-white font-mono font-semibold break-all" id="connServer">—</p>
                 </div>
                 <div class="bg-slate-800/50 rounded-xl p-4">
-                    <p class="text-slate-400 text-xs mb-1">Account Email</p>
+                    <p class="text-slate-400 text-xs mb-1">Account Email / Phone</p>
                     <p class="text-white font-semibold break-all" id="connEmail">—</p>
                 </div>
                 <div class="bg-slate-800/50 rounded-xl p-4">
@@ -135,56 +146,154 @@
 
             <div id="formError" class="hidden mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-300 text-sm text-center"></div>
 
-            <!-- STEP 1: CREDENTIALS -->
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Account number (login)</label>
-                    <input type="text" id="mt5Login" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="e.g. 51234567" oninput="this.value = this.value.replace(/\D/g, '')">
-                    <p class="text-xs text-slate-500 mt-1">Your broker account number — digits only.</p>
+            <!-- NEW STEP 1: CHOOSE YOUR BROKER -->
+            <div id="stepBrokerPanel">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold flex-shrink-0">1</div>
+                    <div>
+                        <h3 class="text-white font-semibold">Step 1: Choose your broker</h3>
+                        <p class="text-slate-400 text-xs">Tap the broker where your live MT5 account is held.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="brokerGrid"></div>
+            </div>
+
+            <!-- NEW STEP 2: BROKER LOGIN -->
+            <div id="stepLoginPanel" class="hidden mt-6 border-t border-slate-700/50 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold flex-shrink-0">2</div>
+                        <div>
+                            <h3 class="text-white font-semibold">Step 2: Login to <span id="loginBrokerName" class="text-amber-400"></span></h3>
+                            <p class="text-slate-400 text-xs">Use your phone number, email, or social account.</p>
+                        </div>
+                    </div>
+                    <button onclick="goStep('broker')" class="text-slate-400 hover:text-white text-xs">Change broker</button>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Account email</label>
-                    <input type="email" id="mt5Email" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="Email registered with your broker">
-                    <p class="text-xs text-slate-500 mt-1">The email on your broker account (stored with your credentials).</p>
+                <!-- Method tabs -->
+                <div class="flex gap-2 mb-4">
+                    <button onclick="setMethod('phone')" id="tabPhone" class="method-tab active flex-1 px-4 py-2.5 rounded-xl border border-slate-600 text-sm font-medium text-slate-300">📱 Phone number</button>
+                    <button onclick="setMethod('email')" id="tabEmail" class="method-tab flex-1 px-4 py-2.5 rounded-xl border border-slate-600 text-sm font-medium text-slate-300">📧 Email address</button>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Live server</label>
-                    <input type="text" id="mt5Server" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="e.g. Exness-MT5Real0">
-                    <div class="flex flex-wrap gap-2 mt-3" id="serverChips"></div>
+                <!-- Phone row -->
+                <div id="phoneRow" class="mb-4">
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Phone number (with country code)</label>
+                    <div class="flex gap-2">
+                        <select id="countryCode" class="input-dark px-3 py-3 rounded-xl text-white text-sm w-32 flex-shrink-0"></select>
+                        <input type="text" id="phoneNumber" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="712 345 678" oninput="this.value = this.value.replace(/\D/g, '')">
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1">Your number always starts with your country code (e.g. +254, +27, +234).</p>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Master password</label>
+                <!-- Email row -->
+                <div id="emailRow" class="hidden mb-4">
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Email address</label>
+                    <input type="email" id="loginEmail" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="you@example.com">
+                </div>
+
+                <!-- Password -->
+                <div id="passwordRow" class="mb-4">
+                    <label class="block text-sm font-medium text-slate-300 mb-2">Broker password</label>
                     <div class="relative">
-                        <input type="password" id="mt5Password" class="input-dark w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="••••••••">
-                        <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-400 transition-colors">
-                            <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                        <input type="password" id="loginPassword" class="input-dark w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-slate-500" placeholder="••••••••">
+                        <button type="button" onclick="toggleLoginPassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-400 transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         </button>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">Bridge token <span class="text-slate-500">(optional)</span></label>
-                    <input type="text" id="mt5Token" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="MetaApi bridge token">
+                <div id="socialNote" class="hidden mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-green-300 text-xs text-center"></div>
+
+                <button onclick="continueLogin()" id="loginContinueBtn" class="w-full gold-gradient text-white font-semibold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg text-base flex items-center justify-center gap-2">
+                    <span id="loginContinueText">Continue</span>
+                    <svg id="loginSpinner" class="hidden spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </button>
+
+                <!-- OR divider -->
+                <div class="flex items-center gap-3 my-4">
+                    <div class="flex-1 h-px bg-slate-700"></div>
+                    <span class="text-slate-500 text-xs">OR CONTINUE WITH</span>
+                    <div class="flex-1 h-px bg-slate-700"></div>
                 </div>
 
-                <button onclick="sendCode()" id="sendCodeBtn" class="w-full gold-gradient text-white font-semibold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg text-base flex items-center justify-center gap-2">
-                    <span id="sendCodeBtnText">Send Verification Code to My Email</span>
-                    <svg id="sendSpinner" class="hidden spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                </button>
-                <p class="text-xs text-slate-500 text-center">For security, the code is sent to your KutinFX account email.</p>
+                <!-- Social buttons -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="socialLogin('google')" id="googleBtn" class="social-btn flex items-center justify-center gap-2 bg-white hover:bg-gray-100 text-slate-800 font-medium py-3 rounded-xl transition-all text-sm">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.27-4.74 3.27-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.1c-.22-.66-.35-1.36-.35-2.1s.13-1.44.35-2.1V7.06H2.18A10.97 10.97 0 001 12c0 1.77.43 3.45 1.18 4.94l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+                        Google
+                    </button>
+                    <button onclick="socialLogin('facebook')" id="facebookBtn" class="social-btn flex items-center justify-center gap-2 bg-[#1877F2] hover:bg-[#166fe5] text-white font-medium py-3 rounded-xl transition-all text-sm">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                        Facebook
+                    </button>
+                </div>
             </div>
 
-            <!-- STEP 2: OTP VERIFICATION -->
+            <!-- STEP 3: MT5 CREDENTIALS (your existing form, now Step 3) -->
+            <div id="step3Panel" class="hidden mt-6 border-t border-slate-700/50 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full gold-gradient flex items-center justify-center text-white font-bold flex-shrink-0">3</div>
+                        <div>
+                            <h3 class="text-white font-semibold">Step 3: MT5 terminal details</h3>
+                            <p class="text-slate-400 text-xs" id="step3Context"></p>
+                        </div>
+                    </div>
+                    <button onclick="goStep('login')" class="text-slate-400 hover:text-white text-xs">← Back to login</button>
+                </div>
+
+                <div class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Account number (login)</label>
+                        <input type="text" id="mt5Login" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="e.g. 51234567" oninput="this.value = this.value.replace(/\D/g, '')">
+                        <p class="text-xs text-slate-500 mt-1">Your broker account number — digits only.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Account email</label>
+                        <input type="email" id="mt5Email" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500" placeholder="Email registered with your broker">
+                        <p class="text-xs text-slate-500 mt-1">The email on your broker account (stored with your credentials).</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Live server</label>
+                        <input type="text" id="mt5Server" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="e.g. Exness-MT5Real0">
+                        <div class="flex flex-wrap gap-2 mt-3" id="serverChips"></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Master password</label>
+                        <div class="relative">
+                            <input type="password" id="mt5Password" class="input-dark w-full px-4 py-3 pr-12 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="••••••••">
+                            <button type="button" onclick="togglePassword()" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-amber-400 transition-colors">
+                                <svg id="eyeIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-2">Bridge token <span class="text-slate-500">(optional)</span></label>
+                        <input type="text" id="mt5Token" class="input-dark w-full px-4 py-3 rounded-xl text-white placeholder-slate-500 font-mono" placeholder="MetaApi bridge token">
+                    </div>
+
+                    <button onclick="sendCode()" id="sendCodeBtn" class="w-full gold-gradient text-white font-semibold py-4 rounded-xl hover:opacity-90 transition-all shadow-lg text-base flex items-center justify-center gap-2">
+                        <span id="sendCodeBtnText">Send Verification Code to My Email</span>
+                        <svg id="sendSpinner" class="hidden spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </button>
+                    <p class="text-xs text-slate-500 text-center">For security, the code is sent to your KutinFX account email.</p>
+                </div>
+            </div>
+
+            <!-- STEP 4: OTP VERIFICATION (your existing OTP, now Step 4) -->
             <div id="step2Panel" class="hidden mt-6 border-t border-slate-700/50 pt-6">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
                         <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l9 6 9-6M3 8v8a2 2 0 002 2h14a2 2 0 002-2V8m-18 0l9-6 9 6"/></svg>
                     </div>
                     <div>
-                        <h3 class="text-white font-semibold">Step 2: Enter your verification code</h3>
+                        <h3 class="text-white font-semibold">Step 4: Enter your verification code</h3>
                         <p class="text-slate-400 text-xs" id="otpSentNote"></p>
                     </div>
                 </div>
@@ -207,21 +316,26 @@
         </div>
 
         <!-- HOW IT WORKS -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div class="glass-card rounded-xl p-5 text-center">
                 <div class="w-10 h-10 mx-auto rounded-full gold-gradient flex items-center justify-center text-white font-bold mb-3">1</div>
-                <h4 class="text-white font-semibold text-sm mb-1">Enter Credentials</h4>
-                <p class="text-slate-400 text-xs">Account number, email, live server and master password.</p>
+                <h4 class="text-white font-semibold text-sm mb-1">Choose Broker</h4>
+                <p class="text-slate-400 text-xs">Pick your broker from the supported list.</p>
             </div>
             <div class="glass-card rounded-xl p-5 text-center">
                 <div class="w-10 h-10 mx-auto rounded-full gold-gradient flex items-center justify-center text-white font-bold mb-3">2</div>
-                <h4 class="text-white font-semibold text-sm mb-1">Receive Email Code</h4>
-                <p class="text-slate-400 text-xs">A 6-digit one-time code arrives in your inbox instantly.</p>
+                <h4 class="text-white font-semibold text-sm mb-1">Login Securely</h4>
+                <p class="text-slate-400 text-xs">Phone with country code, email, Google or Facebook.</p>
             </div>
             <div class="glass-card rounded-xl p-5 text-center">
                 <div class="w-10 h-10 mx-auto rounded-full gold-gradient flex items-center justify-center text-white font-bold mb-3">3</div>
+                <h4 class="text-white font-semibold text-sm mb-1">Email Code</h4>
+                <p class="text-slate-400 text-xs">A 6-digit one-time code arrives in your inbox.</p>
+            </div>
+            <div class="glass-card rounded-xl p-5 text-center">
+                <div class="w-10 h-10 mx-auto rounded-full gold-gradient flex items-center justify-center text-white font-bold mb-3">4</div>
                 <h4 class="text-white font-semibold text-sm mb-1">Verify & Connect</h4>
-                <p class="text-slate-400 text-xs">Enter the code and the broker is linked to your account.</p>
+                <p class="text-slate-400 text-xs">Your live MT5 terminal is linked to KutinFX.</p>
             </div>
         </div>
     </div>
@@ -236,9 +350,39 @@
         let editMode = false;
         let otpSentTo = null;
         let cooldownTimer = null;
+        let selectedBroker = null;
+        let loginMethod = 'phone';
+        let loginIdentity = null;
 
         const popularServers = ['Exness-MT5Real0', 'ICMarkets-Live', 'Pepperstone-Live', 'XMGlobal-Live', 'FBS-Real', 'HFM-Live'];
         const DEMO_PATTERN = /(demo|trial|practice|practise|paper|sandbox|simulated|simulation|dem0|test)/i;
+
+        // NEW: Supported brokers
+        const brokers = [
+            { name: 'Exness', color: 'from-amber-400 to-amber-600', tag: 'Global • MT5', server: 'Exness-MT5Real0' },
+            { name: 'IC Markets', color: 'from-blue-500 to-blue-700', tag: 'Raw spreads', server: 'ICMarkets-Live' },
+            { name: 'Pepperstone', color: 'from-teal-500 to-teal-700', tag: 'Fast execution', server: 'Pepperstone-Live' },
+            { name: 'XM', color: 'from-red-500 to-red-700', tag: 'Low minimums', server: 'XMGlobal-Live' },
+            { name: 'FBS', color: 'from-purple-500 to-purple-700', tag: 'Cent accounts', server: 'FBS-Real' },
+            { name: 'HFM', color: 'from-orange-500 to-orange-700', tag: 'Multi-asset', server: 'HFM-Live' },
+            { name: 'OctaFX', color: 'from-cyan-500 to-cyan-700', tag: 'Copy trading', server: 'OctaFX-Real' },
+            { name: 'Deriv', color: 'from-rose-500 to-rose-700', tag: 'MT5 + Synthetics', server: 'Deriv-Live' }
+        ];
+
+        // NEW: Country codes for phone login
+        const countryCodes = [
+            { c: 'KE', f: '🇰🇪', d: '+254' }, { c: 'UG', f: '🇺🇬', d: '+256' }, { c: 'TZ', f: '🇹', d: '+255' },
+            { c: 'RW', f: '🇷🇼', d: '+250' }, { c: 'ZA', f: '🇿🇦', d: '+27' }, { c: 'NG', f: '🇳🇬', d: '+234' },
+            { c: 'GH', f: '🇬🇭', d: '+233' }, { c: 'BW', f: '🇧🇼', d: '+267' }, { c: 'ZW', f: '🇿🇼', d: '+263' },
+            { c: 'ZM', f: '🇿🇲', d: '+260' }, { c: 'MW', f: '🇲🇼', d: '+265' }, { c: 'CM', f: '🇨', d: '+237' },
+            { c: 'SN', f: '🇸', d: '+221' }, { c: 'MA', f: '🇲🇦', d: '+212' }, { c: 'EG', f: '🇪', d: '+20' },
+            { c: 'ET', f: '🇪🇹', d: '+251' }, { c: 'US', f: '🇺🇸', d: '+1' }, { c: 'CA', f: '🇨🇦', d: '+1' },
+            { c: 'GB', f: '🇬', d: '+44' }, { c: 'AU', f: '🇦🇺', d: '+61' }, { c: 'DE', f: '🇩🇪', d: '+49' },
+            { c: 'FR', f: '🇫🇷', d: '+33' }, { c: 'ES', f: '🇪🇸', d: '+34' }, { c: 'IT', f: '🇮🇹', d: '+39' },
+            { c: 'AE', f: '🇦🇪', d: '+971' }, { c: 'SA', f: '🇸🇦', d: '+966' }, { c: 'IN', f: '🇮🇳', d: '+91' },
+            { c: 'CN', f: '🇨🇳', d: '+86' }, { c: 'JP', f: '🇯🇵', d: '+81' }, { c: 'BR', f: '🇧🇷', d: '+55' },
+            { c: 'MX', f: '🇲🇽', d: '+52' }
+        ];
 
         async function init() {
             const { data: { session } } = await mySupabase.auth.getSession();
@@ -251,8 +395,121 @@
                 document.getElementById('userAvatar').textContent = (profile.first_name || 'U')[0].toUpperCase();
             }
 
+            renderCountryCodes();
+            renderBrokers();
             renderServerChips();
             await loadConnection();
+        }
+
+        // NEW: render country code dropdown
+        function renderCountryCodes() {
+            document.getElementById('countryCode').innerHTML = countryCodes.map(x =>
+                `<option value="${x.d}" class="bg-slate-800">${x.f} ${x.d}</option>`
+            ).join('');
+        }
+
+        // NEW: render broker grid
+        function renderBrokers() {
+            document.getElementById('brokerGrid').innerHTML = brokers.map((b, i) => `
+                <button type="button" onclick="selectBroker(${i})" id="brokerCard${i}" class="broker-card glass-card rounded-xl p-4 text-center border border-slate-700/50">
+                    <div class="w-12 h-12 mx-auto rounded-xl bg-gradient-to-br ${b.color} flex items-center justify-center text-white font-bold text-lg mb-2 shadow-lg">${b.name.slice(0, 2).toUpperCase()}</div>
+                    <p class="text-white font-semibold text-sm">${b.name}</p>
+                    <p class="text-slate-500 text-[10px] mt-0.5">${b.tag}</p>
+                </button>
+            `).join('');
+        }
+
+        // NEW: step navigation
+        function goStep(step) {
+            document.getElementById('stepBrokerPanel').classList.toggle('hidden', step !== 'broker');
+            document.getElementById('stepLoginPanel').classList.toggle('hidden', step !== 'login');
+            document.getElementById('step3Panel').classList.toggle('hidden', step !== 'creds');
+            if (step !== 'creds') document.getElementById('step2Panel').classList.add('hidden');
+        }
+
+        // NEW: broker selected
+        function selectBroker(i) {
+            selectedBroker = brokers[i];
+            document.querySelectorAll('.broker-card').forEach(el => el.classList.remove('selected'));
+            document.getElementById('brokerCard' + i).classList.add('selected');
+            document.getElementById('mt5Server').value = selectedBroker.server;
+            document.getElementById('loginBrokerName').textContent = selectedBroker.name;
+            goStep('login');
+        }
+
+        // NEW: phone / email method tabs
+        function setMethod(m) {
+            loginMethod = m;
+            document.getElementById('tabPhone').classList.toggle('active', m === 'phone');
+            document.getElementById('tabEmail').classList.toggle('active', m === 'email');
+            document.getElementById('phoneRow').classList.toggle('hidden', m !== 'phone');
+            document.getElementById('emailRow').classList.toggle('hidden', m !== 'email');
+            document.getElementById('passwordRow').classList.remove('hidden');
+            document.getElementById('socialNote').classList.add('hidden');
+        }
+
+        function toggleLoginPassword() {
+            const input = document.getElementById('loginPassword');
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        // NEW: Google / Facebook simulated social login
+        async function socialLogin(provider) {
+            const btn = document.getElementById(provider + 'Btn');
+            const other = document.getElementById((provider === 'google' ? 'facebook' : 'google') + 'Btn');
+            btn.disabled = true; other.disabled = true;
+            const original = btn.innerHTML;
+            btn.innerHTML = '<svg class="spinner w-5 h-5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Connecting...';
+            await new Promise(r => setTimeout(r, 1500));
+            btn.innerHTML = original;
+            btn.disabled = false; other.disabled = false;
+            loginMethod = provider;
+            loginIdentity = provider + ' account';
+            document.getElementById('passwordRow').classList.add('hidden');
+            const note = document.getElementById('socialNote');
+            note.textContent = '✓ Connected via ' + (provider === 'google' ? 'Google' : 'Facebook') + '. Press Continue to proceed.';
+            note.classList.remove('hidden');
+        }
+
+        // NEW: validate login step and move to MT5 details
+        async function continueLogin() {
+            const errEl = document.getElementById('formError');
+            errEl.classList.add('hidden');
+
+            if (loginMethod === 'phone') {
+                const dial = document.getElementById('countryCode').value;
+                const num = document.getElementById('phoneNumber').value.trim();
+                if (!/^\d{6,15}$/.test(num)) { showFormError('Please enter a valid phone number after the country code.'); return; }
+                loginIdentity = dial + num;
+            } else if (loginMethod === 'email') {
+                const em = document.getElementById('loginEmail').value.trim();
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { showFormError('Please enter a valid email address.'); return; }
+                loginIdentity = em;
+            }
+
+            if (loginMethod === 'phone' || loginMethod === 'email') {
+                const pw = document.getElementById('loginPassword').value;
+                if (pw.length < 6) { showFormError('Broker password must be at least 6 characters.'); return; }
+            }
+
+            const btn = document.getElementById('loginContinueBtn');
+            const btnText = document.getElementById('loginContinueText');
+            const spinner = document.getElementById('loginSpinner');
+            btn.disabled = true;
+            btnText.textContent = 'Signing in to ' + selectedBroker.name + '...';
+            spinner.classList.remove('hidden');
+            await new Promise(r => setTimeout(r, 1600));
+            btn.disabled = false;
+            btnText.textContent = 'Continue';
+            spinner.classList.add('hidden');
+
+            let masked = loginIdentity;
+            if (loginMethod === 'phone') masked = loginIdentity.slice(0, 4) + '•••' + loginIdentity.slice(-2);
+            else if (loginMethod === 'email') masked = loginIdentity.slice(0, 3) + '•••' + loginIdentity.slice(loginIdentity.indexOf('@'));
+
+            document.getElementById('step3Context').textContent = selectedBroker.name + ' • logged in as ' + masked;
+            goStep('creds');
+            showSuccess('✓ Signed in to ' + selectedBroker.name + ' as ' + masked + '. Now confirm your MT5 terminal details.');
         }
 
         function renderServerChips() {
@@ -266,7 +523,7 @@
             const input = document.getElementById('mt5Password');
             input.type = input.type === 'password' ? 'text' : 'password';
         }
-        function backToStep1() { document.getElementById('step2Panel').classList.add('hidden'); }
+        function backToStep1() { goStep('creds'); }
 
         async function loadConnection() {
             try {
@@ -299,15 +556,19 @@
         function showConnectedCard(conn) {
             document.getElementById('brokerFormCard').classList.add('hidden');
             document.getElementById('connectedCard').classList.remove('hidden');
+            document.getElementById('connBroker').textContent = conn.broker_name || 'MetaTrader 5';
             document.getElementById('connLogin').textContent = maskLogin(conn.account_login);
             document.getElementById('connServer').textContent = conn.live_server;
-            document.getElementById('connEmail').textContent = conn.account_email || '—';
+            document.getElementById('connEmail').textContent = conn.account_phone || conn.account_email || '—';
             document.getElementById('connLatency').textContent = Math.floor(Math.random() * 40) + 18;
         }
 
         function showForm() {
             document.getElementById('connectedCard').classList.add('hidden');
             document.getElementById('brokerFormCard').classList.remove('hidden');
+            if (editMode) { goStep('creds'); }
+            else if (selectedBroker) { goStep('login'); }
+            else { goStep('broker'); }
         }
 
         function editConnection() {
@@ -317,13 +578,14 @@
                 document.getElementById('mt5Email').value = existingConnection.account_email || '';
                 document.getElementById('mt5Server').value = existingConnection.live_server;
                 document.getElementById('mt5Token').value = existingConnection.bridge_token || '';
+                document.getElementById('step3Context').textContent = (existingConnection.broker_name || 'Broker') + ' • updating credentials';
             }
             document.getElementById('step2Panel').classList.add('hidden');
             showForm();
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // STEP 1: SEND EMAIL CODE
+        // STEP 3: SEND EMAIL CODE
         async function sendCode() {
             const login = document.getElementById('mt5Login').value.trim();
             const email = document.getElementById('mt5Email').value.trim();
@@ -332,6 +594,7 @@
             const errEl = document.getElementById('formError');
             errEl.classList.add('hidden');
 
+            if (!selectedBroker && !editMode) { showFormError('Please choose your broker first.'); return; }
             if (!/^\d{4,12}$/.test(login)) { showFormError('Please enter your broker account number (4-12 digits, numbers only).'); return; }
             if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showFormError('Please enter the email registered with your broker.'); return; }
             if (!server) { showFormError('Please enter your live server name.'); return; }
@@ -384,7 +647,7 @@
             }, 1000);
         }
 
-        // STEP 2: VERIFY CODE AND CONNECT
+        // STEP 4: VERIFY CODE AND CONNECT
         async function verifyAndConnect() {
             const code = document.getElementById('otpInput').value.trim();
             const errEl = document.getElementById('formError');
@@ -416,8 +679,10 @@
                 const { error: dbErr } = await mySupabase.from('user_broker_connections').upsert({
                     user_id: userId,
                     platform: 'MT5',
+                    broker_name: selectedBroker ? selectedBroker.name : (existingConnection ? existingConnection.broker_name : null),
                     account_login: login,
                     account_email: email,
+                    account_phone: (loginMethod === 'phone' && loginIdentity) ? loginIdentity : null,
                     live_server: server,
                     master_password: password,
                     bridge_token: token || null,
@@ -460,6 +725,8 @@
                 if (error) throw error;
                 existingConnection = null;
                 editMode = false;
+                selectedBroker = null;
+                loginIdentity = null;
                 document.getElementById('mt5Login').value = '';
                 document.getElementById('mt5Email').value = '';
                 document.getElementById('mt5Server').value = '';
