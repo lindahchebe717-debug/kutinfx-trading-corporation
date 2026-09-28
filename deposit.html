@@ -42,6 +42,27 @@
             background: #10b981; 
             color: white;
         }
+        .guide-section {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        .guide-section.collapsed .guide-content {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+        }
+        .guide-section.expanded .guide-content {
+            max-height: 2000px;
+            opacity: 1;
+            margin-top: 1rem;
+        }
+        .guide-step {
+            transition: all 0.3s ease;
+        }
+        .guide-step:hover {
+            transform: translateX(4px);
+            background: rgba(245, 158, 11, 0.05);
+        }
     </style>
 </head>
 <body class="gradient-bg min-h-screen text-slate-200">
@@ -70,6 +91,76 @@
         <div class="text-center mb-10">
             <h1 class="text-4xl font-bold text-white mb-3">Make a Deposit</h1>
             <p class="text-slate-400 text-lg">Fund your account securely using cryptocurrency.</p>
+        </div>
+
+        <!-- NEW: Quick Deposit Guide (Collapsible) -->
+        <div class="guide-section expanded mb-8">
+            <button onclick="toggleGuide()" class="w-full glass-card rounded-xl p-5 flex items-center justify-between hover:border-amber-500/50 transition-all group">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white text-lg">
+                        💰
+                    </div>
+                    <div class="text-left">
+                        <h3 class="text-white font-semibold text-lg">Quick Deposit Guide</h3>
+                        <p class="text-slate-400 text-sm">5 easy steps to fund your account</p>
+                    </div>
+                </div>
+                <svg id="guideChevron" class="w-6 h-6 text-slate-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+            <div class="guide-content glass-card rounded-xl p-6 mt-3 border-t-0 rounded-t-none">
+                <div class="space-y-4">
+                    <!-- Step 1 -->
+                    <div class="guide-step flex items-start gap-4 p-3 rounded-lg">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-sm">1</div>
+                        <div>
+                            <h4 class="text-white font-semibold mb-1">Get Your Address</h4>
+                            <p class="text-slate-400 text-sm">Select your preferred cryptocurrency below and copy the deposit address we provide.</p>
+                        </div>
+                    </div>
+                    <!-- Step 2 -->
+                    <div class="guide-step flex items-start gap-4 p-3 rounded-lg">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-sm">2</div>
+                        <div>
+                            <h4 class="text-white font-semibold mb-1">Open Your Wallet</h4>
+                            <p class="text-slate-400 text-sm">Go to your external wallet or exchange (e.g., Binance, Bybit, Paybis, MetaMask).</p>
+                        </div>
+                    </div>
+                    <!-- Step 3 -->
+                    <div class="guide-step flex items-start gap-4 p-3 rounded-lg">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-sm">3</div>
+                        <div>
+                            <h4 class="text-white font-semibold mb-1">Withdraw/Send</h4>
+                            <p class="text-slate-400 text-sm">Select the same cryptocurrency, paste the copied address, and enter the amount you wish to deposit.</p>
+                        </div>
+                    </div>
+                    <!-- Step 4 - CRITICAL WARNING -->
+                    <div class="guide-step flex items-start gap-4 p-4 rounded-lg bg-red-500/10 border border-red-500/30">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 font-bold text-sm">⚠️</div>
+                        <div>
+                            <h4 class="text-red-300 font-semibold mb-1">CRITICAL: Double-check the Network</h4>
+                            <p class="text-slate-300 text-sm">The network in your wallet <strong class="text-red-300">MUST exactly match</strong> the network on our site (e.g., TRC20, ERC20, BEP20). Sending on the wrong network will result in <strong class="text-red-300">permanent loss of funds</strong>.</p>
+                        </div>
+                    </div>
+                    <!-- Step 5 -->
+                    <div class="guide-step flex items-start gap-4 p-3 rounded-lg">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 font-bold text-sm">✓</div>
+                        <div>
+                            <h4 class="text-white font-semibold mb-1">Confirm & Wait</h4>
+                            <p class="text-slate-400 text-sm">Approve the transaction. Your funds will arrive shortly after blockchain confirmations.</p>
+                        </div>
+                    </div>
+                    <!-- Pro Tip -->
+                    <div class="guide-step flex items-start gap-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                        <div class="flex-shrink-0 w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 font-bold text-sm">💡</div>
+                        <div>
+                            <h4 class="text-blue-300 font-semibold mb-1">Pro Tip</h4>
+                            <p class="text-slate-300 text-sm">Save your Transaction ID (TXID/Hash) after sending — you'll need it if you ever need to track your deposit with our support team.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Step Indicator -->
@@ -266,6 +357,22 @@
                 gradient: 'from-green-400 to-green-600'
             }
         };
+
+        // Toggle Guide Section
+        function toggleGuide() {
+            const section = document.querySelector('.guide-section');
+            const chevron = document.getElementById('guideChevron');
+            
+            if (section.classList.contains('expanded')) {
+                section.classList.remove('expanded');
+                section.classList.add('collapsed');
+                chevron.style.transform = 'rotate(0deg)';
+            } else {
+                section.classList.remove('collapsed');
+                section.classList.add('expanded');
+                chevron.style.transform = 'rotate(180deg)';
+            }
+        }
 
         // Initialize
         async function init() {
