@@ -586,8 +586,9 @@
             document.getElementById('investBtn').textContent = 'Processing...';
             
             try {
-                const endDate = new Date();
-                endDate.setHours(endDate.getHours() + 24);
+                // FIXED: Use milliseconds addition for exact 24-hour duration
+                const now = new Date();
+                const endDate = new Date(now.getTime() + (24 * 60 * 60 * 1000));
                 
                 const newBalance = userBalance - amount;
                 const { error: balanceError } = await mySupabase
@@ -615,7 +616,7 @@
                             invested_amount: amount,
                             status: 'active',
                             end_date: endDate.toISOString(),
-                            invested_at: new Date().toISOString(),
+                            invested_at: now.toISOString(),
                             total_earnings: 0
                         })
                         .eq('id', existingInv.id);
@@ -631,7 +632,7 @@
                             invested_amount: amount,
                             status: 'active',
                             end_date: endDate.toISOString(),
-                            invested_at: new Date().toISOString()
+                            invested_at: now.toISOString()
                         });
 
                     if (investError) throw investError;
